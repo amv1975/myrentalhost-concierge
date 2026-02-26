@@ -383,7 +383,15 @@ def whatsapp_webhook():
             return jsonify({'status': 'error'}), 500
     
     return jsonify({'status': 'ok'})
+@app.route('/admin.html')
+def admin_panel():
+    """Sirve el panel de administración"""
+    return app.send_static_file('admin.html')
 
+@app.route('/')
+def index():
+    """Redirige a admin"""
+    return app.send_static_file('admin.html')
 application = app
 
 if __name__ == '__main__':

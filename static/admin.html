@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyRentalHost - Panel de Administración</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            background: #e5e7eb;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 6px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .apartments-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .apartment-card {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .apartment-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .apartment-card.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .apartment-card h3 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .apartment-card .doc-count {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .documents-list {
+            margin-top: 20px;
+        }
+
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .document-name {
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            padding: 6px 16px;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .tab:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 MyRentalHost</h1>
+            <p>Panel de Administración del Conciergue Virtual</p>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab active" onclick="showTab('upload')">📤 Subir Documentos</div>
+            <div class="tab" onclick="showTab('manage')">📋 Gestionar Apartamentos</div>
+            <div class="tab" onclick="showTab('test')">💬 Probar Chat</div>
+        </div>
+
+        <div id="upload-tab" class="tab-content active">
+            <div class="card">
+                <h2>Subir Documentos del Apartamento</h2>
+                
+                <div id="uploadAlert"></div>
+                
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="apartmentId">ID del Apartamento *</label>
+                        <input 
+                            type="text" 
+                            id="apartmentId" 
+                            required 
+                            placeholder="Ej: apt-barcelona-001"
+                        >
+                        <small style="color: #6b7280; margin-top: 5px; display: block;">
+                            Usa un identificador único para cada apartamento
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Documento (PDF o Word) *</label>
+                        <div class="file-input-wrapper">
+                            <input 
+                                type="file" 
+                                id="documentFile" 
+                                accept=".pdf,.doc,.docx" 
+                                required
+                                onchange="updateFileName()"
+                            >
+                            <label for="documentFile" class="file-input-label">
+                                📄 Seleccionar archivo
+                            </label>
+                        </div>
+                        <div id="fileName" class="file-name" style="display: none;"></div>
+                    </div>
+
+                    <button type="submit" id="uploadBtn">
+                        Subir Documento
+                    </button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>💡 Tipos de Documentos Recomendados</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <div style="padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px;">
+                        <strong style="color: #065f46;">Manual del Apartamento</strong>
+                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">WiFi, electrodomésticos, calefacción, etc.</p>
+                    </div>
+                    <div style="padding: 15px; background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px;">
+                        <strong style="color: #1e40af;">Normas de la Casa</strong>
+                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Check-in, check-out, horarios</p>
+                    </div>
+                    <div style="padding: 15px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px;">
+                        <strong style="color: #92400e;">Guía Local</strong>
+                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Restaurantes, transporte, lugares de interés</p>
+                    </div>
+                    <div style="padding: 15px; background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 8px;">
+                        <strong style="color: #991b1b;">Contactos de Emergencia</strong>
+                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Teléfonos importantes, servicios</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="manage-tab" class="tab-content">
+            <div class="card">
+                <h2>Apartamentos Registrados</h2>
+                <div id="apartmentsList" class="apartments-list">
+                    <p style="color: #6b7280;">Cargando apartamentos...</p>
+                </div>
+            </div>
+
+            <div class="card" id="documentsCard" style="display: none;">
+                <h2>Documentos de <span id="selectedApartmentName"></span></h2>
+                <div id="documentsList"></div>
+            </div>
+        </div>
+
+        <div id="test-tab" class="tab-content">
+            <div class="card">
+                <h2>Probar el Conciergue</h2>
+                
+                <div class="form-group">
+                    <label for="testApartmentId">Seleccionar Apartamento</label>
+                    <select id="testApartmentId">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="testGuestId">ID del Huésped (para pruebas)</label>
+                    <input 
+                        type="text" 
+                        id="testGuestId" 
+                        value="test-guest-001"
+                        placeholder="test-guest-001"
+                    >
+                </div>
+
+                <div id="chatMessages" style="
+                    background: #f9fafb;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 12px;
+                    padding: 20px;
+                    min-height: 400px;
+                    max-height: 600px;
+                    overflow-y: auto;
+                    margin-bottom: 20px;
+                ">
+                    <p style="color: #6b7280; text-align: center; margin-top: 150px;">
+                        Selecciona un apartamento e inicia una conversación
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <input 
+                        type="text" 
+                        id="testMessage" 
+                        placeholder="Escribe un mensaje..."
+                        style="flex: 1;"
+                        onkeypress="if(event.key==='Enter') sendTestMessage()"
+                    >
+                    <button onclick="sendTestMessage()">Enviar</button>
+                    <button onclick="clearChat()" style="background: #6b7280;">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://myrentalhost-concierge-production.up.railway.app';
+
+        function showTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar tab seleccionado
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Cargar datos si es necesario
+            if (tabName === 'manage') {
+                loadApartments();
+            } else if (tabName === 'test') {
+                loadApartmentsForTest();
+            }
+        }
+
+        function updateFileName() {
+            const input = document.getElementById('documentFile');
+            const fileNameDiv = document.getElementById('fileName');
+            
+            if (input.files.length > 0) {
+                fileNameDiv.textContent = `📄 ${input.files[0].name}`;
+                fileNameDiv.style.display = 'block';
+            } else {
+                fileNameDiv.style.display = 'none';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('uploadAlert');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const apartmentId = document.getElementById('apartmentId').value;
+            const fileInput = document.getElementById('documentFile');
+            const file = fileInput.files[0];
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="loading"></span> Subiendo...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_URL}/apartments/${apartmentId}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ Documento subido exitosamente', 'success');
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('fileName').style.display = 'none';
+                } else {
+                    showAlert(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Error de conexión con el servidor', 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Subir Documento';
+            }
+        });
+
+        async function loadApartments() {
+            try {
+                const response = await fetch(`${API_URL}/apartments`);
+                const data = await response.json();
+                
+                const container = document.getElementById('apartmentsList');
+                
+                if (data.apartments.length === 0) {
+                    container.innerHTML = '<p style="color: #6b7280;">No hay apartamentos registrados aún. Sube documentos para crear uno.</p>';
+                    return;
+                }
+
+                container.innerHTML = data.apartments.map(apt => `
+                    <div class="apartment-card" onclick="selectApartment('${apt}')">
+                        <h3>🏠 ${apt}</h3>
+                        <p class="doc-count">Click para ver documentos</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error cargando apartamentos:', error);
+            }
+        }
+
+        async function selectApartment(apartmentId) {
+            try {
+                const response = await fetch(`${API_URL}/apartments/${apartmentId}/documents`);
+                const data = await response.json();
+                
+                document.querySelectorAll('.apartment-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                event.currentTarget.classList.add('selected');
+                
+                document.getElementById('selectedApartmentName').textContent = apartmentId;
+                document.getElementById('documentsCard').style.display = 'block';
+                
+                const docsList = document.getElementById('documentsList');
+                
+                if (data.documents.length === 0) {
+                    docsList.innerHTML = '<p style="color: #6b7280;">No hay documentos para este apartamento.</p>';
+                    return;
+                }
+
+                docsList.innerHTML = data.documents.map(doc => `
+                    <div class="document-item">
+                        <span class="document-name">📄 ${doc}</span>
+                        <button class="delete-btn" onclick="deleteDocument('${apartmentId}', '${doc}')">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error cargando documentos:', error);
+            }
+        }
+
+        async function deleteDocument(apartmentId, filename) {
+            if (!confirm(`¿Estás seguro de eliminar "${filename}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/apartments/${apartmentId}/documents/${filename}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    selectApartment(apartmentId);
+                }
+            } catch (error) {
+                console.error('Error eliminando documento:', error);
+            }
+        }
+
+        async function loadApartmentsForTest() {
+            try {
+                const response = await fetch(`${API_URL}/apartments`);
+                const data = await response.json();
+                
+                const select = document.getElementById('testApartmentId');
+                
+                if (data.apartments.length === 0) {
+                    select.innerHTML = '<option value="">No hay apartamentos disponibles</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">Selecciona un apartamento</option>' +
+                    data.apartments.map(apt => `<option value="${apt}">${apt}</option>`).join('');
+            } catch (error) {
+                console.error('Error cargando apartamentos:', error);
+            }
+        }
+
+        async function sendTestMessage() {
+            const apartmentId = document.getElementById('testApartmentId').value;
+            const guestId = document.getElementById('testGuestId').value;
+            const message = document.getElementById('testMessage').value;
+
+            if (!apartmentId || !message) {
+                alert('Selecciona un apartamento y escribe un mensaje');
+                return;
+            }
+
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Agregar mensaje del usuario
+            chatMessages.innerHTML += `
+                <div style="margin-bottom: 15px; text-align: right;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 16px; border-radius: 12px 12px 4px 12px; max-width: 70%;">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('testMessage').value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        guest_id: guestId,
+                        apartment_id: apartmentId,
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Agregar respuesta del asistente
+                    chatMessages.innerHTML += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: inline-block; background: #f3f4f6; color: #1f2937; padding: 12px 16px; border-radius: 12px 12px 12px 4px; max-width: 70%;">
+                                ${data.response.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    chatMessages.innerHTML += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: inline-block; background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 12px; max-width: 70%;">
+                                Error: ${data.error}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Error enviando mensaje:', error);
+                chatMessages.innerHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: inline-block; background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 12px; max-width: 70%;">
+                            Error de conexión con el servidor
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function clearChat() {
+            document.getElementById('chatMessages').innerHTML = `
+                <p style="color: #6b7280; text-align: center; margin-top: 150px;">
+                    Chat limpiado. Inicia una nueva conversación
+                </p>
+            `;
+        }
+
+        // Cargar apartamentos al iniciar si estamos en la tab de gestión
+        if (document.getElementById('manage-tab').classList.contains('active')) {
+            loadApartments();
+        }
+    </script>
+</body>
+</html>

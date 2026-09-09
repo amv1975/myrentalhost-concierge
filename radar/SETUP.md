@@ -125,14 +125,21 @@ entra en bucle:
 
 ### El cron
 
-El plan Hobby de Vercel no ejecuta cada hora (aproximadamente una vez al día).
-Por eso la ingesta está también en `.github/workflows/cron.yml`, que llama al
-mismo endpoint. En el repositorio, **Settings → Secrets → Actions**, añade:
+El plan Hobby de Vercel **solo admite crons diarios**, y no es que los ejecute
+menos: rechaza el despliegue entero si `vercel.json` pide más frecuencia, con
+un error de "would run more than once per day". Por eso el cron de Vercel está
+puesto a diario (05:00 UTC) y hace de red de seguridad.
 
-- `CRON_SECRET`: el mismo valor que en Vercel.
-- `RADAR_URL`: la URL del despliegue, sin barra final.
+La ingesta horaria de verdad la hace `.github/workflows/cron.yml`, que llama al
+mismo endpoint y en GitHub no cuesta nada. Para activarlo, en el repositorio,
+**Settings → Secrets and variables → Actions → New repository secret**:
 
-Con Vercel Pro puedes usar `vercel.json` en su lugar y desactivar el workflow.
+- `CRON_SECRET`: el mismo valor que pusiste en Vercel.
+- `RADAR_URL`: `https://radar-sigma-five.vercel.app` (sin barra final).
+
+Que corran los dos no duplica nada: la ingesta es idempotente y un correo ya
+visto no se vuelve a procesar. Con Vercel Pro podrías subir `vercel.json` a
+`0 * * * *` y desactivar el workflow.
 
 ## Ver la interfaz antes de provisionar nada
 

@@ -3,9 +3,9 @@
 
 insert into spaces (key, name, timezone, default_location, google_calendar_id)
 values
-  ('family', 'Familia', 'Europe/Madrid',
+  ('family', 'Family', 'Europe/Madrid',
    'Col·legi Lestonnac, Carrer Pau Claris 131, Barcelona', 'primary'),
-  ('work',   'Trabajo', 'Europe/Madrid', null, 'primary')
+  ('work',   'Work', 'Europe/Madrid', null, 'primary')
 on conflict (key) do nothing;
 
 

@@ -20,8 +20,28 @@ body {
   color: var(--color-ink);
   font-family:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  /* Espacio para la barra de tabs fija en móvil. */
+  /* Instalada como app no hay barra del navegador, así que el contenido
+     llegaría bajo la barra de estado y el gesto de inicio del móvil. */
+  padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Al instalarla, un toque sostenido no debe seleccionar texto como en una web:
+   se espera que la tarjeta se deslice. El texto de los ítems sí se selecciona. */
+@media (display-mode: standalone) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  p,
+  h1,
+  h2,
+  h3 {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
 
 /* Que un swipe horizontal sobre una tarjeta no arrastre la página. */

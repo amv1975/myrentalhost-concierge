@@ -1,8 +1,21 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { SpaceBoard } from "@/components/space-board";
+import { SpaceTabs } from "@/components/space-tabs";
 import { SAMPLE_FAMILY, SAMPLE_WORK } from "@/lib/preview/sample";
-import { SLUG_BY_SPACE } from "@/lib/types";
+import type { Space } from "@/lib/types";
+
+/** Los dos espacios como los devolvería la base de datos. */
+const PREVIEW_SPACES: Space[] = (["family", "work"] as const).map((key) => ({
+  id: key,
+  key,
+  name: key === "family" ? "Family" : "Work",
+  timezone: "Europe/Madrid",
+  default_location: null,
+  google_calendar_id: "primary",
+  auto_confirm_enabled: false,
+  auto_confirm_threshold: 0.9,
+  lookback_days: 14,
+}));
 
 /**
  * Previsualización de la interfaz con datos de ejemplo, para poder verla y
@@ -25,44 +38,11 @@ export default async function PreviewPage({
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
-      <header className="sticky top-0 z-10 border-b border-[var(--color-line)] bg-[var(--color-ground)]/90 backdrop-blur">
-        <div className="flex items-center justify-between px-4 pt-3 sm:px-6">
-          <span className="text-base font-semibold tracking-tight">Radar</span>
-          <span className="text-xs text-[var(--color-muted)]">
-            previsualización
-          </span>
-        </div>
-        <nav className="flex gap-1 px-4 pt-2 sm:px-6">
-          {(["family", "work"] as const).map((key) => {
-            const target = SLUG_BY_SPACE[key];
-            const active = slug === target;
-            return (
-              <Link
-                key={key}
-                href={`/preview?espacio=${target}`}
-                aria-current={active ? "page" : undefined}
-                className={`-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition ${
-                  active
-                    ? "border-current"
-                    : "border-transparent text-[var(--color-muted)]"
-                }`}
-                style={
-                  active
-                    ? {
-                        color:
-                          key === "family"
-                            ? "var(--color-family)"
-                            : "var(--color-work)",
-                      }
-                    : undefined
-                }
-              >
-                {key === "family" ? "Familia" : "Trabajo"}
-              </Link>
-            );
-          })}
-        </nav>
-      </header>
+      <SpaceTabs
+        spaces={PREVIEW_SPACES}
+        userEmail="previsualización"
+        activeSlug={slug}
+      />
 
       <main className="flex-1 px-4 pb-24 pt-4 sm:px-6">
         <SpaceBoard espacio={slug} view={view} demo />

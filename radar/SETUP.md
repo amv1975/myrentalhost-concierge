@@ -3,25 +3,8 @@
 Nada de esto arranca sin provisionar Supabase y Google Cloud. Son unos 20
 minutos la primera vez.
 
-## 0. Mover Radar a su propio repositorio
-
-Ahora mismo Radar vive en `radar/` dentro de `myrentalhost-concierge`, porque la
-sesión que lo construyó no tenía permiso para crear repositorios. Para separarlo:
-
-```bash
-# Crea amv1975/radar en GitHub (privado, vacío, sin README).
-cd radar
-git init
-git add -A
-git commit -m "Radar: primera versión"
-git branch -M main
-git remote add origin git@github.com:amv1975/radar.git
-git push -u origin main
-```
-
-A partir de ahí Vercel apunta a `amv1975/radar` con el directorio raíz por
-defecto. Si prefieres dejarlo donde está, en Vercel configura
-**Root Directory: `radar`** y todo lo demás funciona igual.
+El repositorio es privado a propósito: `supabase/seed.sql` lleva correos
+personales y los dominios del colegio.
 
 ## 1. Supabase
 

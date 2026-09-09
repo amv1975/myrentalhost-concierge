@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import type { Item } from "@/lib/types";
 import { gmailSearchUrl } from "@/lib/gmail-link";
 import { googleCalendarDayUrl } from "@/lib/calendar-link";
+import { sourceLabel } from "@/lib/source-label";
 import { formatDate, formatDateTime, relativeDays } from "@/lib/format";
 
 type Action = "confirmar" | "descartar" | "hecho" | "reabrir";
+type PinAction = "fijar" | "soltar";
 
 const SWIPE_COMMIT_PX = 96;
 
@@ -24,20 +26,22 @@ export function ItemCard({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [busy, setBusy] = useState<Action | null>(null);
   const [offset, setOffset] = useState(0);
   const [gone, setGone] = useState(false);
+  const [pinned, setPinned] = useState(item.pinned);
   const [error, setError] = useState<string | null>(null);
   const startX = useRef<number | null>(null);
 
   async function act(action: Action) {
-    setBusy(action);
     setError(null);
 
-    if (demo) {
-      setTimeout(() => setGone(true), 180);
-      return;
-    }
+    // La tarjeta se va en el momento, sin esperar al servidor. Revisar veinte
+    // ítems seguidos con una pausa por cada uno es justo lo que hace que dé
+    // pereza abrir la app; y confirmar puede tardar más de un segundo porque
+    // además crea el evento en el calendario.
+    setGone(true);
+
+    if (demo) return;
 
     try {
       const response = await fetch(`/api/items/${item.id}`, {
@@ -48,19 +52,45 @@ export function ItemCard({
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error ?? "No se pudo guardar");
 
-      // La decisión se guardó, pero el calendario no la recogió. Conviene
-      // decirlo: el cron lo reintentará, y mientras tanto el evento no está.
+      // La decisión se guardó, pero el calendario no la recogió. La tarjeta
+      // vuelve para decirlo: el cron lo reintentará, y mientras tanto el
+      // evento no está donde crees que está.
       if (body.syncError) {
-        setError(`Guardado, pero no llegó al calendario: ${body.syncError}`);
+        setGone(false);
         setOffset(0);
-        setBusy(null);
+        setError(`Guardado, pero no llegó al calendario: ${body.syncError}`);
         return;
       }
       startTransition(() => router.refresh());
     } catch (caught) {
-      setBusy(null);
+      // Si falló de verdad, la tarjeta reaparece: dar por hecho algo que no se
+      // guardó es peor que la espera que acabamos de quitar.
+      setGone(false);
       setOffset(0);
       setError(caught instanceof Error ? caught.message : "Error inesperado");
+    }
+  }
+
+  /** Fijar es una marca, no una decisión: la tarjeta se queda donde está. */
+  async function togglePin() {
+    const next = !pinned;
+    setPinned(next);
+    setError(null);
+
+    if (demo) return;
+
+    try {
+      const action: PinAction = next ? "fijar" : "soltar";
+      const response = await fetch(`/api/items/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!response.ok) throw new Error("No se pudo guardar");
+      startTransition(() => router.refresh());
+    } catch {
+      setPinned(!next);
+      setError("No se pudo marcar como importante");
     }
   }
 
@@ -71,12 +101,12 @@ export function ItemCard({
   }
 
   function onTouchMove(event: React.TouchEvent) {
-    if (startX.current === null || busy) return;
+    if (startX.current === null) return;
     setOffset(event.touches[0].clientX - startX.current);
   }
 
   function onTouchEnd() {
-    if (startX.current === null || busy) return;
+    if (startX.current === null) return;
     const moved = offset;
     startX.current = null;
 
@@ -124,11 +154,14 @@ export function ItemCard({
       </div>
 
       <article
-        className="swipeable relative rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(20,22,26,0.04)]"
+        className={`swipeable relative rounded-2xl border bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(20,22,26,0.04)] ${
+          pinned
+            ? "border-[var(--color-warn)]/45"
+            : "border-[var(--color-line)]"
+        }`}
         style={{
           transform: `translateX(${offset}px)`,
           transition: startX.current === null ? "transform 180ms ease" : "none",
-          opacity: busy ? 0.55 : 1,
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -136,12 +169,31 @@ export function ItemCard({
       >
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
-            <TypeBadge isEvent={isEvent} />
-            {item.status === "needs_review" ? (
-              <span className="rounded-full bg-[var(--color-warn-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-warn)]">
-                Ha cambiado
-              </span>
-            ) : null}
+            <div className="flex min-w-0 items-center gap-2">
+              <TypeBadge isEvent={isEvent} />
+              <Source item={item} />
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {item.status === "needs_review" ? (
+                <span className="rounded-full bg-[var(--color-warn-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-warn)]">
+                  Ha cambiado
+                </span>
+              ) : null}
+              <button
+                onClick={togglePin}
+                aria-pressed={pinned}
+                aria-label={
+                  pinned ? "Quitar de importantes" : "Marcar como importante"
+                }
+                className={`-m-1 rounded-lg p-1 transition ${
+                  pinned
+                    ? "text-[var(--color-warn)]"
+                    : "text-[var(--color-line)]"
+                }`}
+              >
+                <StarIcon filled={pinned} />
+              </button>
+            </div>
           </div>
 
           <h3 className="mt-2.5 text-[17px] font-semibold leading-snug text-[var(--color-ink)]">
@@ -178,9 +230,21 @@ export function ItemCard({
           ) : null}
         </div>
 
-        <Footer item={item} mode={mode} busy={busy !== null} act={act} />
+        <Footer item={item} mode={mode} act={act} />
       </article>
     </li>
+  );
+}
+
+/** De dónde salió. Sutil, pero antes del título: cambia cuánta atención merece. */
+function Source({ item }: { item: Item }) {
+  const label = sourceLabel(item.email_from, item.email_from_name);
+  if (!label) return null;
+
+  return (
+    <span className="min-w-0 truncate text-xs text-[var(--color-faint)]">
+      {label}
+    </span>
   );
 }
 
@@ -249,12 +313,10 @@ function When({
 function Footer({
   item,
   mode,
-  busy,
   act,
 }: {
   item: Item;
   mode: "review" | "open";
-  busy: boolean;
   act: (action: Action) => void;
 }) {
   const inCalendar = item.type === "event" && item.google_event_id;
@@ -266,15 +328,13 @@ function Footer({
           <>
             <button
               onClick={() => act("confirmar")}
-              disabled={busy}
-              className="flex-1 rounded-xl bg-[var(--color-ink)] px-3 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50"
+              className="flex-1 rounded-xl bg-[var(--color-ink)] px-3 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
             >
               {item.type === "event" ? "Confirmar y añadir" : "Confirmar"}
             </button>
             <button
               onClick={() => act("descartar")}
-              disabled={busy}
-              className="rounded-xl border border-[var(--color-line)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-body)] transition active:scale-[0.98] disabled:opacity-50"
+              className="rounded-xl border border-[var(--color-line)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-body)] transition active:scale-[0.98]"
             >
               Descartar
             </button>
@@ -282,16 +342,14 @@ function Footer({
         ) : item.type === "action" ? (
           <button
             onClick={() => act("hecho")}
-            disabled={busy}
-            className="flex-1 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition active:scale-[0.98]"
           >
             Marcar como hecho
           </button>
         ) : (
           <button
             onClick={() => act("descartar")}
-            disabled={busy}
-            className="flex-1 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium text-[var(--color-body)] transition active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium text-[var(--color-body)] transition active:scale-[0.98]"
           >
             {item.google_event_id ? "Quitar del calendario" : "Descartar"}
           </button>
@@ -400,6 +458,22 @@ function PinIcon() {
       className="mt-0.5 h-3 w-3 shrink-0 fill-current"
     >
       <path d="M8 1a5 5 0 0 0-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 0 0-5-5Zm0 6.75A1.75 1.75 0 1 1 8 4.25a1.75 1.75 0 0 1 0 3.5Z" />
+    </svg>
+  );
+}
+
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden
+      className="h-[18px] w-[18px]"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 1.6}
+      strokeLinejoin="round"
+    >
+      <path d="M10 2.6l2.36 4.78 5.28.77-3.82 3.72.9 5.26L10 14.64l-4.72 2.49.9-5.26L2.36 8.15l5.28-.77L10 2.6Z" />
     </svg>
   );
 }

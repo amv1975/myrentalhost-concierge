@@ -13,17 +13,25 @@ const ALLOWED: Record<string, ItemStatus> = {
   reabrir: "pending",
 };
 
+/** Fijar no cambia el estado: es una marca aparte sobre el mismo ítem. */
+const PIN_ACTIONS: Record<string, boolean> = {
+  fijar: true,
+  soltar: false,
+};
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const body = (await request.json()) as { action?: string };
-  const status = body.action ? ALLOWED[body.action] : undefined;
+  const action = body.action ?? "";
+  const status = ALLOWED[action];
+  const pinned = PIN_ACTIONS[action];
 
-  if (!status) {
+  if (status === undefined && pinned === undefined) {
     return NextResponse.json(
-      { error: `Acción no permitida: ${body.action ?? "(vacía)"}` },
+      { error: `Acción no permitida: ${action || "(vacía)"}` },
       { status: 400 },
     );
   }
@@ -51,6 +59,16 @@ export async function PATCH(
   // pasa por RLS. Sin esta comprobación, cualquiera con sesión podría tocar un
   // ítem de un espacio al que no pertenece.
   await assertSpaceMember(user.id, item.space_id);
+
+  // Fijar solo mueve la marca: no toca el estado ni el calendario.
+  if (pinned !== undefined) {
+    const { error } = await admin
+      .from("items")
+      .update({ pinned })
+      .eq("id", id);
+    if (error) throw error;
+    return NextResponse.json({ ok: true, pinned });
+  }
 
   const { error: updateError } = await admin
     .from("items")

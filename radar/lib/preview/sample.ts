@@ -47,9 +47,12 @@ function item(overrides: Partial<Item> & Pick<Item, "id" | "title">): Item {
     google_calendar_id: null,
     synced_at: null,
     sync_error: null,
+    pinned: false,
     reviewed_at: null,
     created_at: new Date(Date.now() - 3 * DIA).toISOString(),
     updated_at: new Date().toISOString(),
+    email_from: "avisos@lestonnacbcn.org",
+    email_from_name: null,
     ...overrides,
   };
 }
@@ -137,6 +140,9 @@ export const SAMPLE_WORK: SpaceView = {
   toReview: [
     item({
       id: "w1",
+      pinned: true,
+      email_from: "noticias@apartur.com",
+      email_from_name: "Apartur",
       type: "action",
       title: "Decidir el precio del late check-out",
       due_date: soloFecha(1),
@@ -147,6 +153,8 @@ export const SAMPLE_WORK: SpaceView = {
     }),
     item({
       id: "w2",
+      email_from: "noreply@guest.booking.com",
+      email_from_name: null,
       type: "action",
       title: "Responder a la consulta sobre el parking",
       due_date: soloFecha(0),
@@ -170,6 +178,8 @@ export const SAMPLE_WORK: SpaceView = {
   upcomingEvents: [
     item({
       id: "w4",
+      email_from: "express@airbnb.com",
+      email_from_name: null,
       title: "Entrada del huésped en Balmes",
       status: "confirmed",
       starts_at: fecha(3, "16:00"),

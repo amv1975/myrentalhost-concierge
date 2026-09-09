@@ -27,18 +27,23 @@ export async function getSpaceView(spaceId: string): Promise<SpaceView> {
     .from("items")
     // El asunto y el remitente del correo vienen en la misma consulta: son lo
     // que permite enlazar al original sin una petición por ítem.
-    .select("*, emails(subject, from_email)")
+    .select("*, emails(subject, from_email, from_name)")
     .eq("space_id", spaceId)
     .in("status", ["pending", "needs_review", "confirmed"])
     .order("created_at", { ascending: true });
   if (error) throw error;
 
   const items = ((data ?? []) as (Item & {
-    emails: { subject: string | null; from_email: string } | null;
+    emails: {
+      subject: string | null;
+      from_email: string;
+      from_name: string | null;
+    } | null;
   })[]).map(({ emails, ...item }) => ({
     ...item,
     email_subject: emails?.subject ?? null,
     email_from: emails?.from_email ?? null,
+    email_from_name: emails?.from_name ?? null,
   })) as Item[];
   const now = new Date();
   const todayIso = now.toISOString();
@@ -46,13 +51,17 @@ export async function getSpaceView(spaceId: string): Promise<SpaceView> {
   const toReview = items
     .filter((i) => i.status === "pending" || i.status === "needs_review")
     .sort((a, b) => {
+      // Lo fijado a mano manda sobre cualquier otro criterio: es la única
+      // forma que tiene el usuario de decir "esto por encima de la fecha".
+      const pin = byPinned(a, b);
+      if (pin !== 0) return pin;
       if (a.status !== b.status) return a.status === "needs_review" ? -1 : 1;
       return byDate(a) - byDate(b);
     });
 
   const openActions = items
     .filter((i) => i.type === "action" && i.status === "confirmed")
-    .sort((a, b) => byDate(a) - byDate(b));
+    .sort((a, b) => byPinned(a, b) || byDate(a) - byDate(b));
 
   const upcomingEvents = items
     .filter(
@@ -61,7 +70,7 @@ export async function getSpaceView(spaceId: string): Promise<SpaceView> {
         i.status === "confirmed" &&
         (i.ends_at ?? i.starts_at ?? "") >= todayIso,
     )
-    .sort((a, b) => byDate(a) - byDate(b));
+    .sort((a, b) => byPinned(a, b) || byDate(a) - byDate(b));
 
   const oldestPending = toReview[0];
   const oldestPendingDays = oldestPending
@@ -69,6 +78,12 @@ export async function getSpaceView(spaceId: string): Promise<SpaceView> {
     : null;
 
   return { toReview, openActions, upcomingEvents, oldestPendingDays };
+}
+
+/** Lo fijado sube. Empate si ninguno lo está o si lo están los dos. */
+function byPinned(a: Item, b: Item): number {
+  if (a.pinned === b.pinned) return 0;
+  return a.pinned ? -1 : 1;
 }
 
 /** Sin fecha va al final, no al principio. */

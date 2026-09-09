@@ -323,3 +323,20 @@ create policy sync_runs_select on sync_runs
   for select using (space_id is null or public.is_space_member(space_id));
 
 -- allowed_members y google_accounts quedan sin políticas: solo service role.
+
+
+-- ---------------------------------------------------------------------------
+-- Privilegios
+--
+-- Supabase concede acceso a anon/authenticated por defecto, pero dejarlo
+-- implícito esconde la decisión de diseño. Escritos aquí, se leen de un vistazo
+-- y una regresión los rompe: el navegador puede LEER sus espacios y editar sus
+-- remitentes, y nada más. Confirmar, descartar y sincronizar pasan por la API.
+-- ---------------------------------------------------------------------------
+
+grant select on spaces, space_members, emails, items, sync_runs to authenticated;
+grant select, insert, update, delete on sources to authenticated;
+
+-- allowed_members y google_accounts no se conceden a nadie: el refresh token de
+-- Google no debe ser legible ni siquiera para su dueño desde el navegador.
+grant all on all tables in schema public to service_role;

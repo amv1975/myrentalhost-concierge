@@ -1,0 +1,29 @@
+name: Ingesta horaria
+
+# Vercel Cron en plan Hobby no ejecuta cada hora (aproximadamente una vez al
+# día). Este workflow llama al mismo endpoint cada hora sin depender del plan.
+# Si tienes Vercel Pro, puedes usar vercel.json en su lugar y desactivar esto.
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Buscar correos y extraer compromisos
+        run: |
+          codigo=$(curl -sS -o /tmp/respuesta.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.RADAR_URL }}/api/cron/ingest")
+
+          cat /tmp/respuesta.json
+
+          # 207 significa que un espacio falló y el otro no: se muestra el
+          # detalle pero no se marca el workflow como roto.
+          if [ "$codigo" != "200" ] && [ "$codigo" != "207" ]; then
+            echo "::error::La ingesta devolvió $codigo"
+            exit 1
+          fi

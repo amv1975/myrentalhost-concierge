@@ -39,6 +39,27 @@ interface RawMessage {
   payload?: GmailPart;
 }
 
+/** Gmail limita las unidades por minuto y por usuario; espaciar las llamadas
+ *  cuesta poco y evita chocar con ese límite en buzones con mucho movimiento. */
+const MIN_MS_BETWEEN_CALLS = 120;
+const MAX_ATTEMPTS = 4;
+
+let lastCallAt = 0;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Se lanza cuando Gmail rechaza por cuota y no por un problema del correo. */
+export class GmailRateLimitError extends Error {
+  constructor() {
+    super(
+      "Gmail está limitando las peticiones. Los correos que falten se recogerán en la siguiente pasada.",
+    );
+    this.name = "GmailRateLimitError";
+  }
+}
+
 async function gmailGet<T>(
   accessToken: string,
   path: string,
@@ -49,17 +70,43 @@ async function gmailGet<T>(
     url.searchParams.set(key, value);
   }
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const since = Date.now() - lastCallAt;
+    if (since < MIN_MS_BETWEEN_CALLS) {
+      await sleep(MIN_MS_BETWEEN_CALLS - since);
+    }
+    lastCallAt = Date.now();
 
-  if (!response.ok) {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
+
+    if (response.ok) return (await response.json()) as T;
+
     const body = await response.text();
-    throw new Error(`Gmail ${response.status} en ${path}: ${body}`);
+    const throttled =
+      response.status === 429 ||
+      (response.status === 403 &&
+        /rateLimitExceeded|userRateLimitExceeded|Quota exceeded/i.test(body));
+
+    // Un 403 por cuota se reintenta; uno por permisos, no: repetirlo no cambia
+    // nada y solo retrasa el error que hay que ver.
+    if (!throttled && response.status < 500) {
+      throw new Error(`Gmail ${response.status} en ${path}: ${body.slice(0, 300)}`);
+    }
+
+    if (attempt === MAX_ATTEMPTS) {
+      if (throttled) throw new GmailRateLimitError();
+      throw new Error(`Gmail ${response.status} en ${path}: ${body.slice(0, 300)}`);
+    }
+
+    // Espera creciente con algo de azar, para no reintentar todos a la vez.
+    await sleep(500 * 2 ** (attempt - 1) + Math.random() * 250);
   }
-  return (await response.json()) as T;
+
+  throw new GmailRateLimitError();
 }
 
 /**

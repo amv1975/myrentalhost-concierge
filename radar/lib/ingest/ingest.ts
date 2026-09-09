@@ -1,7 +1,11 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
-import { getMessage, listMessageIds } from "@/lib/google/gmail";
+import {
+  getMessage,
+  listMessageIds,
+  GmailRateLimitError,
+} from "@/lib/google/gmail";
 import { buildGmailQuery, matchesSource } from "@/lib/ingest/query";
 import type { Source, Space } from "@/lib/types";
 
@@ -69,7 +73,20 @@ export async function ingestSpace(space: Space): Promise<IngestResult> {
     const fresh = messageIds.filter((id) => !known.has(id));
 
     for (const messageId of fresh) {
-      const message = await getMessage(accessToken, messageId);
+      let message;
+      try {
+        message = await getMessage(accessToken, messageId);
+      } catch (error) {
+        // Si Gmail corta por cuota, se conserva todo lo descargado hasta aquí y
+        // se termina la tanda. Los que falten entran en la siguiente pasada:
+        // como la ingesta es idempotente, no se pierde ni se duplica nada.
+        if (error instanceof GmailRateLimitError) {
+          result.error = error.message;
+          break;
+        }
+        throw error;
+      }
+
 
       if (!matchesSource(message.fromEmail, sources)) {
         result.skipped += 1;
@@ -100,7 +117,7 @@ export async function ingestSpace(space: Space): Promise<IngestResult> {
       result.messagesNew += 1;
     }
 
-    await finishRun(runId, "ok", result);
+    await finishRun(runId, result.error ? "error" : "ok", result);
     return result;
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);

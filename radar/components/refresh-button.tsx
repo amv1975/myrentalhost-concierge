@@ -24,14 +24,23 @@ export function RefreshButton({ espacio }: { espacio: string }) {
 
       const nuevos = extract.created ?? 0;
       const cambios = extract.updated ?? 0;
-      setMessage(
-        nuevos + cambios === 0
-          ? `${ingest.messagesNew ?? 0} correos nuevos, nada que revisar`
-          : `${nuevos} nuevos, ${cambios} con cambios`,
-      );
+
+      // La ingesta puede terminar bien habiendo guardado solo una parte, si
+      // Gmail cortó por cuota. Eso no es un fallo: el resto entra al repetir.
+      if (ingest.error) {
+        setMessage(readable(ingest.error));
+      } else {
+        setMessage(
+          nuevos + cambios === 0
+            ? `${ingest.messagesNew ?? 0} correos nuevos, nada que revisar`
+            : `${nuevos} nuevos, ${cambios} con cambios`,
+        );
+      }
       startTransition(() => router.refresh());
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Error inesperado");
+      setMessage(
+        readable(error instanceof Error ? error.message : "Error inesperado"),
+      );
     } finally {
       setPhase("idle");
     }
@@ -66,4 +75,22 @@ async function postJson(url: string) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error ?? "No se pudo completar");
   return body;
+}
+
+/**
+ * Los errores de Google llegan como un JSON largo que no dice nada útil a quien
+ * está mirando el móvil. Se traducen los que tienen una causa reconocible y del
+ * resto se muestra solo el principio.
+ */
+function readable(raw: string): string {
+  if (/Quota exceeded|rateLimitExceeded|429/i.test(raw)) {
+    return "Gmail limitó las peticiones. Se guardó lo descargado; vuelve a pulsar en un minuto para el resto.";
+  }
+  if (/invalid_grant|refresh token/i.test(raw)) {
+    return "El permiso de Google caducó. Cierra sesión y vuelve a entrar para renovarlo.";
+  }
+  if (/insufficient|insufficientPermissions|403/i.test(raw)) {
+    return "Google rechazó la petición por permisos. Vuelve a entrar aceptando el acceso a Gmail y Calendar.";
+  }
+  return raw.length > 160 ? `${raw.slice(0, 160)}…` : raw;
 }

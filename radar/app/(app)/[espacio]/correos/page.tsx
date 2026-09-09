@@ -5,7 +5,7 @@ import { getSpaceByKey } from "@/lib/spaces";
 import { slugToSpaceKey, type Email } from "@/lib/types";
 import { gmailMessageUrl } from "@/lib/gmail-link";
 import { formatDateTime } from "@/lib/format";
-import { RunIngestButton } from "@/components/run-ingest-button";
+import { RefreshButton } from "@/components/refresh-button";
 
 /**
  * Los correos tal como llegaron, antes de extraer nada. Sirve para comprobar
@@ -43,7 +43,7 @@ export default async function EmailsPage({
             {emails.length} en los últimos {space.lookback_days} días
           </p>
         </div>
-        <RunIngestButton espacio={espacio} />
+        <RefreshButton espacio={espacio} />
       </div>
 
       <Link
@@ -55,7 +55,7 @@ export default async function EmailsPage({
 
       {emails.length === 0 ? (
         <p className="rounded-xl border border-[var(--color-line)] bg-white px-4 py-8 text-center text-sm text-[var(--color-muted)]">
-          Todavía no hay correos. Pulsa «Buscar correos» para traerlos.
+          Todavía no hay correos. Pulsa «Actualizar» para traerlos.
         </p>
       ) : (
         <ul className="space-y-2">

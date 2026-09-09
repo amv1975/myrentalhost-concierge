@@ -136,15 +136,38 @@ mismo endpoint. En el repositorio, **Settings → Secrets → Actions**, añade:
 
 Con Vercel Pro puedes usar `vercel.json` en su lugar y desactivar el workflow.
 
-## Lo que falta
+## Ver la interfaz antes de provisionar nada
 
-Los pasos 5 y 6 del plan original: la sincronización con Google Calendar y el
-despliegue. Hasta que eso esté, **Radar no escribe nada fuera de su propia base
-de datos**: confirmar un evento lo marca como confirmado, pero todavía no crea
-nada en tu calendario. Es deliberado — primero conviene ver si la extracción es
-buena sobre correos reales.
+```bash
+RADAR_PREVIEW=1 npm run dev
+```
 
-El esquema ya guarda `google_event_id` y `google_calendar_id`, y las
-actualizaciones llegan como `needs_review` con el diff, así que cuando se
-conecte Calendar la actualización de un evento existente es un PATCH sobre ese
-identificador, no un evento nuevo.
+Y abre `http://localhost:3000/preview`. Son los componentes reales con datos de
+ejemplo: no lee ni escribe nada, ni toca el calendario. Sirve para juzgar la
+interfaz, no para comprobar que la extracción funciona. Sin `RADAR_PREVIEW=1`
+esa ruta no existe.
+
+## Antes de la primera sincronización con el calendario
+
+Radar crea, actualiza y retira eventos en el calendario que indiques
+(`primary` por defecto). Conviene saber qué implica antes de confirmar el
+primero:
+
+- **Confirmar un evento** lo crea en tu calendario. En Familia se invita
+  automáticamente a quien esté en `allowed_members` de ese espacio, así que
+  Victoria recibe la invitación.
+- **Que el colegio mueva la hora** actualiza el evento existente por su
+  `google_event_id`. No aparece uno nuevo.
+- **Descartar un evento que ya estaba puesto lo retira del calendario.** Es
+  deliberado: si Radar se inventó una reunión, dejarla ahí sería peor que
+  quitarla. Es la única operación destructiva de toda la app, solo actúa sobre
+  eventos que creó Radar, y nunca toca eventos que hayas creado tú.
+- Las **acciones nunca van al calendario**: no tienen hora y el calendario no
+  sabe guardarlas. Viven en Radar, que es el motivo de que exista.
+
+Si prefieres estrenar sobre un calendario aparte en vez de sobre el principal,
+crea uno en Google Calendar y cambia el destino antes de confirmar nada:
+
+```sql
+update spaces set google_calendar_id = '<id-del-calendario>' where key = 'family';
+```

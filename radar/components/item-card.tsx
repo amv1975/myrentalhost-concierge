@@ -13,30 +13,48 @@ const SWIPE_COMMIT_PX = 96;
 export function ItemCard({
   item,
   mode,
+  demo = false,
 }: {
   item: Item;
   /** review: decidir si entra. open: ya está dentro y se puede cerrar. */
   mode: "review" | "open";
+  /** En previsualización la tarjeta se aparta sola, sin llamar a la API. */
+  demo?: boolean;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState<Action | null>(null);
   const [offset, setOffset] = useState(0);
+  const [gone, setGone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const startX = useRef<number | null>(null);
 
   async function act(action: Action) {
     setBusy(action);
     setError(null);
+
+    if (demo) {
+      setTimeout(() => setGone(true), 180);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/items/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
+      const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
         throw new Error(body.error ?? "No se pudo guardar");
+      }
+      // La decisión se guardó, pero el calendario no la recogió. Conviene
+      // decirlo: el cron lo reintentará, y mientras tanto el evento no está.
+      if (body.syncError) {
+        setError(`Guardado, pero no llegó al calendario: ${body.syncError}`);
+        setOffset(0);
+        setBusy(null);
+        return;
       }
       startTransition(() => router.refresh());
     } catch (caught) {
@@ -62,7 +80,11 @@ export function ItemCard({
     const moved = offset;
     startX.current = null;
 
-    if (moved > SWIPE_COMMIT_PX) {
+    // Un evento ya confirmado no se "hace": o se queda o se quita. Deslizarlo a
+    // la derecha no tiene significado, así que la tarjeta vuelve a su sitio.
+    const derechaHaceAlgo = mode === "review" || item.type === "action";
+
+    if (moved > SWIPE_COMMIT_PX && derechaHaceAlgo) {
       setOffset(400);
       void act(mode === "review" ? "confirmar" : "hecho");
     } else if (moved < -SWIPE_COMMIT_PX) {
@@ -84,11 +106,19 @@ export function ItemCard({
     ? relativeDays(dateForCountdown).startsWith("hace")
     : false;
 
+  if (gone) return null;
+
   return (
     <li className="relative overflow-hidden rounded-xl">
       {/* Lo que asoma bajo la tarjeta mientras se desliza. */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-between rounded-xl px-5 text-sm font-medium">
-        <span className={offset > 20 ? "text-emerald-700" : "opacity-0"}>
+        <span
+          className={
+            offset > 20 && (mode === "review" || item.type === "action")
+              ? "text-emerald-700"
+              : "opacity-0"
+          }
+        >
           {mode === "review" ? "Confirmar" : "Hecho"}
         </span>
         <span className={offset < -20 ? "text-[var(--color-danger)]" : "opacity-0"}>
@@ -149,6 +179,16 @@ export function ItemCard({
 
         {item.changed_fields ? <ChangeDiff item={item} /> : null}
 
+        {mode === "open" && item.type === "event" ? (
+          <p className="mt-2 text-xs text-[var(--color-muted)]">
+            {item.google_event_id
+              ? "En tu calendario"
+              : item.sync_error
+                ? `No llegó al calendario: ${item.sync_error}`
+                : "Pendiente de subir al calendario"}
+          </p>
+        ) : null}
+
         {error ? (
           <p className="mt-2 text-xs text-[var(--color-danger)]">{error}</p>
         ) : null}
@@ -171,13 +211,23 @@ export function ItemCard({
                 Descartar
               </button>
             </>
-          ) : (
+          ) : item.type === "action" ? (
             <button
               onClick={() => act("hecho")}
               disabled={busy !== null}
               className="flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50"
             >
               Marcar como hecho
+            </button>
+          ) : (
+            // Un evento confirmado ya está en el calendario. Lo único que tiene
+            // sentido hacerle desde aquí es retirarlo.
+            <button
+              onClick={() => act("descartar")}
+              disabled={busy !== null}
+              className="flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50"
+            >
+              {item.google_event_id ? "Quitar del calendario" : "Descartar"}
             </button>
           )}
 

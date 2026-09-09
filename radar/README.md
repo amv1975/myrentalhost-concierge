@@ -57,16 +57,24 @@ es texto que resumir, no una orden. Pero la defensa que de verdad cuenta es
 estructural: la llamada de extracción no declara herramientas. No hay nada que
 un correo pueda hacer ejecutar.
 
-**Permisos mínimos, y verificados.** Gmail en solo lectura, Calendar solo para
-crear eventos. `tests/permissions.test.ts` falla si la lista de scopes crece, si
-aparece en el código una llamada a un endpoint de escritura de Gmail, o si la
-extracción empieza a declarar herramientas.
+**Permisos mínimos, y verificados.** Gmail en solo lectura: no hay en todo el
+proyecto una sola llamada que pueda enviar, responder, etiquetar o borrar un
+correo. Calendar sí escribe, porque poner eventos es el objetivo, pero solo
+sobre eventos que Radar creó — cada operación exige el `google_event_id` que
+guardó la sincronización, y nunca se leen ni se listan los eventos que ya
+tenías. `tests/permissions.test.ts` falla si la lista de scopes crece, si
+aparece una llamada de escritura a Gmail, si Calendar empieza a leer, o si la
+extracción declara herramientas.
 
 ## Estado
 
-Funcionan los pasos 1 a 4: autenticación, ingesta, extracción y revisión.
+Funciona el ciclo completo: autenticación, ingesta, extracción, revisión y
+sincronización con Google Calendar, con el cron que lo repite cada hora.
 
-**Radar todavía no escribe nada fuera de su propia base de datos.** Confirmar un
-evento lo marca como confirmado, pero aún no crea nada en Google Calendar. Es
-deliberado: primero conviene comprobar sobre correos reales que la extracción es
-buena. La sincronización con Calendar y el cron desplegado son lo siguiente.
+Confirmar un evento lo crea en el calendario e invita a quien corresponda;
+cuando el colegio mueve la hora se actualiza el evento existente por su
+`google_event_id`; y descartar un evento ya puesto lo retira. Las acciones
+nunca van al calendario.
+
+Para verlo sin provisionar nada: `RADAR_PREVIEW=1 npm run dev` y abre
+`/preview`. Son los componentes reales con datos de ejemplo.

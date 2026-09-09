@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember } from "@/lib/spaces";
+import { syncItemById } from "@/lib/calendar/sync";
 import type { ItemStatus } from "@/lib/types";
 
 /** Lo único que la UI puede hacerle a un ítem. */
@@ -58,13 +59,28 @@ export async function PATCH(
   if (updateError) throw updateError;
 
   // Al aceptar una actualización, el compromiso anterior deja de estar vivo:
-  // ya no debe aparecer en la lista ni volver a emparejarse con nada.
+  // ya no debe aparecer en la lista ni volver a emparejarse con nada. No se
+  // sincroniza su baja porque el evento de Google lo hereda el ítem nuevo, que
+  // lo actualiza en su sitio en lugar de borrarlo y crear otro.
   if (status === "confirmed" && item.supersedes_item_id) {
     await admin
       .from("items")
-      .update({ status: "dismissed" })
+      .update({ status: "dismissed", google_event_id: null })
       .eq("id", item.supersedes_item_id);
   }
 
-  return NextResponse.json({ ok: true, status });
+  // El calendario se actualiza en el momento, no en la siguiente pasada del
+  // cron: confirmar algo y no verlo aparecer haría dudar de si funcionó. Si
+  // falla, la confirmación se mantiene y el error queda en sync_error para que
+  // el cron lo reintente.
+  let syncError: string | null = null;
+  if (status === "confirmed" || status === "dismissed") {
+    try {
+      await syncItemById(id);
+    } catch (error) {
+      syncError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  return NextResponse.json({ ok: true, status, syncError });
 }

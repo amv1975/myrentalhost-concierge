@@ -84,6 +84,37 @@ describe("superficie de escritura en Gmail", () => {
   });
 });
 
+describe("superficie de Calendar", () => {
+  const calendar = () =>
+    readFileSync(path.join(ROOT, "lib/google/calendar.ts"), "utf8");
+
+  it("solo actúa sobre eventos identificados por su id", () => {
+    // Calendar sí escribe, porque poner eventos es el objetivo de la app. Lo
+    // que no puede es tocar nada que Radar no haya creado: todas las
+    // operaciones sobre un evento concreto llevan el eventId que se guardó en
+    // items.google_event_id, y ese campo solo lo escribe la sincronización.
+    const source = calendar();
+    for (const fn of ["updateEvent", "cancelEvent"]) {
+      const signature = source.slice(source.indexOf(`export async function ${fn}`));
+      expect(signature.slice(0, 300)).toContain("eventId: string");
+    }
+  });
+
+  it("no lista ni lee los eventos que ya tienes en el calendario", () => {
+    // El scope calendar.events permitiría leerlos; no hacerlo es una decisión.
+    const source = calendar();
+    expect(source).not.toMatch(/method:\s*"GET"/);
+    expect(source).not.toContain("calendarList");
+  });
+
+  it("no toca la configuración de la cuenta ni otros calendarios", () => {
+    const source = calendar();
+    expect(source).not.toContain("/settings");
+    expect(source).not.toContain("/acl");
+    expect(source).not.toContain("calendars/primary/clear");
+  });
+});
+
 describe("aislamiento del contenido del correo", () => {
   it("la extracción no declara herramientas", () => {
     // Sin tools no hay nada que un correo pueda hacer ejecutar, diga lo que

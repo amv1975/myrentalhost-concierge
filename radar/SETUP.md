@@ -108,6 +108,21 @@ Aplican `0001_init.sql` de verdad, así que si la migración se rompe, se rompen
 2. Añade todas las variables de `.env.example` en Environment Variables.
 3. Despliega y añade la URL a las Redirect URLs de Supabase.
 
+### Este despliegue
+
+- App: https://radar-sigma-five.vercel.app
+- Supabase: `evfrkkfjuypxakdhecpa` (West EU, Ireland)
+- Google Cloud: proyecto `radarapp-508118`
+
+Tras el primer despliegue hay que registrar la URL en dos sitios, o el login
+entra en bucle:
+
+- **Supabase** → Authentication → URL Configuration: Site URL a la URL de
+  Vercel, y `https://radar-sigma-five.vercel.app/**` en Redirect URLs.
+- **Google Cloud** → Clients → Radar web: la URI de redirección sigue siendo la
+  de Supabase (`.../auth/v1/callback`), esa no cambia. Lo que sí conviene es
+  añadir la URL de Vercel en *Authorised JavaScript origins*.
+
 ### El cron
 
 El plan Hobby de Vercel no ejecuta cada hora (aproximadamente una vez al día).

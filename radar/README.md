@@ -18,6 +18,8 @@ Dos espacios que no se mezclan nunca: **Familia** (el colegio) y **Trabajo**
 (los canales de reserva). Separados en la base de datos con RLS, no solo en la
 interfaz.
 
+En producción: **https://radar-sigma-five.vercel.app**
+
 Puesta en marcha: [SETUP.md](SETUP.md).
 
 ## Cómo está construido

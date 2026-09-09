@@ -29,6 +29,7 @@ export function ItemCard({
   const [offset, setOffset] = useState(0);
   const [gone, setGone] = useState(false);
   const [pinned, setPinned] = useState(item.pinned);
+  const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const startX = useRef<number | null>(null);
 
@@ -208,13 +209,31 @@ export function ItemCard({
             isEvent={isEvent}
           />
 
+          {/* De un vistazo basta con el título y la fecha. El detalle se pide.
+              Con cinco tarjetas seguidas, la descripción entera es un muro de
+              texto que hace que no se lea ninguna. */}
           {item.description ? (
-            <p className="mt-2.5 text-sm leading-relaxed text-[var(--color-body)]">
-              {item.description}
-            </p>
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              className="mt-2.5 block w-full text-left"
+            >
+              <span
+                className={`block text-sm leading-relaxed text-[var(--color-body)] ${
+                  expanded ? "" : "line-clamp-2"
+                }`}
+              >
+                {item.description}
+              </span>
+              {isLong(item.description) ? (
+                <span className="mt-1 inline-block text-xs font-medium text-[var(--color-muted)]">
+                  {expanded ? "Ver menos" : "Ver más"}
+                </span>
+              ) : null}
+            </button>
           ) : null}
 
-          {item.location ? (
+          {item.location && (expanded || !item.description) ? (
             <p className="mt-2 flex items-start gap-1.5 text-xs text-[var(--color-muted)]">
               <PinIcon />
               <span>{item.location}</span>
@@ -234,6 +253,11 @@ export function ItemCard({
       </article>
     </li>
   );
+}
+
+/** Dos líneas caben sin cortar; más allá, hay algo que el resumen esconde. */
+function isLong(text: string): boolean {
+  return text.length > 110;
 }
 
 /** De dónde salió. Sutil, pero antes del título: cambia cuánta atención merece. */

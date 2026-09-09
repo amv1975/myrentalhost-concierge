@@ -101,3 +101,20 @@ export const SLUG_BY_SPACE: Record<SpaceKey, string> = {
 export function slugToSpaceKey(slug: string): SpaceKey | null {
   return SPACE_SLUGS[slug] ?? null;
 }
+
+/**
+ * Cómo se llama cada espacio en la interfaz.
+ *
+ * Vive aquí y no en la base de datos a propósito: los espacios son dos y no
+ * van a cambiar, así que renombrarlos debe ser editar una línea y desplegar,
+ * no ejecutar SQL a mano contra producción. `spaces.name` sigue existiendo
+ * para el seed y para los mensajes del backend.
+ */
+export const SPACE_LABELS: Record<SpaceKey, string> = {
+  family: "Family",
+  work: "Work",
+};
+
+export function spaceLabel(key: SpaceKey): string {
+  return SPACE_LABELS[key];
+}

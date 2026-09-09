@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SLUG_BY_SPACE, type Space } from "@/lib/types";
+import { SLUG_BY_SPACE, spaceLabel, type Space } from "@/lib/types";
 
 export function SpaceTabs({
   spaces,
@@ -58,7 +58,7 @@ export function SpaceTabs({
                     : undefined
                 }
               >
-                {space.name}
+                {spaceLabel(space.key)}
               </Link>
             );
           })}

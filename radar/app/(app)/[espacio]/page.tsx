@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSpaceByKey } from "@/lib/spaces";
 import { getSpaceView } from "@/lib/items";
-import { slugToSpaceKey } from "@/lib/types";
+import { slugToSpaceKey, spaceLabel } from "@/lib/types";
 import { SpaceBoard } from "@/components/space-board";
 import { RefreshButton } from "@/components/refresh-button";
 
@@ -24,7 +24,7 @@ export default async function SpacePage({
 
   return (
     <>
-      <h1 className="sr-only">{space.name}</h1>
+      <h1 className="sr-only">{spaceLabel(space.key)}</h1>
       <SpaceBoard espacio={espacio} view={view}>
         <RefreshButton espacio={espacio} />
       </SpaceBoard>

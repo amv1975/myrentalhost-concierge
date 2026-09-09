@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSpaceByKey } from "@/lib/spaces";
-import { slugToSpaceKey, type Source } from "@/lib/types";
+import { slugToSpaceKey, spaceLabel, type Source } from "@/lib/types";
 import { SourcesEditor } from "@/components/sources-editor";
 import { AutoConfirmToggle } from "@/components/auto-confirm-toggle";
 
@@ -29,7 +29,7 @@ export default async function SettingsPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-lg font-semibold">Ajustes de {space.name}</h1>
+        <h1 className="text-lg font-semibold">Ajustes de {spaceLabel(space.key)}</h1>
         <Link
           href={`/${espacio}`}
           className="text-sm text-[var(--color-muted)] underline underline-offset-4"

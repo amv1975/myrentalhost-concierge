@@ -8,7 +8,7 @@ import type { Space } from "@/lib/types";
 const PREVIEW_SPACES: Space[] = (["family", "work"] as const).map((key) => ({
   id: key,
   key,
-  name: key === "family" ? "Family" : "Work",
+  name: key,
   timezone: "Europe/Madrid",
   default_location: null,
   google_calendar_id: "primary",

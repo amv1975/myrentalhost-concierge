@@ -5,6 +5,7 @@ import { getSpaceByKey } from "@/lib/spaces";
 import { slugToSpaceKey, spaceLabel, type Source } from "@/lib/types";
 import { SourcesEditor } from "@/components/sources-editor";
 import { AutoConfirmToggle } from "@/components/auto-confirm-toggle";
+import { ReanalyzeButton } from "@/components/reanalyze-button";
 
 export default async function SettingsPage({
   params,
@@ -62,6 +63,18 @@ export default async function SettingsPage({
             enabled={space.auto_confirm_enabled}
             threshold={space.auto_confirm_threshold}
           />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold">Reanalizar</h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Los correos se analizan una sola vez, que es lo que impide que los
+          compromisos se dupliquen. Si cambian las reglas de extracción, esto
+          rehace los que aún no has confirmado.
+        </p>
+        <div className="mt-3">
+          <ReanalyzeButton espacio={espacio} />
         </div>
       </section>
 

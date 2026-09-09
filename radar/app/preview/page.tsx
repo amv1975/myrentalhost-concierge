@@ -44,7 +44,10 @@ export default async function PreviewPage({
         activeSlug={slug}
       />
 
-      <main className="flex-1 px-4 pb-24 pt-4 sm:px-6">
+      <main
+        className="flex-1 px-4 pb-24 pt-4 sm:px-6"
+        data-space={slug === "trabajo" ? "work" : "family"}
+      >
         <SpaceBoard espacio={slug} view={view} demo />
 
         <p className="mt-8 rounded-xl border border-dashed border-[var(--color-line)] px-4 py-3 text-xs text-[var(--color-muted)]">

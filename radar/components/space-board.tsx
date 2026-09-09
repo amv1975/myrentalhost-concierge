@@ -27,7 +27,7 @@ export function SpaceBoard({
     view.upcomingEvents.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* El botón va ancho y arriba del todo: es lo primero que se pulsa al
           abrir la app, y en el móvil un objetivo grande se acierta sin mirar. */}
       {children}
@@ -38,55 +38,60 @@ export function SpaceBoard({
       />
 
       {nothingAtAll ? (
-        <div className="rounded-xl border border-[var(--color-line)] bg-white px-4 py-10 text-center">
-          <p className="text-sm text-[var(--color-muted)]">
-            Nada pendiente. Si esperabas algo, busca correos nuevos.
-          </p>
-        </div>
-      ) : null}
-
-      <Section
-        title="Para revisar"
-        items={view.toReview}
-        mode="review"
-        demo={demo}
-        empty={
-          view.toReview.length === 0 && !nothingAtAll
-            ? "Todo revisado."
-            : undefined
-        }
-      />
-
-      <Section
-        title="Acciones abiertas"
-        items={view.openActions}
-        mode="open"
-        demo={demo}
-      />
-
-      <Section
-        title="Próximos eventos"
-        items={view.upcomingEvents}
-        mode="open"
-        demo={demo}
-      />
+        <EmptyState />
+      ) : (
+        <>
+          <Section
+            title="Para revisar"
+            items={view.toReview}
+            mode="review"
+            demo={demo}
+            empty="Todo revisado."
+          />
+          <Section
+            title="Acciones abiertas"
+            items={view.openActions}
+            mode="open"
+            demo={demo}
+          />
+          <Section
+            title="Próximos eventos"
+            items={view.upcomingEvents}
+            mode="open"
+            demo={demo}
+          />
+        </>
+      )}
 
       {demo ? null : (
-        <div className="flex gap-4 pt-2 text-sm">
+        <div className="flex gap-5 border-t border-[var(--color-line)] pt-4 text-sm">
           <Link
             href={`/${espacio}/correos`}
-            className="text-[var(--color-muted)] underline underline-offset-4"
+            className="font-medium text-[var(--color-muted)]"
           >
             Ver correos
           </Link>
           <Link
             href={`/${espacio}/ajustes`}
-            className="text-[var(--color-muted)] underline underline-offset-4"
+            className="font-medium text-[var(--color-muted)]"
           >
             Ajustes
           </Link>
         </div>
       )}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-[var(--color-surface)] px-6 py-12 text-center">
+      <p className="text-sm font-medium text-[var(--color-body)]">
+        Nada pendiente
+      </p>
+      <p className="mt-1 text-sm text-[var(--color-muted)]">
+        Si esperabas algo, pulsa Actualizar.
+      </p>
     </div>
   );
 }
@@ -108,16 +113,18 @@ function Section({
 
   return (
     <section>
-      <h2 className="mb-2 text-sm font-semibold text-[var(--color-muted)]">
+      <h2 className="mb-2.5 flex items-baseline gap-2 px-0.5 text-[13px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
         {title}
         {items.length > 0 ? (
-          <span className="ml-1.5 font-normal">({items.length})</span>
+          <span className="tnum rounded-full bg-[var(--color-line-soft)] px-1.5 text-[11px] font-semibold normal-case tracking-normal text-[var(--color-body)]">
+            {items.length}
+          </span>
         ) : null}
       </h2>
       {items.length === 0 ? (
-        <p className="text-sm text-[var(--color-muted)]">{empty}</p>
+        <p className="px-0.5 text-sm text-[var(--color-faint)]">{empty}</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {items.map((item) => (
             <ItemCard key={item.id} item={item} mode={mode} demo={demo} />
           ))}
@@ -140,24 +147,38 @@ function PendingNotice({
   count: number;
   days: number | null;
 }) {
-  if (count === 0) {
-    return (
-      <p className="text-sm text-[var(--color-muted)]">Nada por revisar.</p>
-    );
-  }
+  if (count === 0) return null;
 
   const piledUp = count >= 10 || (days ?? 0) >= 7;
 
   return (
-    <p
-      className={`text-sm ${piledUp ? "font-medium text-[var(--color-danger)]" : ""}`}
+    <div
+      className={`rounded-xl px-4 py-3 ${
+        piledUp
+          ? "bg-[var(--color-danger-soft)]"
+          : "bg-[var(--accent-soft,#eef0f4)]"
+      }`}
     >
-      {count} {count === 1 ? "cosa" : "cosas"} por revisar
+      <p
+        className={`text-sm font-semibold ${
+          piledUp
+            ? "text-[var(--color-danger)]"
+            : "text-[var(--accent,#3f4653)]"
+        }`}
+      >
+        {count} {count === 1 ? "cosa por revisar" : "cosas por revisar"}
+      </p>
       {days !== null && days >= 1 ? (
-        <span className="block text-xs font-normal text-[var(--color-muted)]">
+        <p
+          className={`mt-0.5 text-xs ${
+            piledUp
+              ? "text-[var(--color-danger)]"
+              : "text-[var(--color-muted)]"
+          }`}
+        >
           la más antigua lleva {days} {days === 1 ? "día" : "días"} esperando
-        </span>
+        </p>
       ) : null}
-    </p>
+    </div>
   );
 }

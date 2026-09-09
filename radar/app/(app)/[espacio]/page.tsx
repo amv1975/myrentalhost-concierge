@@ -23,11 +23,13 @@ export default async function SpacePage({
   const view = await getSpaceView(space.id);
 
   return (
-    <>
+    // data-space tiñe los acentos con el color del espacio, para que se note en
+    // qué mitad de la vida estás sin tener que leer la pestaña.
+    <div data-space={space.key}>
       <h1 className="sr-only">{spaceLabel(space.key)}</h1>
       <SpaceBoard espacio={espacio} view={view}>
         <RefreshButton />
       </SpaceBoard>
-    </>
+    </div>
   );
 }

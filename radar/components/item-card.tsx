@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Item } from "@/lib/types";
 import { gmailSearchUrl } from "@/lib/gmail-link";
+import { googleCalendarDayUrl } from "@/lib/calendar-link";
 import { formatDate, formatDateTime, relativeDays } from "@/lib/format";
 
 type Action = "confirmar" | "descartar" | "hecho" | "reabrir";
@@ -45,9 +46,8 @@ export function ItemCard({
         body: JSON.stringify({ action }),
       });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(body.error ?? "No se pudo guardar");
-      }
+      if (!response.ok) throw new Error(body.error ?? "No se pudo guardar");
+
       // La decisión se guardó, pero el calendario no la recogió. Conviene
       // decirlo: el cron lo reintentará, y mientras tanto el evento no está.
       if (body.syncError) {
@@ -95,157 +95,242 @@ export function ItemCard({
     }
   }
 
-  const when = item.starts_at
-    ? formatDateTime(item.starts_at)
-    : item.due_date
-      ? formatDate(item.due_date)
-      : null;
-  const dateForCountdown = item.starts_at ?? item.due_date;
-  const days = dateForCountdown ? relativeDays(dateForCountdown) : null;
-  const overdue = dateForCountdown
-    ? relativeDays(dateForCountdown).startsWith("hace")
-    : false;
+  const isEvent = item.type === "event";
+  const dateValue = item.starts_at ?? item.due_date;
+  const days = dateValue ? relativeDays(dateValue) : null;
+  const overdue = days?.startsWith("hace") ?? false;
+  const today = days === "hoy" || days === "mañana";
 
   if (gone) return null;
 
   return (
-    <li className="relative overflow-hidden rounded-xl">
+    <li className="relative overflow-hidden rounded-2xl">
       {/* Lo que asoma bajo la tarjeta mientras se desliza. */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-between rounded-xl px-5 text-sm font-medium">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-between rounded-2xl bg-[var(--color-line-soft)] px-6 text-sm font-semibold">
         <span
           className={
             offset > 20 && (mode === "review" || item.type === "action")
-              ? "text-emerald-700"
+              ? "text-[var(--color-ok)]"
               : "opacity-0"
           }
         >
           {mode === "review" ? "Confirmar" : "Hecho"}
         </span>
-        <span className={offset < -20 ? "text-[var(--color-danger)]" : "opacity-0"}>
+        <span
+          className={offset < -20 ? "text-[var(--color-danger)]" : "opacity-0"}
+        >
           Descartar
         </span>
       </div>
 
-      <div
-        className="swipeable relative rounded-xl border border-[var(--color-line)] bg-white p-4"
+      <article
+        className="swipeable relative rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(20,22,26,0.04)]"
         style={{
           transform: `translateX(${offset}px)`,
           transition: startX.current === null ? "transform 180ms ease" : "none",
-          opacity: busy ? 0.5 : 1,
+          opacity: busy ? 0.55 : 1,
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="flex items-start justify-between gap-3">
-          <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
-            {item.type === "event" ? "Evento" : "Acción"}
-          </span>
-          {item.status === "needs_review" ? (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-              Ha cambiado
-            </span>
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <TypeBadge isEvent={isEvent} />
+            {item.status === "needs_review" ? (
+              <span className="rounded-full bg-[var(--color-warn-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-warn)]">
+                Ha cambiado
+              </span>
+            ) : null}
+          </div>
+
+          <h3 className="mt-2.5 text-[17px] font-semibold leading-snug text-[var(--color-ink)]">
+            {item.title}
+          </h3>
+
+          <When
+            item={item}
+            days={days}
+            overdue={overdue}
+            today={today}
+            isEvent={isEvent}
+          />
+
+          {item.description ? (
+            <p className="mt-2.5 text-sm leading-relaxed text-[var(--color-body)]">
+              {item.description}
+            </p>
+          ) : null}
+
+          {item.location ? (
+            <p className="mt-2 flex items-start gap-1.5 text-xs text-[var(--color-muted)]">
+              <PinIcon />
+              <span>{item.location}</span>
+            </p>
+          ) : null}
+
+          {item.changed_fields ? <ChangeDiff item={item} /> : null}
+
+          {error ? (
+            <p className="mt-3 rounded-lg bg-[var(--color-danger-soft)] px-3 py-2 text-xs text-[var(--color-danger)]">
+              {error}
+            </p>
           ) : null}
         </div>
 
-        <h3 className="mt-1 text-base font-medium leading-snug">{item.title}</h3>
+        <Footer item={item} mode={mode} busy={busy !== null} act={act} />
+      </article>
+    </li>
+  );
+}
 
-        {when ? (
-          <p className="mt-1 text-sm">
-            {when}
-            {days ? (
-              <span
-                className={`ml-2 text-xs ${overdue ? "font-medium text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}
-              >
-                {days}
-              </span>
-            ) : null}
-          </p>
-        ) : (
-          <p className="mt-1 text-xs text-[var(--color-muted)]">Sin fecha</p>
-        )}
+function TypeBadge({ isEvent }: { isEvent: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+        isEvent
+          ? "bg-[var(--accent-soft,#eef0f4)] text-[var(--accent,#3f4653)]"
+          : "bg-[var(--color-line-soft)] text-[var(--color-body)]"
+      }`}
+    >
+      {isEvent ? <CalendarIcon /> : <CheckSquareIcon />}
+      {isEvent ? "Evento" : "Acción"}
+    </span>
+  );
+}
 
-        {item.description ? (
-          <p className="mt-2 text-sm text-[var(--color-muted)]">
-            {item.description}
-          </p>
-        ) : null}
+/** La fecha es lo que más se mira, así que va grande y con el plazo al lado. */
+function When({
+  item,
+  days,
+  overdue,
+  today,
+  isEvent,
+}: {
+  item: Item;
+  days: string | null;
+  overdue: boolean;
+  today: boolean;
+  isEvent: boolean;
+}) {
+  if (!item.starts_at && !item.due_date) {
+    return (
+      <p className="mt-1.5 text-sm text-[var(--color-faint)]">Sin fecha</p>
+    );
+  }
 
-        {item.location ? (
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            {item.location}
-          </p>
-        ) : null}
+  const text = item.starts_at
+    ? formatDateTime(item.starts_at)
+    : formatDate(item.due_date!);
 
-        {item.changed_fields ? <ChangeDiff item={item} /> : null}
+  return (
+    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <span className="tnum text-sm font-medium text-[var(--color-ink)]">
+        {!isEvent && item.due_date ? "Antes del " : ""}
+        {text}
+      </span>
+      {days ? (
+        <span
+          className={`rounded-md px-1.5 py-0.5 text-xs font-medium ${
+            overdue
+              ? "bg-[var(--color-danger-soft)] text-[var(--color-danger)]"
+              : today
+                ? "bg-[var(--color-warn-soft)] text-[var(--color-warn)]"
+                : "text-[var(--color-muted)]"
+          }`}
+        >
+          {overdue ? `vencido ${days}` : days}
+        </span>
+      ) : null}
+    </div>
+  );
+}
 
-        {mode === "open" && item.type === "event" ? (
-          <p className="mt-2 text-xs text-[var(--color-muted)]">
-            {item.google_event_id
-              ? "En tu calendario"
-              : item.sync_error
-                ? `No llegó al calendario: ${item.sync_error}`
-                : "Pendiente de subir al calendario"}
-          </p>
-        ) : null}
+function Footer({
+  item,
+  mode,
+  busy,
+  act,
+}: {
+  item: Item;
+  mode: "review" | "open";
+  busy: boolean;
+  act: (action: Action) => void;
+}) {
+  const inCalendar = item.type === "event" && item.google_event_id;
 
-        {error ? (
-          <p className="mt-2 text-xs text-[var(--color-danger)]">{error}</p>
-        ) : null}
-
-        <div className="mt-3 flex items-center gap-2">
-          {mode === "review" ? (
-            <>
-              <button
-                onClick={() => act("confirmar")}
-                disabled={busy !== null}
-                className="flex-1 rounded-lg bg-[var(--color-ink)] px-3 py-2.5 text-sm font-medium text-white transition active:scale-[0.98] disabled:opacity-50"
-              >
-                Confirmar
-              </button>
-              <button
-                onClick={() => act("descartar")}
-                disabled={busy !== null}
-                className="rounded-lg border border-[var(--color-line)] px-3 py-2.5 text-sm transition active:scale-[0.98] disabled:opacity-50"
-              >
-                Descartar
-              </button>
-            </>
-          ) : item.type === "action" ? (
+  return (
+    <div className="border-t border-[var(--color-line-soft)] px-4 py-3">
+      <div className="flex items-center gap-2">
+        {mode === "review" ? (
+          <>
             <button
-              onClick={() => act("hecho")}
-              disabled={busy !== null}
-              className="flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50"
+              onClick={() => act("confirmar")}
+              disabled={busy}
+              className="flex-1 rounded-xl bg-[var(--color-ink)] px-3 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50"
             >
-              Marcar como hecho
+              {item.type === "event" ? "Confirmar y añadir" : "Confirmar"}
             </button>
-          ) : (
-            // Un evento confirmado ya está en el calendario. Lo único que tiene
-            // sentido hacerle desde aquí es retirarlo.
             <button
               onClick={() => act("descartar")}
-              disabled={busy !== null}
-              className="flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50"
+              disabled={busy}
+              className="rounded-xl border border-[var(--color-line)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-body)] transition active:scale-[0.98] disabled:opacity-50"
             >
-              {item.google_event_id ? "Quitar del calendario" : "Descartar"}
+              Descartar
             </button>
-          )}
+          </>
+        ) : item.type === "action" ? (
+          <button
+            onClick={() => act("hecho")}
+            disabled={busy}
+            className="flex-1 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition active:scale-[0.98] disabled:opacity-50"
+          >
+            Marcar como hecho
+          </button>
+        ) : (
+          <button
+            onClick={() => act("descartar")}
+            disabled={busy}
+            className="flex-1 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-sm font-medium text-[var(--color-body)] transition active:scale-[0.98] disabled:opacity-50"
+          >
+            {item.google_event_id ? "Quitar del calendario" : "Descartar"}
+          </button>
+        )}
+      </div>
 
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+        <a
+          href={gmailSearchUrl({
+            fromEmail: item.email_from,
+            subject: item.email_subject,
+            messageId: item.gmail_message_id,
+          })}
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-[var(--color-muted)] underline underline-offset-4"
+        >
+          Ver el correo
+        </a>
+
+        {inCalendar ? (
           <a
-            href={gmailSearchUrl({
-              fromEmail: item.email_from,
-              subject: item.email_subject,
-              messageId: item.gmail_message_id,
-            })}
+            href={googleCalendarDayUrl(item.starts_at!)}
             target="_blank"
             rel="noreferrer"
-            className="shrink-0 px-2 py-2.5 text-xs text-[var(--color-muted)] underline underline-offset-4"
+            className="inline-flex items-center gap-1 font-medium text-[var(--color-ok)] underline underline-offset-4"
           >
-            Correo
+            <CheckIcon />
+            En tu calendario
           </a>
-        </div>
+        ) : item.type === "event" && mode === "open" ? (
+          <span className="text-[var(--color-muted)]">
+            {item.sync_error
+              ? "No llegó al calendario"
+              : "Subiendo al calendario…"}
+          </span>
+        ) : null}
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -263,17 +348,20 @@ function ChangeDiff({ item }: { item: Item }) {
   if (entries.length === 0) return null;
 
   return (
-    <dl className="mt-3 space-y-1 rounded-lg bg-amber-50 p-3 text-xs">
+    <dl className="mt-3 space-y-1.5 rounded-xl bg-[var(--color-warn-soft)] px-3 py-2.5 text-xs">
       {entries.map(([field, change]) => (
-        <div key={field} className="flex flex-wrap gap-x-2">
-          <dt className="font-medium text-amber-900">
-            {labels[field] ?? field}:
+        <div key={field}>
+          <dt className="font-semibold text-[var(--color-warn)]">
+            {labels[field] ?? field}
           </dt>
-          <dd className="text-amber-900">
-            <span className="line-through opacity-60">
+          <dd className="text-[var(--color-warn)]">
+            <span className="line-through opacity-55">
               {display(field, change.before)}
-            </span>{" "}
-            → <span className="font-medium">{display(field, change.after)}</span>
+            </span>
+            <span className="mx-1.5">→</span>
+            <span className="font-semibold">
+              {display(field, change.after)}
+            </span>
           </dd>
         </div>
       ))}
@@ -286,4 +374,40 @@ function display(field: string, value: string | null): string {
   if (field === "starts_at") return formatDateTime(value);
   if (field === "due_date") return formatDate(value);
   return value.length > 60 ? `${value.slice(0, 60)}…` : value;
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden className="h-3 w-3 fill-current">
+      <path d="M5 1a.75.75 0 0 1 .75.75V2.5h4.5v-.75a.75.75 0 0 1 1.5 0V2.5h.75A1.5 1.5 0 0 1 14 4v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13V4a1.5 1.5 0 0 1 1.5-1.5h.75v-.75A.75.75 0 0 1 5 1ZM3.5 6v7h9V6h-9Z" />
+    </svg>
+  );
+}
+
+function CheckSquareIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden className="h-3 w-3 fill-current">
+      <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 12.5 2h-9Zm7.78 4.28-4 4a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 1 1 1.06-1.06l1.47 1.47 3.47-3.47a.75.75 0 1 1 1.06 1.06Z" />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden
+      className="mt-0.5 h-3 w-3 shrink-0 fill-current"
+    >
+      <path d="M8 1a5 5 0 0 0-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 0 0-5-5Zm0 6.75A1.75 1.75 0 1 1 8 4.25a1.75 1.75 0 0 1 0 3.5Z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden className="h-3 w-3 fill-current">
+      <path d="M13.28 4.22a.75.75 0 0 1 0 1.06l-6 6a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L6.75 9.69l5.47-5.47a.75.75 0 0 1 1.06 0Z" />
+    </svg>
+  );
 }

@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #16171a;
-  --color-muted: #6b7280;
-  --color-line: #e5e7eb;
+  /* Texto */
+  --color-ink: #14161a;
+  --color-body: #3f4653;
+  --color-muted: #757e8c;
+  --color-faint: #9aa3b0;
+
+  /* Superficies */
   --color-surface: #ffffff;
-  --color-ground: #f7f7f8;
-  --color-family: #0f766e;
-  --color-work: #4338ca;
-  --color-danger: #b91c1c;
+  --color-ground: #f4f5f7;
+  --color-line: #e3e6eb;
+  --color-line-soft: #eef0f4;
+
+  /* Un color por espacio: saber en cuál estás sin leer la pestaña. */
+  --color-family: #0d7a70;
+  --color-family-soft: #e6f4f2;
+  --color-work: #4640c4;
+  --color-work-soft: #ecebfb;
+
+  /* Estados */
+  --color-danger: #b4232a;
+  --color-danger-soft: #fdeceb;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fdf3e0;
+  --color-ok: #0f7a4a;
+  --color-ok-soft: #e6f5ee;
 }
 
 html {
@@ -24,6 +41,18 @@ body {
      llegaría bajo la barra de estado y el gesto de inicio del móvil. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* El espacio activo tiñe sus acentos. Lo pone el layout en un contenedor. */
+[data-space="family"] {
+  --accent: var(--color-family);
+  --accent-soft: var(--color-family-soft);
+}
+
+[data-space="work"] {
+  --accent: var(--color-work);
+  --accent-soft: var(--color-work-soft);
 }
 
 /* Al instalarla, un toque sostenido no debe seleccionar texto como en una web:
@@ -47,4 +76,9 @@ body {
 /* Que un swipe horizontal sobre una tarjeta no arrastre la página. */
 .swipeable {
   touch-action: pan-y;
+}
+
+/* Números tabulares en fechas y contadores: no bailan al cambiar. */
+.tnum {
+  font-variant-numeric: tabular-nums;
 }

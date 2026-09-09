@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAuthorizedCron } from "@/lib/auth/cron";
 import { getAllSpaces } from "@/lib/spaces";
 import { ingestSpace } from "@/lib/ingest/ingest";
+import { extractPending } from "@/lib/extraction/run";
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
@@ -12,16 +13,20 @@ export async function GET(request: NextRequest) {
   }
 
   const spaces = await getAllSpaces();
-  const results = [];
+  const ingested = [];
+  const extracted = [];
+
   for (const space of spaces) {
     // Un espacio que falla (token caducado, cuota) no debe impedir que el otro
-    // se ingiera: ingestSpace captura su propio error y lo devuelve.
-    results.push(await ingestSpace(space));
+    // se procese: cada función captura su propio error y lo devuelve.
+    ingested.push(await ingestSpace(space));
+    extracted.push(await extractPending(space));
   }
 
-  const failed = results.some((r) => r.error);
+  const failed =
+    ingested.some((r) => r.error) || extracted.some((r) => r.error);
   return NextResponse.json(
-    { results },
+    { ingested, extracted },
     { status: failed ? 207 : 200 },
   );
 }

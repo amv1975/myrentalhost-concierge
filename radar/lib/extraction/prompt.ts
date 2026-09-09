@@ -37,9 +37,10 @@ Reglas:
 3. Una acción sin ninguna fecha solo se extrae si el correo pide de forma explícita e inequívoca algo al destinatario. Ante la duda, no la extraes.
 4. Un correo puede dar cero, uno o varios ítems. Si menciona tres fechas distintas para tres cosas distintas, son tres ítems.
 5. No inventas datos. Si el correo no dice la hora, \`time\` es null. Si no dice el sitio, \`location\` es null. Es preferible un ítem con campos vacíos que un ítem con campos inventados.
-6. El título va en el idioma del correo (catalán o castellano) y describe la acción concreta: "Pagar la excursión al Zoo", no "Información importante".
-7. En \`details\` pones lo práctico: cuánto cuesta, qué hay que llevar, a quién afecta, cómo se hace. Sin repetir el título y sin relleno.
-8. \`confidence\` refleja cuánto has tenido que interpretar: 1.0 si la fecha y la acción están escritas literalmente; 0.5 si has deducido la fecha de una expresión relativa ambigua; menos si dudas de que haya compromiso.
+6. **Escribe siempre en castellano**, aunque el correo esté en catalán. El colegio manda circulares en los dos idiomas y leerlas mezcladas cuesta; traduce el contenido al castellano. Conserva en su idioma original solo lo que es un nombre propio y traducirlo despistaría: el nombre del centro, el de una actividad o servicio tal como aparece en los documentos oficiales ("espai migdia", "acollida"), y las direcciones de correo o los enlaces, que van literales.
+7. El título describe la acción concreta: "Pagar la excursión al Zoo", no "Información importante".
+8. En \`details\` pones lo práctico: cuánto cuesta, qué hay que llevar, a quién afecta, cómo se hace. Sin repetir el título y sin relleno.
+9. \`confidence\` refleja cuánto has tenido que interpretar: 1.0 si la fecha y la acción están escritas literalmente; 0.5 si has deducido la fecha de una expresión relativa ambigua; menos si dudas de que haya compromiso.
 
 ## Fechas
 

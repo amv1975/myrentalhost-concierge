@@ -6,6 +6,7 @@ import { slugToSpaceKey, spaceLabel, type Source } from "@/lib/types";
 import { SourcesEditor } from "@/components/sources-editor";
 import { AutoConfirmToggle } from "@/components/auto-confirm-toggle";
 import { ReanalyzeButton } from "@/components/reanalyze-button";
+import { LearnedList, type LearnedEntry } from "@/components/learned-list";
 
 export default async function SettingsPage({
   params,
@@ -26,6 +27,32 @@ export default async function SettingsPage({
     .eq("space_id", space.id)
     .order("kind")
     .order("value");
+
+  // Lo que la app ha aprendido a ignorar sale de lo que has descartado: no hay
+  // una lista aparte que mantener, la señal está en el propio uso.
+  const { data: dismissed } = await supabase
+    .from("items")
+    .select("title, normalized_title")
+    .eq("space_id", space.id)
+    .eq("status", "dismissed")
+    .order("updated_at", { ascending: false })
+    .limit(200);
+
+  const learned = Object.values(
+    ((dismissed ?? []) as { title: string; normalized_title: string }[]).reduce<
+      Record<string, LearnedEntry>
+    >((acc, row) => {
+      const existing = acc[row.normalized_title];
+      if (existing) existing.count += 1;
+      else
+        acc[row.normalized_title] = {
+          title: row.title,
+          normalizedTitle: row.normalized_title,
+          count: 1,
+        };
+      return acc;
+    }, {}),
+  ).sort((a, b) => b.count - a.count);
 
   return (
     <div className="space-y-8">
@@ -63,6 +90,18 @@ export default async function SettingsPage({
             enabled={space.auto_confirm_enabled}
             threshold={space.auto_confirm_threshold}
           />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold">Lo que ha aprendido a ignorar</h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Cada cosa que descartas se convierte en un ejemplo de lo que no te
+          interesa, y deja de traerte también las que se le parezcan. Si alguna
+          resulta importante después, quítala de aquí.
+        </p>
+        <div className="mt-3">
+          <LearnedList espacio={espacio} entries={learned} />
         </div>
       </section>
 

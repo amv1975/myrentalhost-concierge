@@ -2,6 +2,10 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EXTRACTION_MODEL, extractItems } from "@/lib/extraction/extract";
 import { persistItems } from "@/lib/extraction/persist";
+import {
+  buildLearnedSection,
+  getDismissedExamples,
+} from "@/lib/extraction/learned";
 import type { Email, Space } from "@/lib/types";
 
 export interface ExtractRunResult {
@@ -54,8 +58,11 @@ export async function extractPending(
       .limit(limit);
     if (error) throw error;
 
+    // Una sola consulta por tanda: lo aprendido no cambia entre correos.
+    const learned = buildLearnedSection(await getDismissedExamples(space.id));
+
     for (const email of (data ?? []) as Email[]) {
-      await processOne(email, space, result);
+      await processOne(email, space, result, learned);
     }
 
     await finishRun(runId, "ok", result);
@@ -71,6 +78,7 @@ async function processOne(
   email: Email,
   space: Space,
   result: ExtractRunResult,
+  learned: string,
 ): Promise<void> {
   const admin = createAdminClient();
 
@@ -83,7 +91,7 @@ async function processOne(
     .eq("id", email.id);
 
   try {
-    const items = await extractItems(email, space);
+    const items = await extractItems(email, space, learned);
     const persisted = await persistItems(email, items, space);
 
     await admin

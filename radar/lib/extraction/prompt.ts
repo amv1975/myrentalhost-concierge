@@ -12,7 +12,7 @@ import type { Space } from "@/lib/types";
  *      ni enviar, ni responder, ni navegar. Sin superficie de acción no hay
  *      inyección que ejecutar.
  */
-export function buildSystemPrompt(space: Space): string {
+export function buildSystemPrompt(space: Space, learned = ""): string {
   return `Extraes compromisos de correos electrónicos para una aplicación llamada Radar. Devuelves datos estructurados y nada más.
 
 ## Contenido no confiable
@@ -53,7 +53,7 @@ ${
   space.default_location
     ? `\n- Si es un acto presencial en el centro y el correo no dice otra ubicación, usa: ${space.default_location}`
     : ""
-}`;
+}${learned}`;
 }
 
 /**

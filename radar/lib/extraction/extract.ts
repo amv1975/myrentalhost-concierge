@@ -29,6 +29,8 @@ export async function extractItems(
     "from_email" | "from_name" | "subject" | "body_text" | "received_at"
   >,
   space: Space,
+  /** Lo que esta persona ya ha descartado, para no volver a traérselo. */
+  learned = "",
 ): Promise<ExtractedItem[]> {
   const body = (email.body_text ?? "").trim();
   if (body.length === 0) return [];
@@ -42,7 +44,7 @@ export async function extractItems(
       effort: "medium",
       format: zodOutputFormat(ExtractionResultSchema),
     },
-    system: buildSystemPrompt(space),
+    system: buildSystemPrompt(space, learned),
     messages: [
       {
         role: "user",

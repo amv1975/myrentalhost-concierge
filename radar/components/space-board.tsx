@@ -28,13 +28,14 @@ export function SpaceBoard({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <PendingNotice
-          count={view.toReview.length}
-          days={view.oldestPendingDays}
-        />
-        {children}
-      </div>
+      {/* El botón va ancho y arriba del todo: es lo primero que se pulsa al
+          abrir la app, y en el móvil un objetivo grande se acierta sin mirar. */}
+      {children}
+
+      <PendingNotice
+        count={view.toReview.length}
+        days={view.oldestPendingDays}
+      />
 
       {nothingAtAll ? (
         <div className="rounded-xl border border-[var(--color-line)] bg-white px-4 py-10 text-center">

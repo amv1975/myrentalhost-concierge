@@ -25,13 +25,21 @@ export async function getSpaceView(spaceId: string): Promise<SpaceView> {
 
   const { data, error } = await supabase
     .from("items")
-    .select("*")
+    // El asunto y el remitente del correo vienen en la misma consulta: son lo
+    // que permite enlazar al original sin una petición por ítem.
+    .select("*, emails(subject, from_email)")
     .eq("space_id", spaceId)
     .in("status", ["pending", "needs_review", "confirmed"])
     .order("created_at", { ascending: true });
   if (error) throw error;
 
-  const items = (data ?? []) as Item[];
+  const items = ((data ?? []) as (Item & {
+    emails: { subject: string | null; from_email: string } | null;
+  })[]).map(({ emails, ...item }) => ({
+    ...item,
+    email_subject: emails?.subject ?? null,
+    email_from: emails?.from_email ?? null,
+  })) as Item[];
   const now = new Date();
   const todayIso = now.toISOString();
 

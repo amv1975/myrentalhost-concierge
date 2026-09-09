@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Item } from "@/lib/types";
-import { gmailMessageUrl } from "@/lib/gmail-link";
+import { gmailSearchUrl } from "@/lib/gmail-link";
 import { formatDate, formatDateTime, relativeDays } from "@/lib/format";
 
 type Action = "confirmar" | "descartar" | "hecho" | "reabrir";
@@ -232,7 +232,11 @@ export function ItemCard({
           )}
 
           <a
-            href={gmailMessageUrl(item.gmail_message_id)}
+            href={gmailSearchUrl({
+              fromEmail: item.email_from,
+              subject: item.email_subject,
+              messageId: item.gmail_message_id,
+            })}
             target="_blank"
             rel="noreferrer"
             className="shrink-0 px-2 py-2.5 text-xs text-[var(--color-muted)] underline underline-offset-4"

@@ -26,7 +26,7 @@ export default async function SpacePage({
     <>
       <h1 className="sr-only">{spaceLabel(space.key)}</h1>
       <SpaceBoard espacio={espacio} view={view}>
-        <RefreshButton espacio={espacio} />
+        <RefreshButton />
       </SpaceBoard>
     </>
   );

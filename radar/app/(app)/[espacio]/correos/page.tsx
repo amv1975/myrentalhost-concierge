@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSpaceByKey } from "@/lib/spaces";
 import { slugToSpaceKey, type Email } from "@/lib/types";
-import { gmailMessageUrl } from "@/lib/gmail-link";
+import { gmailSearchUrl } from "@/lib/gmail-link";
 import { formatDateTime } from "@/lib/format";
 import { RefreshButton } from "@/components/refresh-button";
 
@@ -36,15 +36,13 @@ export default async function EmailsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold">Correos recibidos</h1>
-          <p className="text-xs text-[var(--color-muted)]">
-            {emails.length} en los últimos {space.lookback_days} días
-          </p>
-        </div>
-        <RefreshButton espacio={espacio} />
+      <div>
+        <h1 className="text-lg font-semibold">Correos recibidos</h1>
+        <p className="text-xs text-[var(--color-muted)]">
+          {emails.length} en los últimos {space.lookback_days} días
+        </p>
       </div>
+      <RefreshButton />
 
       <Link
         href={`/${espacio}`}
@@ -78,7 +76,11 @@ export default async function EmailsPage({
               </p>
               <div className="mt-2 flex items-center gap-3 text-xs">
                 <a
-                  href={gmailMessageUrl(email.gmail_message_id)}
+                  href={gmailSearchUrl({
+                    fromEmail: email.from_email,
+                    subject: email.subject,
+                    messageId: email.gmail_message_id,
+                  })}
                   target="_blank"
                   rel="noreferrer"
                   className="underline underline-offset-4"

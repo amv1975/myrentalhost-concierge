@@ -4,36 +4,34 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Busca correos y extrae, en ese orden. Es el mismo trabajo que hace el cron,
- * disponible a mano para cuando esperas algo y no quieres aguardar a la hora.
+ * Busca correos, extrae compromisos y sincroniza el calendario, en los dos
+ * espacios a la vez. Es lo primero que se pulsa al abrir la app, así que es el
+ * botón más grande de la pantalla y no obliga a repetir la operación por
+ * pestaña.
  */
-export function RefreshButton({ espacio }: { espacio: string }) {
+export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [phase, setPhase] = useState<"idle" | "ingest" | "extract">("idle");
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   async function run() {
+    setBusy(true);
     setMessage(null);
     try {
-      setPhase("ingest");
-      const ingest = await postJson(`/api/spaces/${espacio}/ingest`);
+      const response = await fetch("/api/refresh", { method: "POST" });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? "No se pudo actualizar");
 
-      setPhase("extract");
-      const extract = await postJson(`/api/spaces/${espacio}/extract`);
-
-      const nuevos = extract.created ?? 0;
-      const cambios = extract.updated ?? 0;
-
-      // La ingesta puede terminar bien habiendo guardado solo una parte, si
-      // Gmail cortó por cuota. Eso no es un fallo: el resto entra al repetir.
-      if (ingest.error) {
-        setMessage(readable(ingest.error));
+      if (body.error) {
+        setMessage(readable(body.error));
       } else {
+        const nuevos = body.created ?? 0;
+        const cambios = body.updated ?? 0;
         setMessage(
           nuevos + cambios === 0
-            ? `${ingest.messagesNew ?? 0} correos nuevos, nada que revisar`
-            : `${nuevos} nuevos, ${cambios} con cambios`,
+            ? `Sin novedades (${body.messagesNew ?? 0} correos nuevos)`
+            : `${nuevos} nuevos${cambios ? `, ${cambios} con cambios` : ""}`,
         );
       }
       startTransition(() => router.refresh());
@@ -42,39 +40,26 @@ export function RefreshButton({ espacio }: { espacio: string }) {
         readable(error instanceof Error ? error.message : "Error inesperado"),
       );
     } finally {
-      setPhase("idle");
+      setBusy(false);
     }
   }
 
-  const busy = phase !== "idle";
-
   return (
-    <div className="shrink-0 text-right">
+    <div>
       <button
         onClick={run}
         disabled={busy}
-        className="rounded-lg border border-[var(--color-line)] bg-white px-3 py-2 text-sm font-medium shadow-sm transition active:scale-[0.98] disabled:opacity-60"
+        className="w-full rounded-xl bg-[var(--color-ink)] px-4 py-3.5 text-base font-medium text-white shadow-sm transition active:scale-[0.99] disabled:opacity-60"
       >
-        {phase === "ingest"
-          ? "Buscando…"
-          : phase === "extract"
-            ? "Analizando…"
-            : "Actualizar"}
+        {busy ? "Buscando y analizando…" : "Actualizar"}
       </button>
       {message ? (
-        <p className="mt-1 max-w-[14rem] text-xs text-[var(--color-muted)]">
+        <p className="mt-1.5 text-center text-xs text-[var(--color-muted)]">
           {message}
         </p>
       ) : null}
     </div>
   );
-}
-
-async function postJson(url: string) {
-  const response = await fetch(url, { method: "POST" });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error ?? "No se pudo completar");
-  return body;
 }
 
 /**
@@ -83,7 +68,7 @@ async function postJson(url: string) {
  * resto se muestra solo el principio.
  */
 function readable(raw: string): string {
-  if (/Quota exceeded|rateLimitExceeded|429/i.test(raw)) {
+  if (/Quota exceeded|rateLimitExceeded|429|limitando/i.test(raw)) {
     return "Gmail limitó las peticiones. Se guardó lo descargado; vuelve a pulsar en un minuto para el resto.";
   }
   if (/invalid_grant|refresh token/i.test(raw)) {

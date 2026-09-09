@@ -79,6 +79,9 @@ export interface Item {
   reviewed_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Del correo de origen, para poder enlazar a él. Se rellena en la consulta. */
+  email_subject?: string | null;
+  email_from?: string | null;
 }
 
 /** Qué cambió respecto al ítem al que este sustituye, para el diff en la UI. */

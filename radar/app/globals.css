@@ -203,6 +203,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 30px;
+  /* Hueco para la barra fija de abajo: sin esto, el último enlace del pie
+     queda tapado y no hay forma de llegar a él. */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
 .parte-eyebrow {
@@ -582,16 +585,72 @@ body {
 
 /* El botón de actualizar viene de la otra pantalla, con la paleta de la otra
    pantalla. Aquí se viste con la del parte para que no cante en oscuro. */
+/* La barra de actualizar, pegada abajo.
+
+   position: fixed y no sticky: el parte es una columna flex y un sticky dentro
+   de ella se queda quieto al final del contenido en vez de en el borde de la
+   pantalla, que es justo donde tiene que estar cuando la lista es larga. */
+.parte-refresh {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: var(--p-paper);
+  border-top: 1px solid var(--p-rule-soft);
+}
+
+/* Centrada con el texto cuando la pantalla es ancha. */
+.parte-refresh > div {
+  margin: 0 auto;
+  max-width: 42rem;
+}
+
 .parte-refresh button {
   background: var(--p-solid);
   color: var(--p-solid-ink);
   border: 1px solid var(--p-solid-line);
   border-radius: 2px;
   font-size: 15px;
+  /* Sitio para la barra de progreso sin que el botón cambie de alto al
+     empezar a trabajar: la lista no puede saltar bajo el pulgar. */
+  position: relative;
+  overflow: hidden;
 }
 
 .parte-refresh p {
   color: var(--p-muted);
+}
+
+/* La barra de progreso, dentro del propio botón. */
+.parte-progreso {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--p-solid-ink);
+  opacity: 0.85;
+  transition: width 400ms ease;
+}
+
+/* Sin cola que medir no se finge un porcentaje: se deja claro que trabaja. */
+.parte-progreso[data-indeterminado="true"] {
+  width: 35%;
+  animation: parte-vaiven 1.1s ease-in-out infinite;
+}
+
+@keyframes parte-vaiven {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(340%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parte-progreso[data-indeterminado="true"] {
+    animation: none;
+    width: 100%;
+    opacity: 0.4;
+  }
 }
 
 /* Lo que queda en el hueco de una línea despachada. Ocupa lo mismo que ocupaba

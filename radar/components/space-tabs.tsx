@@ -29,12 +29,35 @@ export function SpaceTabs({
   return (
     <header className="sticky top-0 z-10 border-b border-[var(--color-line)] bg-[var(--color-surface)]/95 backdrop-blur">
       <div className="flex items-center justify-between gap-3 px-4 pt-3 sm:px-6">
-        <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+        {/* El nombre lleva al parte, como en cualquier sitio. */}
+        <Link
+          href={isPreview ? "/preview" : "/"}
+          className="flex items-center gap-2 text-[15px] font-semibold tracking-tight"
+        >
           <RadarMark />
           Radar
-        </span>
-        <span className="truncate text-xs text-[var(--color-faint)]">
-          {userEmail}
+        </Link>
+
+        {/* min-w-0 en los dos: sin él, un correo largo empuja la casita fuera
+            de la pantalla en vez de recortarse. */}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="min-w-0 truncate text-xs text-[var(--color-faint)]">
+            {userEmail}
+          </span>
+          {/*
+            Y una casita explícita, porque el nombre de una aplicación no
+            parece un botón. Desde Ajustes no había forma evidente de volver:
+            el único enlace era una línea pequeña bajo el título, y llevaba a
+            la lista de fichas en vez de al parte.
+          */}
+          <Link
+            href={isPreview ? "/preview" : "/"}
+            aria-label="Ir al parte"
+            title="Ir al parte"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)]"
+          >
+            <CasaMark />
+          </Link>
         </span>
       </div>
 
@@ -72,6 +95,27 @@ export function SpaceTabs({
         <div className="h-3" />
       )}
     </header>
+  );
+}
+
+function CasaMark() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden className="h-[18px] w-[18px]">
+      <path
+        d="M3.4 8.6 10 3.2l6.6 5.4"
+        className="fill-none stroke-current"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.1 9.9v6.3h9.8V9.9"
+        className="fill-none stroke-current"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

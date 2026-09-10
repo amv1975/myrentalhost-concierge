@@ -15,6 +15,15 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  /**
+   * Cuánto se ha vaciado la cola, de 0 a 1. Null mientras no se sabe.
+   *
+   * Es progreso de verdad, no una animación de cortesía: el pipeline devuelve
+   * cuántos correos quedan por mirar y por leer, así que la barra mide el
+   * trabajo que falta. La primera pasada no tiene con qué comparar todavía y
+   * sale indeterminada.
+   */
+  const [progreso, setProgreso] = useState<number | null>(null);
 
   /**
    * Muchas pasadas cortas en vez de una larga.
@@ -28,6 +37,10 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
   async function run() {
     setBusy(true);
     setMessage(null);
+    setProgreso(null);
+
+    /** La cola al empezar, para saber contra qué medir lo que queda. */
+    let cola: number | null = null;
 
     let total = { created: 0, updated: 0, screened: 0, discarded: 0, read: 0, costUsd: 0 };
     let anterior: number | null = null;
@@ -48,6 +61,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
           readable(error instanceof Error ? error.message : "Error inesperado"),
         );
         setBusy(false);
+        setProgreso(null);
         startTransition(() => router.refresh());
         return;
       }
@@ -74,7 +88,15 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
         ((body.remaining as number) ?? 0) +
         ((body.pendingScreen as number) ?? 0);
 
+      // La primera respuesta fija el denominador. Usar el total inicial y no
+      // el de cada vuelta evita que la barra retroceda cuando el filtro
+      // convierte correos "sin mirar" en correos "por leer": el trabajo no ha
+      // crecido, solo ha cambiado de cola.
+      if (cola === null) cola = Math.max(quedan, 1);
+      setProgreso(Math.min(1, Math.max(0, 1 - quedan / cola)));
+
       if (quedan === 0) {
+        setProgreso(1);
         setMessage(summary(total));
         break;
       }
@@ -99,6 +121,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
     }
 
     setBusy(false);
+    setProgreso(null);
     startTransition(() => router.refresh());
   }
 
@@ -107,11 +130,19 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
       <button
         onClick={run}
         disabled={busy}
-        className="w-full rounded-xl bg-[var(--color-solid)] px-4 py-3.5 text-base font-medium text-[var(--color-solid-ink)] shadow-sm transition active:scale-[0.99] disabled:opacity-60"
+        aria-busy={busy}
+        className="relative w-full overflow-hidden rounded-xl bg-[var(--color-solid)] px-4 py-3.5 text-base font-medium text-[var(--color-solid-ink)] shadow-sm transition active:scale-[0.99] disabled:opacity-60"
       >
         {busy ? (message ?? "Buscando y analizando…") : "Actualizar"}
+        {busy ? (
+          <span
+            className="parte-progreso"
+            data-indeterminado={progreso === null ? "true" : undefined}
+            style={progreso === null ? undefined : { width: `${Math.round(progreso * 100)}%` }}
+          />
+        ) : null}
       </button>
-      {message ? (
+      {message && !busy ? (
         <p className="mt-1.5 text-center text-xs leading-relaxed text-[var(--color-muted)]">
           {message}
         </p>

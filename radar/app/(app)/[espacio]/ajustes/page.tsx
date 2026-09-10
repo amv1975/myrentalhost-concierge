@@ -76,10 +76,10 @@ export default async function SettingsPage({
       <div>
         <h1 className="text-lg font-semibold">Ajustes de {spaceLabel(space.key)}</h1>
         <Link
-          href={`/${espacio}`}
+          href="/"
           className="text-sm text-[var(--color-muted)] underline underline-offset-4"
         >
-          ← Volver
+          ← Volver al parte
         </Link>
       </div>
 

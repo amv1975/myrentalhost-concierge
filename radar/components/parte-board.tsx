@@ -49,10 +49,6 @@ export function ParteBoard({
         </div>
       </header>
 
-      <div className="parte-refresh">
-        <RefreshButton />
-      </div>
-
       {parte.error ? (
         <div className="parte-broken">
           <p className="que">Algo se ha roto al montar el parte</p>
@@ -120,16 +116,30 @@ export function ParteBoard({
         </span>
         {parte.reading > 0 ? <ParteVaciar pendientes={parte.reading} /> : null}
         <ParteRedo espacios={espacios} />
+        {/*
+          Aquí había "Solo Familia · Solo Trabajo", y eran una trampa: sacaban
+          del parte a la vista de fichas —otra pantalla, con otra cabecera— sin
+          avisar de que se cambiaba de sitio. Filtrar ya se hace arriba, con los
+          chips, y sin moverse. Del pie solo cuelga lo que de verdad es otra
+          pantalla.
+        */}
         <span>
-          <Link href="/familia">Solo Familia</Link>
-          {" · "}
-          <Link href="/trabajo">Solo Trabajo</Link>
-          {" · "}
           <Link href="/familia/ajustes">Ajustes</Link>
           {" · "}
           <Link href="/estado">Por dentro</Link>
         </span>
       </p>
+
+      {/*
+        La barra de actualizar va abajo y fija.
+        Arriba ocupaba el mejor sitio de la pantalla —justo debajo de la fecha—
+        para un botón que se pulsa una vez y luego estorba. Abajo cae donde
+        llega el pulgar sin recolocar el móvil, y el contenido empieza en lo
+        que hay que leer.
+      */}
+      <div className="parte-refresh">
+        <RefreshButton />
+      </div>
     </div>
   );
 }

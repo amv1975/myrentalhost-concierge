@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ParteList } from "@/components/parte-list";
 import { ParteAgenda } from "@/components/parte-agenda";
 import { ParteRedo } from "@/components/parte-redo";
+import { ParteVaciar } from "@/components/parte-vaciar";
 import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
 import type { Agenda } from "@/lib/agenda";
@@ -69,7 +70,8 @@ export function ParteBoard({
         <p className="parte-cola">
           Quedan {parte.reading} correos por leer entera. Aparecen con su
           asunto y se van completando; vuelve a pulsar Actualizar hasta que no
-          quede ninguno.
+          quede ninguno. Si son ruido, puedes descartarlos todos de golpe ahí
+          abajo.
         </p>
       ) : null}
 
@@ -116,6 +118,7 @@ export function ParteBoard({
         <span>
           Se lee tu bandeja entera cada mañana y solo sube lo que te toca.
         </span>
+        {parte.reading > 0 ? <ParteVaciar pendientes={parte.reading} /> : null}
         <ParteRedo espacios={espacios} />
         <span>
           <Link href="/familia">Solo Familia</Link>

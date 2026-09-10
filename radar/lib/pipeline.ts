@@ -12,12 +12,7 @@ import { Spend } from "@/lib/usage";
 import { deadlineIn, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
-import {
-  CATEGORIAS_PROPIAS,
-  CRITERIO_ACTUAL,
-  ESTADOS_LEIBLES,
-  MARCA_USUARIO,
-} from "@/lib/triage/estados";
+import { CATEGORIAS_PROPIAS, ESTADOS_LEIBLES } from "@/lib/triage/estados";
 
 export interface PipelineResult {
   /** Correos nuevos vistos en el buzón (solo cabeceras). */
@@ -140,8 +135,6 @@ export async function runPipeline(
     return result;
   }
 
-  await reabrirDesactualizados();
-
   const gated = await gatePending(spaces, context, spend, plazo);
   result.screened = gated.screened;
   result.discarded = gated.discarded;
@@ -236,43 +229,6 @@ async function desdeCuandoMirar(): Promise<Date> {
   if (!ultima) return new Date(tope);
 
   return new Date(Math.max(Date.parse(ultima) - SOLAPE_MS, tope));
-}
-
-/**
- * Devuelve al filtro lo que se juzgó con un criterio viejo.
- *
- * Un correo ya juzgado no se vuelve a mirar nunca, así que cada vez que se
- * afinan las reglas —"el caudal automático de los canales de reservas es
- * ruido"— los correos que ya estaban clasificados se quedan congelados con el
- * criterio del día en que entraron. Hasta ahora eso solo se arreglaba
- * acordándose de pulsar "Rehacer los resúmenes", que es pedirle al usuario que
- * recuerde algo que la app sabe perfectamente.
- *
- * El sello queda guardado en triage_model. Si no coincide con el de ahora, el
- * correo vuelve al filtro. Lo que decidiste tú a mano no se toca: ahí el sello
- * es "usuario" y ese no caduca nunca.
- */
-async function reabrirDesactualizados(): Promise<void> {
-  const admin = createAdminClient();
-
-  const { data } = await admin
-    .from("emails")
-    .select("id")
-    .not("triaged_at", "is", null)
-    .neq("triage_model", MARCA_USUARIO)
-    .not("triage_model", "eq", CRITERIO_ACTUAL)
-    .is("dismissed_at", null)
-    .limit(200);
-
-  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
-  if (ids.length === 0) return;
-
-  // El espacio se conserva hasta que el filtro decida: si se borrara ahora, el
-  // parte se vaciaría mientras dura la cola.
-  await admin
-    .from("emails")
-    .update({ triaged_at: null, triage_status: "pending" })
-    .in("id", ids);
 }
 
 /** Lo que falta por clasificar o por leer. */

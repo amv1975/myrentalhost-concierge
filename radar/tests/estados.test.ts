@@ -124,10 +124,11 @@ describe("de quién es cada correo", () => {
 });
 
 describe("el sello del criterio", () => {
-  it("lo que decidiste tú no caduca nunca", async () => {
-    // Un cambio de reglas devuelve al filtro los correos juzgados con el
-    // criterio viejo. Lo que corregiste a mano lleva otro sello justamente
-    // para que no lo pise el modelo la próxima vez.
+  it("lo que decidiste tú lleva un sello distinto del de la máquina", async () => {
+    // El sello dice con qué reglas se juzgó cada correo, y nada más: la app no
+    // reabre por su cuenta lo que ya te enseñó. Volver atrás sobre lo
+    // clasificado es decisión tuya, y por eso lo que corregiste a mano tiene
+    // que ser distinguible de lo que decidió el modelo.
     const { CRITERIO_ACTUAL, MARCA_USUARIO } = await import(
       "@/lib/triage/estados"
     );

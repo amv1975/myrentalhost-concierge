@@ -51,13 +51,13 @@ export function estaTerminado(email: EstadoCorreo): boolean {
 /**
  * El sello del criterio con el que se juzgó un correo.
  *
- * Cambia cada vez que se afinan las reglas del filtro. Los correos sellados
- * con uno anterior vuelven a la cola solos, sin que nadie tenga que acordarse
- * de pulsar nada: un criterio nuevo que solo se aplica a lo que llegue mañana
- * no arregla la bandeja de hoy, que es justo lo que se está mirando.
+ * Queda guardado para saber con qué reglas se decidió cada cosa. Lo que NO
+ * hace es reabrir nada por su cuenta: un criterio nuevo se aplica a lo que
+ * llega a partir de ahora, y volver atrás sobre lo ya clasificado es una
+ * decisión del usuario —el botón "Rehacer los resúmenes"—, no de la app.
  *
- * Sube el número al cambiar el prompt del filtro de forma que cambie lo que
- * entra o lo que sale.
+ * Una aplicación que rehace sola lo que ya te enseñó te quita de las manos lo
+ * único que era tuyo: decidir qué se queda y qué se va.
  */
 export const CRITERIO_ACTUAL = "haiku-4.5/v2";
 

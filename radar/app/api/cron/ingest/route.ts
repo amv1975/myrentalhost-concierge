@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAuthorizedCron } from "@/lib/auth/cron";
 import { getAllSpaces } from "@/lib/spaces";
 import { runPipeline } from "@/lib/pipeline";
+import { describeError } from "@/lib/errors";
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     // El cron corre solo de madrugada: si revienta sin decir qué, nadie se
     // entera hasta que el parte aparece vacío por la mañana.
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) },
+      { error: describeError(error) },
       { status: 500 },
     );
   }

@@ -8,6 +8,7 @@ import {
 } from "@/lib/extraction/learned";
 import type { Spend } from "@/lib/usage";
 import type { Email, Space } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 export interface ExtractRunResult {
   space: string;
@@ -103,7 +104,7 @@ export async function extractPending(
     await finishRun(runId, "ok", result);
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
+    result.error = describeError(error);
     await finishRun(runId, "error", result);
     return result;
   }
@@ -143,7 +144,7 @@ async function extractOne(
     return {
       email,
       items: null,
-      error: error instanceof Error ? error.message : String(error),
+      error: describeError(error),
     };
   }
 }
@@ -189,7 +190,7 @@ async function persistOne(
       .update({
         extraction_status: "failed",
         extraction_error:
-          caught instanceof Error ? caught.message : String(caught),
+          describeError(caught),
       })
       .eq("id", email.id);
     result.failed += 1;

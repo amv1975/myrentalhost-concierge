@@ -12,6 +12,7 @@ import {
   type TriageContext,
 } from "@/lib/triage/prompt";
 import type { Email, Space } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 /**
  * El modelo rápido y barato de la segunda etapa.
@@ -185,7 +186,7 @@ export async function triagePending(
             return {
               email,
               triage: null,
-              error: caught instanceof Error ? caught.message : String(caught),
+              error: describeError(caught),
             };
           }
         }),
@@ -200,7 +201,7 @@ export async function triagePending(
 
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
+    result.error = describeError(error);
     return result;
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getVisibleSpaces } from "@/lib/spaces";
 import { runPipeline } from "@/lib/pipeline";
+import { describeError } from "@/lib/errors";
 
 export const maxDuration = 300;
 
@@ -33,7 +34,7 @@ export async function POST() {
     // Vercel. Una app que esconde sus propios errores no se puede arreglar.
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : String(error),
+        error: describeError(error),
       },
       { status: 500 },
     );

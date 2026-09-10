@@ -18,6 +18,7 @@ import {
 } from "@/lib/triage/learned";
 import { readUsage, type Spend } from "@/lib/usage";
 import type { Email, Space, TriageCategory } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 /** El modelo más barato que hay. Para mirar un asunto sobra. */
 export const GATE_MODEL = "claude-haiku-4-5";
@@ -130,7 +131,7 @@ export async function gatePending(
 
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
+    result.error = describeError(error);
     return result;
   }
 }

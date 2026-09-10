@@ -68,8 +68,10 @@ async function load(spaces: Space[]): Promise<Agenda> {
       )
     ).flat();
 
+    const real = events.filter(isRealAppointment);
+
     return {
-      slots: events.filter((e) => !e.allDay).map(toSlot).filter(isSlot),
+      slots: real.map(toSlot).filter(isSlot),
       blocks: events.filter((e) => e.allDay).length,
       ok: true,
     };
@@ -79,6 +81,31 @@ async function load(spaces: Space[]): Promise<Agenda> {
     return empty;
   }
 }
+
+/**
+ * Qué es una cita de verdad.
+ *
+ * Google mete en el calendario cosas que nadie ha puesto ahí: eventos que se
+ * inventa leyendo tu correo (un webinar al que te apuntaste hace meses, la
+ * entrega de un paquete), cumpleaños y marcadores de dónde trabajas. En una
+ * agenda que dice "esto es tu día" eso no son citas, son ruido — y ver a las
+ * once de la mañana un webinar de las dos de la madrugada como si fuera lo
+ * primero del día quita toda la credibilidad.
+ *
+ * Lo pasado también se va: una cita que ya terminó no organiza nada.
+ */
+function isRealAppointment(event: CalendarEntry): boolean {
+  if (event.allDay) return false;
+  if (IGNORED_KINDS.has(event.kind)) return false;
+  if (event.end && event.end.getTime() < Date.now()) return false;
+  return true;
+}
+
+const IGNORED_KINDS = new Set([
+  "fromGmail",
+  "birthday",
+  "workingLocation",
+]);
 
 function toSlot(event: CalendarEntry): AgendaSlot | null {
   if (!event.start) return null;

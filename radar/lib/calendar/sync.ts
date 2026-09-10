@@ -10,6 +10,7 @@ import {
 import { DEFAULT_EVENT_MINUTES, addMinutes } from "@/lib/extraction/dates";
 import { needsSync } from "@/lib/calendar/needs-sync";
 import type { Item, Space } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 export interface SyncResult {
   space: string;
@@ -68,7 +69,7 @@ export async function syncSpace(space: Space): Promise<SyncResult> {
 
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
+    result.error = describeError(error);
     return result;
   }
 }
@@ -152,7 +153,7 @@ async function syncOne(
     await admin
       .from("items")
       .update({
-        sync_error: error instanceof Error ? error.message : String(error),
+        sync_error: describeError(error),
       })
       .eq("id", item.id);
   }

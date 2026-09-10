@@ -156,6 +156,9 @@ export interface CalendarEntry {
   /** Los bloqueos de estancias son de día completo; las citas, no. */
   allDay: boolean;
   location: string | null;
+  /** Cómo nació el evento. "fromGmail" es un evento que Google se inventó
+   *  leyendo un correo, no algo que nadie haya puesto en la agenda. */
+  kind: string;
 }
 
 /**
@@ -176,6 +179,7 @@ export async function listEvents(
       id: string;
       summary?: string;
       status?: string;
+      eventType?: string;
       location?: string;
       start?: { dateTime?: string; date?: string };
       end?: { dateTime?: string; date?: string };
@@ -200,5 +204,6 @@ export async function listEvents(
       end: event.end?.dateTime ? new Date(event.end.dateTime) : null,
       allDay: !event.start?.dateTime,
       location: event.location ?? null,
+      kind: event.eventType ?? "default",
     }));
 }

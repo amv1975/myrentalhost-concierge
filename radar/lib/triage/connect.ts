@@ -7,6 +7,7 @@ import { env } from "@/lib/env";
 import { sourceLabel } from "@/lib/source-label";
 import { readUsage, type Spend } from "@/lib/usage";
 import type { Email } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 /**
  * Qué tiene que ver un correo con otro.
@@ -123,7 +124,7 @@ export async function connectRecent(spend: Spend): Promise<ConnectResult> {
 
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
+    result.error = describeError(error);
     return result;
   }
 }

@@ -7,6 +7,7 @@ import {
 } from "@/lib/google/gmail";
 import { buildInboxQuery, knownSpaceFor } from "@/lib/ingest/query";
 import type { Source, Space, SpaceKey } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 export interface IngestResult {
   messagesSeen: number;
@@ -122,7 +123,7 @@ export async function ingestInbox(
     await finishRun(runId, result.error ? "error" : "ok", result);
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
+    result.error = describeError(error);
     await finishRun(runId, "error", result);
     return result;
   }

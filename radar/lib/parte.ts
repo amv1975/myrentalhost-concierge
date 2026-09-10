@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sourceLabel } from "@/lib/source-label";
 import { formatDate, formatDateTime, daysBetween } from "@/lib/format";
 import type { Email, Item, SpaceKey } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 /**
  * El parte de la mañana.
@@ -90,7 +91,7 @@ export async function getParte(): Promise<Parte> {
   } catch (error) {
     return {
       ...VACIO,
-      error: error instanceof Error ? error.message : String(error),
+      error: describeError(error),
     };
   }
 }

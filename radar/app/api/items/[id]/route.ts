@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember } from "@/lib/spaces";
 import { syncItemById } from "@/lib/calendar/sync";
 import type { ItemStatus } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 /** Lo único que la UI puede hacerle a un ítem. */
 const ALLOWED: Record<string, ItemStatus> = {
@@ -96,7 +97,7 @@ export async function PATCH(
     try {
       await syncItemById(id);
     } catch (error) {
-      syncError = error instanceof Error ? error.message : String(error);
+      syncError = describeError(error);
     }
   }
 

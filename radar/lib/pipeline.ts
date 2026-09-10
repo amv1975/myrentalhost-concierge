@@ -10,6 +10,7 @@ import { extractPending } from "@/lib/extraction/run";
 import { syncSpace } from "@/lib/calendar/sync";
 import { Spend } from "@/lib/usage";
 import type { Space } from "@/lib/types";
+import { describeError } from "@/lib/errors";
 
 export interface PipelineResult {
   /** Correos nuevos vistos en el buzón (solo cabeceras). */
@@ -86,7 +87,7 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
     accessToken = await getAccessToken(userId);
   } catch (error) {
     result.errors.push(
-      error instanceof Error ? error.message : String(error),
+      describeError(error),
     );
     return result;
   }
@@ -104,7 +105,7 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
   } catch (error) {
     result.errors.push(
       `No se pudo leer la configuración de los espacios: ${
-        error instanceof Error ? error.message : String(error)
+        describeError(error)
       }`,
     );
     return result;

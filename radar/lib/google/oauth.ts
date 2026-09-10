@@ -91,9 +91,7 @@ async function refreshAccessToken(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(
-      `No se pudo refrescar el token de Google (${response.status}): ${body}`,
-    );
+    throw new Error(explainTokenError(response.status, body));
   }
 
   const token = (await response.json()) as {
@@ -114,6 +112,31 @@ async function refreshAccessToken(
     .eq("user_id", account.user_id);
 
   return token.access_token;
+}
+
+/**
+ * Google contesta a estos fallos con un JSON que acusa a la clave y no a la
+ * causa. Traducirlos es la diferencia entre saber qué tocar y no saberlo.
+ */
+function explainTokenError(status: number, body: string): string {
+  if (/invalid_client/.test(body)) {
+    return (
+      "Google no reconoce el cliente OAuth de la app. Revisa GOOGLE_CLIENT_ID y " +
+      "GOOGLE_CLIENT_SECRET en Vercel: tienen que ser exactamente los del " +
+      "cliente OAuth de Google Cloud, el mismo que está configurado en Supabase. " +
+      "Después de cambiarlos hay que volver a desplegar."
+    );
+  }
+
+  if (/invalid_grant/.test(body)) {
+    return (
+      "El permiso de Google ya no vale: o caducó, o lo revocaste, o la app usa " +
+      "ahora un cliente OAuth distinto del que lo concedió. Cierra sesión y " +
+      "vuelve a entrar aceptando el acceso."
+    );
+  }
+
+  return `No se pudo refrescar el token de Google (${status}): ${body}`;
 }
 
 /**

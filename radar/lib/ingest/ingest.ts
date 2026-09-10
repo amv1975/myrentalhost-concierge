@@ -5,7 +5,7 @@ import {
   listMessageIds,
   GmailRateLimitError,
 } from "@/lib/google/gmail";
-import { buildInboxQuery, knownSpaceFor } from "@/lib/ingest/query";
+import { buildInboxQuery } from "@/lib/ingest/query";
 import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
 import type { Source, Space, SpaceKey } from "@/lib/types";
 import { describeError } from "@/lib/errors";
@@ -30,6 +30,13 @@ export interface IngestResult {
  * entero sería trabajo, tiempo y cuota de Gmail gastados en publicidad. Se
  * pide después, uno a uno, solo de los que han sobrevivido al primer filtro.
  *
+ * Aquí ya no se decide de qué espacio es nada. Antes, un remitente de la lista
+ * de confianza entraba con su espacio puesto y se saltaba el filtro por
+ * asunto — y como los remitentes de confianza son justo los que más volumen
+ * generan (Airbnb, Booking), doscientos sesenta avisos automáticos se colaban
+ * a la cola de lectura cara sin que nadie los mirase. El atajo estaba pensado
+ * para ahorrar, y costaba diez veces más de lo que ahorraba.
+ *
  * Idempotente por construcción: los mensajes conocidos ni siquiera se piden a
  * la API, y el INSERT se apoya en el UNIQUE de gmail_message_id para el caso de
  * dos ejecuciones a la vez.
@@ -52,18 +59,6 @@ export async function ingestInbox(
   const runId = runRow?.id as string | undefined;
 
   try {
-    // Remitentes de confianza: ya no deciden qué entra, solo ahorran la
-    // clasificación de lo que se sabe de antemano de qué espacio es.
-    const { data: sourceRows } = await admin
-      .from("sources")
-      .select("*, spaces(key)")
-      .eq("enabled", true);
-    const sources = ((sourceRows ?? []) as (Source & {
-      spaces: { key: string } | null;
-    })[]).map((s) => ({ ...s, space_key: s.spaces?.key }));
-
-    const spaceIdByKey = new Map(spaces.map((s) => [s.key, s.id]));
-
     const messageIds = await listMessageIds(
       accessToken,
       buildInboxQuery(lookbackDays),
@@ -93,17 +88,7 @@ export async function ingestInbox(
         throw error;
       }
 
-      const knownKey = knownSpaceFor(
-        message.fromEmail,
-        message.recipients,
-        sources,
-      );
-      const knownSpaceId = knownKey
-        ? (spaceIdByKey.get(knownKey as SpaceKey) ?? null)
-        : null;
-
       const { error: insertError } = await admin.from("emails").insert({
-        space_id: knownSpaceId,
         gmail_message_id: message.id,
         gmail_thread_id: message.threadId,
         from_email: message.fromEmail,
@@ -115,9 +100,6 @@ export async function ingestInbox(
         // Se rellena más tarde, y solo si el correo pasa el filtro por asunto.
         body_text: null,
         received_at: message.receivedAt.toISOString(),
-        // De un remitente conocido ya se sabe de qué vida es: se salta el
-        // filtro por asunto y va directo a que le bajen el cuerpo.
-        ...(knownKey ? { triage_category: knownKey } : {}),
       });
 
       if (insertError) {

@@ -4,6 +4,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { GateResultSchema } from "@/lib/triage/gate-schema";
+import { knownSpaceFor } from "@/lib/ingest/query";
 import {
   buildGateSystemPrompt,
   buildGateUserPrompt,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/triage/learned";
 import { readUsage, type Spend } from "@/lib/usage";
 import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
-import type { Email, Space, TriageCategory } from "@/lib/types";
+import type { Email, Source, Space, TriageCategory } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
 /** El modelo más barato que hay. Para mirar un asunto sobra. */
@@ -88,20 +89,32 @@ export async function gatePending(
   const spaceIdByKey = new Map(spaces.map((s) => [s.key, s.id]));
 
   try {
-    // Los que ya traen categoría vienen de un remitente conocido: no hace
-    // falta mirarlos, ya se sabe de qué son.
+    // "Nunca lo ha mirado un modelo" es exactamente triaged_at nulo. Sirve
+    // para lo recién llegado y también para rescatar lo que entró por el
+    // atajo de remitente conocido, que se saltaba este filtro y llenaba de
+    // avisos automáticos la cola de lectura.
     const { data, error } = await admin
       .from("emails")
       .select(
         "id, from_email, from_name, subject, snippet, bulk, triage_status",
       )
       .in("triage_status", ["pending", "failed"])
-      .is("triage_category", null)
+      .is("triaged_at", null)
       .order("received_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
 
     const pending = (data ?? []) as ScreenedEmail[];
+
+    // La lista de remitentes del usuario ya no decide qué entra, pero sigue
+    // sirviendo para no dudar entre familia y trabajo.
+    const { data: sourceRows } = await admin
+      .from("sources")
+      .select("*, spaces(key)")
+      .eq("enabled", true);
+    const sources = ((sourceRows ?? []) as (Source & {
+      spaces: { key: string } | null;
+    })[]).map((row) => ({ ...row, space_key: row.spaces?.key }));
 
     // Dos consultas por pasada, no por lote: lo aprendido no cambia entre
     // lotes y va en el prompt de sistema, que además está en caché.
@@ -130,7 +143,15 @@ export async function gatePending(
         batches
           .slice(i, i + CONCURRENCY)
           .map((batch) =>
-            runBatch(batch, context, learned, spend, spaceIdByKey, result),
+            runBatch(
+              batch,
+              context,
+              learned,
+              sources,
+              spend,
+              spaceIdByKey,
+              result,
+            ),
           ),
       );
     }
@@ -146,6 +167,7 @@ async function runBatch(
   batch: ScreenedEmail[],
   context: GateContext,
   learned: string,
+  sources: (Source & { space_key?: string })[],
   spend: Spend,
   spaceIdByKey: Map<string, string>,
   result: GateRunResult,
@@ -154,7 +176,7 @@ async function runBatch(
 
   let decisions: Map<number, TriageCategory>;
   try {
-    decisions = await classify(batch, context, learned, spend);
+    decisions = await classify(batch, context, learned, sources, spend);
   } catch {
     // Una tanda que falla se reintenta en la siguiente pasada. Cuesta décimas
     // de céntimo, así que no hace falta contador de intentos: lo que no puede
@@ -201,6 +223,7 @@ async function runBatch(
         triage_category: category,
         space_id: spaceIdByKey.get(category) ?? null,
         triage_status: "pending",
+        triaged_at: new Date().toISOString(),
       })
       .eq("id", email.id);
     result.kept += 1;
@@ -225,6 +248,7 @@ async function classify(
   batch: ScreenedEmail[],
   context: GateContext,
   learned: string,
+  sources: (Source & { space_key?: string })[],
   spend: Spend,
 ): Promise<Map<number, TriageCategory>> {
   const emails: GateEmail[] = batch.map((email) => ({
@@ -233,6 +257,7 @@ async function classify(
     subject: email.subject,
     snippet: email.snippet,
     bulk: email.bulk ?? false,
+    hint: knownSpaceFor(email.from_email, [], sources),
   }));
 
   const response = await getClient().messages.parse({

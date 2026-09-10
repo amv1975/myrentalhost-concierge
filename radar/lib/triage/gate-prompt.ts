@@ -23,6 +23,8 @@ export interface GateEmail {
   snippet: string | null;
   /** Envío masivo (trae List-Unsubscribe). Casi siempre es ruido. */
   bulk: boolean;
+  /** De qué vida suele ser este remitente, si está en la lista del usuario. */
+  hint?: string | null;
 }
 
 export function buildGateSystemPrompt(
@@ -64,6 +66,12 @@ Señales de que **sí** es family o work aunque venga de un desconocido:
 
 Ante la duda entre family y work, elige la que encaje mejor. Ante la duda entre una de las dos y none, elige **none**: lo que se quede fuera sigue estando en Gmail, mientras que colar publicidad llena la aplicación de ruido y hace que se deje de usar.
 
+## La pista del remitente
+
+Algunos correos llevan "(remitente habitual de work)" o "de family". Eso dice a qué vida pertenecería el correo **si resulta no ser ruido**. No dice que sea importante ni que haya que quedárselo.
+
+Es una trampa fácil: los remitentes que el usuario ha marcado como habituales son también los que más avisos automáticos mandan. Un canal de reservas manda tanto una queja de un huésped como cincuenta confirmaciones automáticas al día. La pista te ahorra dudar entre family y work; no te ahorra decidir si es none.
+
 ## Formato
 
 Devuelve una entrada por cada número recibido, con ese mismo número. Ni una más ni una menos, y sin explicaciones.${learned}`;
@@ -83,7 +91,9 @@ export function buildGateUserPrompt(emails: GateEmail[]): string {
     const subject = clip(email.subject ?? "(sin asunto)", MAX_SUBJECT);
     const preview = clip(email.snippet ?? "", MAX_SNIPPET);
 
-    return `[${index + 1}]${email.bulk ? " (masivo)" : ""} De: ${sanitize(from)} | Asunto: ${sanitize(subject)}${preview ? ` | Vista previa: ${sanitize(preview)}` : ""}`;
+    const pista = email.hint ? ` (remitente habitual de ${email.hint})` : "";
+
+    return `[${index + 1}]${email.bulk ? " (masivo)" : ""} De: ${sanitize(from)}${pista} | Asunto: ${sanitize(subject)}${preview ? ` | Vista previa: ${sanitize(preview)}` : ""}`;
   });
 
   return `<contenido_no_confiable>

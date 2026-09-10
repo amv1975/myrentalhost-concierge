@@ -81,3 +81,23 @@ describe("filtro por asunto", () => {
     );
   });
 });
+
+describe("la pista del remitente", () => {
+  it("dice de qué vida sería, no que haya que quedárselo", () => {
+    // El atajo que había antes —remitente conocido, se salta el filtro— metió
+    // 260 avisos automáticos de Airbnb en la cola de lectura cara. Los
+    // remitentes de más confianza son justo los de más ruido.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("si resulta no ser ruido");
+    expect(prompt).toContain("no te ahorra decidir si es none");
+  });
+
+  it("la pista viaja en la línea del correo", () => {
+    const prompt = buildGateUserPrompt([email({ hint: "work" })]);
+    expect(prompt).toContain("(remitente habitual de work)");
+  });
+
+  it("sin pista, la línea no cambia", () => {
+    expect(buildGateUserPrompt([email()])).not.toContain("remitente habitual");
+  });
+});

@@ -185,28 +185,55 @@ async function buildParte(): Promise<Parte> {
 
   // Lo que has marcado tú manda sobre la hora: es lo único de esta pantalla
   // que dice explícitamente "esto por encima de lo demás".
-  entries.sort(
+  const unicas = dedupe(entries);
+
+  unicas.sort(
     (a, b) =>
       Number(b.starred) - Number(a.starred) || b.at.localeCompare(a.at),
   );
 
   const noise = user ? await getNoise(user.id, since) : { list: [], count: 0 };
 
-  const reading = entries.filter((e) => e.reading).length;
+  const reading = unicas.filter((e) => e.reading).length;
 
   return {
     reading,
     scanned: await countScanned(since),
     discarded: noise.count,
     updatedAt: emails[0]?.triaged_at ?? null,
-    urgent: entries.filter((e) => e.urgent),
+    urgent: unicas.filter((e) => e.urgent),
     // Lo que no pide nada baja al tercer montón aunque sea de los tuyos: saber
     // que una reserva entró bien tranquiliza, pero no es una tarea, y mezclarlo
     // con las que sí lo son es lo que hace que una lista deje de despacharse.
-    rest: entries.filter((e) => !e.urgent && e.actionable),
-    fyi: entries.filter((e) => !e.urgent && !e.actionable),
+    rest: unicas.filter((e) => !e.urgent && e.actionable),
+    fyi: unicas.filter((e) => !e.urgent && !e.actionable),
     noise: noise.list,
   };
+}
+
+/**
+ * El mismo correo, una sola línea.
+ *
+ * Muchos avisos llegan a la vez a dos o tres buzones del negocio, o el colegio
+ * escribe a los dos padres. Son el mismo mensaje con distinto destinatario, y
+ * verlo repetido tres veces en el parte hace dudar de si son tres cosas
+ * distintas. Se reconocen por remitente y asunto dentro de la misma hora.
+ */
+function dedupe(entries: ParteEntry[]): ParteEntry[] {
+  const vistos = new Map<string, ParteEntry>();
+
+  for (const entry of entries) {
+    const hora = entry.at.slice(0, 13);
+    const clave = `${entry.kind}:${entry.fromEmail ?? ""}:${entry.subject ?? entry.headline}:${hora}`;
+
+    const anterior = vistos.get(clave);
+    // Se queda el que más información tiene: uno leído gana a uno sin leer.
+    if (!anterior || (anterior.reading && !entry.reading)) {
+      vistos.set(clave, entry);
+    }
+  }
+
+  return [...vistos.values()];
 }
 
 function itemEntry(

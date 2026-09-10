@@ -42,6 +42,11 @@ describe("buildInboxQuery", () => {
   });
 });
 
+/**
+ * knownSpaceFor sigue existiendo, pero ya no decide qué se salta el filtro.
+ * Ese atajo metía doscientos sesenta avisos automáticos de Airbnb en la cola
+ * de lectura cara: los remitentes de más confianza eran justo los de más ruido.
+ */
 describe("knownSpaceFor", () => {
   it("un remitente conocido se salta la clasificación", () => {
     expect(

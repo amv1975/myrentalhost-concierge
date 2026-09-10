@@ -64,7 +64,7 @@ export async function triageOne(
 ): Promise<TriageResult> {
   const response = await getClient().messages.parse({
     model: TRIAGE_MODEL,
-    max_tokens: 500,
+    max_tokens: 1200,
     output_config: { format: zodOutputFormat(TriageResultSchema) },
     // Idéntico en toda la pasada: en caché cuesta la décima parte.
     system: [
@@ -110,7 +110,10 @@ export async function triageOne(
  * algo y cuánto corre.
  */
 export async function triagePending(
-  accessToken: string,
+  /** Null cuando se reanaliza: el cuerpo ya está guardado y no hay que pedir
+   *  nada a Gmail. Los correos a los que les falte se quedan para la próxima
+   *  actualización en vez de fallar. */
+  accessToken: string | null,
   spaces: Space[],
   context: TriageContext,
   spend: Spend,
@@ -150,6 +153,7 @@ export async function triagePending(
           withBody.push(email);
           continue;
         }
+        if (!accessToken) continue;
         try {
           const bodyText = await getMessageBody(
             accessToken,
@@ -233,6 +237,7 @@ async function save(
       triage_status: "done",
       triage_category: category,
       summary: triage.summary,
+      detail: triage.detail,
       actionable: triage.actionable,
       importance: triage.importance,
       space_id: spaceId,

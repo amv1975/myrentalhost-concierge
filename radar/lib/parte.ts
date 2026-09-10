@@ -41,6 +41,8 @@ export interface ParteEntry {
   when: string | null;
   fromEmail: string | null;
   subject: string | null;
+  /** Si hay algo que hacer. Un aviso de que algo se resolvió solo, no lo hay. */
+  actionable: boolean;
   gmailMessageId: string;
   needsReview: boolean;
   /** Marcado a mano como importante. Sube arriba y no se cae con el tiempo. */
@@ -54,6 +56,8 @@ export interface Parte {
   updatedAt: string | null;
   urgent: ParteEntry[];
   rest: ParteEntry[];
+  /** Pasó, está bien que lo sepas, y no hay nada que hacer. */
+  fyi: ParteEntry[];
   /** Qué se tiró. Vacío si este usuario no es el dueño del buzón. */
   noise: { who: string; subject: string }[];
 }
@@ -149,7 +153,11 @@ export async function getParte(): Promise<Parte> {
     discarded: noise.count,
     updatedAt: emails[0]?.triaged_at ?? null,
     urgent: entries.filter((e) => e.urgent),
-    rest: entries.filter((e) => !e.urgent),
+    // Lo que no pide nada baja al tercer montón aunque sea de los tuyos: saber
+    // que una reserva entró bien tranquiliza, pero no es una tarea, y mezclarlo
+    // con las que sí lo son es lo que hace que una lista deje de despacharse.
+    rest: entries.filter((e) => !e.urgent && e.actionable),
+    fyi: entries.filter((e) => !e.urgent && !e.actionable),
     noise: noise.list,
   };
 }
@@ -188,6 +196,7 @@ function itemEntry(
     when: whenLabel(item),
     fromEmail: item.emails?.from_email ?? null,
     subject: item.emails?.subject ?? null,
+    actionable: true,
     gmailMessageId: item.gmail_message_id,
     needsReview: item.status === "needs_review",
     starred: item.pinned,
@@ -209,10 +218,13 @@ function emailEntry(
     at: email.received_at,
     who: sourceLabel(email.from_email, email.from_name) ?? "",
     headline: email.summary ?? email.subject ?? "(sin asunto)",
-    detail: email.snippet,
+    // El snippet de Gmail solo se usa si el correo es viejo y se resumió antes
+    // de que existiera el detalle.
+    detail: email.detail ?? email.snippet,
     when: null,
     fromEmail: email.from_email,
     subject: email.subject,
+    actionable: email.actionable,
     gmailMessageId: email.gmail_message_id,
     needsReview: false,
     starred: email.triage_model === "usuario" && email.importance === "alta",

@@ -18,9 +18,11 @@ type Filter = "todo" | "work" | "family";
 export function ParteList({
   urgent,
   rest,
+  fyi,
 }: {
   urgent: ParteEntry[];
   rest: ParteEntry[];
+  fyi: ParteEntry[];
 }) {
   const [filter, setFilter] = useState<Filter>("todo");
 
@@ -44,7 +46,7 @@ export function ParteList({
     }
   }
 
-  const all = [...urgent, ...rest];
+  const all = [...urgent, ...rest, ...fyi];
   const counts = {
     todo: all.length,
     work: all.filter((e) => e.life === "work").length,
@@ -56,6 +58,7 @@ export function ParteList({
 
   const shownUrgent = keep(urgent);
   const shownRest = keep(rest);
+  const shownFyi = keep(fyi);
 
   return (
     <>
@@ -73,7 +76,7 @@ export function ParteList({
         ))}
       </div>
 
-      {shownUrgent.length + shownRest.length === 0 ? (
+      {shownUrgent.length + shownRest.length + shownFyi.length === 0 ? (
         <p className="parte-empty">
           Nada aquí.
           <span>
@@ -83,7 +86,11 @@ export function ParteList({
       ) : (
         <>
           <Section title="Hay que mirarlo hoy" entries={shownUrgent} urgent />
-          <Section title="Lo demás que es tuyo" entries={shownRest} />
+          <Section title="Cuando puedas" entries={shownRest} />
+          {/* El tercer montón es el que hace que te fíes: dice qué ha pasado
+              que NO te toca. Sin él, "todo despejado" no se sabe si es que no
+              ha pasado nada o es que la app no se ha enterado. */}
+          <Section title="No hace falta que hagas nada" entries={shownFyi} />
         </>
       )}
     </>

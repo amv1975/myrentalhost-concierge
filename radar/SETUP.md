@@ -16,7 +16,8 @@ personales y los dominios del colegio.
      prefijo `NEXT_PUBLIC_`: salta RLS)
 3. En **SQL Editor**, pega y ejecuta las migraciones **en orden**
    (`supabase/migrations/0001_init.sql`, `0002_pinned.sql`,
-   `0003_recipient_sources.sql`, `0004_triage.sql`) y después
+   `0003_recipient_sources.sql`, `0004_triage.sql`, `0005_detalle.sql`)
+   y después
    `supabase/seed.sql`. Cada una es idempotente: volver a ejecutarla no rompe
    nada.
 

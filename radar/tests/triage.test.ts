@@ -66,12 +66,31 @@ describe("prompt de clasificación", () => {
     expect(prompt.match(/<contenido_no_confiable>/g)).toHaveLength(1);
   });
 
-  it("recorta los cuerpos largos", () => {
-    // Se paga por cada correo de la bandeja: leer entera una cadena de
-    // reenvíos no cambia la clasificación y multiplica el coste.
-    const prompt = userPrompt({ bodyText: "a".repeat(10_000) });
-    expect(prompt.length).toBeLessThan(4_000);
-    expect(prompt).toContain("[…]");
+  it("lee el correo entero, no las dos primeras líneas", () => {
+    // Aquí llegan diez al día, ya elegidos, y el dato que importa —el importe
+    // corregido, el plazo, lo que piden— suele estar en mitad del cuerpo.
+    const largo = userPrompt({ bodyText: "a".repeat(10_000) });
+    expect(largo).not.toContain("[…]");
+
+    // Pero hay un tope: una cadena de reenvíos no puede costar lo que quiera.
+    expect(userPrompt({ bodyText: "a".repeat(40_000) })).toContain("[…]");
+  });
+
+  it("pide lo que hace falta para decidir sin abrir Gmail", () => {
+    // Es la diferencia entre un titular y un parte: sin cifras, plazos y
+    // consecuencia, hay que abrir el correo igual y la app no sirve de nada.
+    const prompt = buildTriageSystemPrompt(context);
+    expect(prompt).toContain("Los números");
+    expect(prompt).toContain("convertido en fecha");
+    expect(prompt).toContain("Quién espera qué, y desde cuándo");
+    expect(prompt).toContain("Qué se rompe si nadie lo mira");
+  });
+
+  it("separa «importa» de «hay que hacer algo»", () => {
+    // Un aviso de que algo se resolvió solo importa y no es una tarea. Sin esa
+    // distinción, la lista de pendientes se llena de cosas ya cerradas.
+    const prompt = buildTriageSystemPrompt(context);
+    expect(prompt).toContain("no hace falta que hagas nada");
   });
 
   it("fecha el correo por cuándo llegó, no por hoy", () => {

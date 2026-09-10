@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember, getSpaceByKey } from "@/lib/spaces";
 import { extractPending } from "@/lib/extraction/run";
+import { triagePending } from "@/lib/triage/run";
+import { buildTriageContext } from "@/lib/triage/context";
+import { getVisibleSpaces } from "@/lib/spaces";
+import { Spend } from "@/lib/usage";
 import { slugToSpaceKey, type Item } from "@/lib/types";
 
 export const maxDuration = 300;
@@ -10,9 +14,13 @@ export const maxDuration = 300;
 /**
  * Vuelve a analizar los correos del espacio.
  *
- * Sirve para cuando cambian las reglas de extracción: sin esto, los ítems
- * viejos se quedan como los dejó el prompt anterior, porque un correo ya
- * analizado nunca se reprocesa.
+ * Sirve para cuando cambian las reglas: sin esto, los correos viejos se quedan
+ * como los dejó el prompt anterior, porque uno ya analizado nunca se reprocesa.
+ *
+ * Rehace las dos cosas: el resumen y el detalle de cada correo, y los
+ * compromisos que salgan de ellos. No vuelve a pedirle nada a Gmail —el cuerpo
+ * ya está guardado— ni vuelve a pasar por el filtro por asunto, porque de qué
+ * vida es cada uno ya se sabe.
  *
  * Deja en paz lo que ya has decidido. Solo se reanaliza un correo si NINGUNO
  * de sus ítems está confirmado o hecho: si un compromiso ya está en tu
@@ -77,6 +85,16 @@ export async function POST(
 
   // Solo los que el clasificador marcó como que piden algo. Reanalizar los
   // demás sería pagarle al modelo caro por lo que ya se descartó por barato.
+  // Los resúmenes se rehacen todos, hayan dado compromisos o no: el detalle
+  // que se ve al desplegar una línea sale de aquí.
+  const { error: triageError } = await admin
+    .from("emails")
+    .update({ triage_status: "pending" })
+    .eq("space_id", space.id)
+    .in("triage_category", ["family", "work"])
+    .not("body_text", "is", null);
+  if (triageError) throw triageError;
+
   const { data: emailRows, error: emailsError } = await admin
     .from("emails")
     .select("id")
@@ -100,16 +118,26 @@ export async function POST(
     if (error) throw error;
   }
 
-  const result = await extractPending(space, undefined, toReprocess.length || 1);
+  const spend = new Spend();
+  const spaces = await getVisibleSpaces();
+  const triaged = await triagePending(
+    null,
+    spaces,
+    await buildTriageContext(spaces),
+    spend,
+  );
+
+  const result = await extractPending(space, spend, toReprocess.length || 1);
 
   return NextResponse.json(
     {
-      reanalyzed: toReprocess.length,
+      reanalyzed: triaged.read,
       kept: locked.size,
       created: result.created,
       failed: result.failed,
-      error: result.error,
+      costUsd: spend.usd,
+      error: triaged.error ?? result.error,
     },
-    { status: result.error ? 500 : 200 },
+    { status: triaged.error || result.error ? 500 : 200 },
   );
 }

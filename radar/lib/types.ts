@@ -63,8 +63,11 @@ export interface Email {
   bulk: boolean;
   triage_status: TriageStatus;
   triage_category: TriageCategory | null;
-  /** De qué va, en una frase. Lo pone el clasificador. */
+  /** El titular: qué pasa, en una frase. */
   summary: string | null;
+  /** Lo que hace falta para decidir sin abrir Gmail: cifras, plazos, quién
+   *  espera qué y qué se rompe si nadie lo mira. */
+  detail: string | null;
   /** Si pide algo concreto; solo entonces se le buscan compromisos. */
   actionable: boolean;
   importance: Importance;

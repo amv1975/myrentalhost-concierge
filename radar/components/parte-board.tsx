@@ -4,7 +4,7 @@ import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
 
 export function ParteBoard({ parte }: { parte: Parte }) {
-  const total = parte.urgent.length + parte.rest.length;
+  const total = parte.urgent.length + parte.rest.length + parte.fyi.length;
 
   return (
     <div className="parte">
@@ -48,7 +48,11 @@ export function ParteBoard({ parte }: { parte: Parte }) {
           </span>
         </p>
       ) : (
-        <ParteList urgent={parte.urgent} rest={parte.rest} />
+        <ParteList
+          urgent={parte.urgent}
+          rest={parte.rest}
+          fyi={parte.fyi}
+        />
       )}
 
       {parte.discarded > 0 ? (

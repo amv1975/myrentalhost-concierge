@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ParteList } from "@/components/parte-list";
 import { ParteAgenda } from "@/components/parte-agenda";
+import { ParteRedo } from "@/components/parte-redo";
 import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
 import type { Agenda } from "@/lib/agenda";
@@ -8,9 +9,11 @@ import type { Agenda } from "@/lib/agenda";
 export function ParteBoard({
   parte,
   agenda,
+  espacios,
 }: {
   parte: Parte;
   agenda: Agenda;
+  espacios: string[];
 }) {
   const total = parte.urgent.length + parte.rest.length + parte.fyi.length;
 
@@ -100,6 +103,7 @@ export function ParteBoard({
         <span>
           Se lee tu bandeja entera cada mañana y solo sube lo que te toca.
         </span>
+        <ParteRedo espacios={espacios} />
         <span>
           <Link href="/familia">Solo Familia</Link>
           {" · "}

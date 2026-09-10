@@ -9,6 +9,8 @@ import { ReanalyzeButton } from "@/components/reanalyze-button";
 import { LearnedList, type LearnedEntry } from "@/components/learned-list";
 import { getMonthSpend } from "@/lib/spend";
 import { formatUsd } from "@/lib/usage";
+import { PantallaRota } from "@/components/pantalla-rota";
+import { describeError } from "@/lib/errors";
 
 export default async function SettingsPage({
   params,
@@ -19,7 +21,16 @@ export default async function SettingsPage({
   const key = slugToSpaceKey(espacio);
   if (!key) notFound();
 
-  const spend = await getMonthSpend();
+  // El gasto del mes es un extra: si su consulta falla, Ajustes tiene que
+  // seguir abriéndose, porque es desde donde se arreglan las cosas.
+  let spend = { usd: 0, runs: 0, screened: 0 };
+  let spendError: string | null = null;
+  try {
+    spend = await getMonthSpend();
+  } catch (error) {
+    spendError = describeError(error);
+  }
+
   const space = await getSpaceByKey(key);
   if (!space) notFound();
 
@@ -76,13 +87,21 @@ export default async function SettingsPage({
           todo lo que entra con el modelo más barato y solo lee entero lo que
           parece tuyo, que es de donde sale que esto valga céntimos y no euros.
         </p>
-        <p className="mt-3 text-2xl font-semibold tabular-nums">
-          {formatUsd(spend.usd)}
-        </p>
-        <p className="text-xs text-[var(--color-muted)]">
-          {spend.screened} correos mirados en {spend.runs}{" "}
-          {spend.runs === 1 ? "actualización" : "actualizaciones"}
-        </p>
+        {spendError ? (
+          <p className="mt-3 text-xs text-[var(--color-danger)]">
+            No se pudo calcular: {spendError}
+          </p>
+        ) : (
+          <>
+            <p className="mt-3 text-2xl font-semibold tabular-nums">
+              {formatUsd(spend.usd)}
+            </p>
+            <p className="text-xs text-[var(--color-muted)]">
+              {spend.screened} correos mirados en {spend.runs}{" "}
+              {spend.runs === 1 ? "actualización" : "actualizaciones"}
+            </p>
+          </>
+        )}
       </section>
 
       <section>

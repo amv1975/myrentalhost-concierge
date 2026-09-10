@@ -3,6 +3,7 @@ import { getVisibleSpaces } from "@/lib/spaces";
 import { getParte } from "@/lib/parte";
 import { getAgenda } from "@/lib/agenda";
 import { ParteBoard } from "@/components/parte-board";
+import { SLUG_BY_SPACE } from "@/lib/types";
 
 /**
  * La pantalla de inicio: el parte de la mañana.
@@ -17,5 +18,11 @@ export default async function HomePage() {
 
   const [parte, agenda] = await Promise.all([getParte(), getAgenda(spaces)]);
 
-  return <ParteBoard parte={parte} agenda={agenda} />;
+  return (
+    <ParteBoard
+      parte={parte}
+      agenda={agenda}
+      espacios={spaces.map((space) => SLUG_BY_SPACE[space.key])}
+    />
+  );
 }

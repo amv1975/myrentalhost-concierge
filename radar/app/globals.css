@@ -734,3 +734,14 @@ body:has(.parte) {
   color: var(--p-faint);
   margin: 0;
 }
+
+.parte-redo button {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--p-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

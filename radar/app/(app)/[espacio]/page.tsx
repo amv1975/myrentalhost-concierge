@@ -3,6 +3,8 @@ import { getSpaceByKey } from "@/lib/spaces";
 import { getSpaceView } from "@/lib/items";
 import { slugToSpaceKey, spaceLabel } from "@/lib/types";
 import { SpaceBoard } from "@/components/space-board";
+import { PantallaRota } from "@/components/pantalla-rota";
+import { describeError } from "@/lib/errors";
 import { RefreshButton } from "@/components/refresh-button";
 
 export default async function SpacePage({
@@ -20,7 +22,17 @@ export default async function SpacePage({
   const space = await getSpaceByKey(key);
   if (!space) notFound();
 
-  const view = await getSpaceView(space.id);
+  let view;
+  try {
+    view = await getSpaceView(space.id);
+  } catch (error) {
+    return (
+      <PantallaRota
+        titulo={spaceLabel(space.key)}
+        error={describeError(error)}
+      />
+    );
+  }
 
   return (
     // data-space tiñe los acentos con el color del espacio, para que se note en

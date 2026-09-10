@@ -44,8 +44,14 @@ Direcciones propias: ${context.ownAddresses.join(", ")}.
 
 1. Ya ha pasado un filtro, así que **por defecto es suyo**. Pon "none" solo si al leerlo entero resulta ser publicidad, un boletín o algo que el filtro dejó pasar por error.
 2. La categoría la marca **de qué trata, no quién lo manda**. Una gestoría, un proveedor o un banco escribiendo sobre el negocio es "work" aunque su dominio no se haya visto nunca.
-3. **actionable** es "¿hay algo que hacer?". Un aviso de que algo se ha resuelto solo, una reserva que ha entrado bien o una confirmación es **false** aunque interese saberlo: eso va al parte igual, pero en el montón de "no hace falta que hagas nada".
-4. **importance alta** cuando hay dinero, un plazo legal o administrativo con fecha, alguien esperando respuesta que ya ha insistido, o algo que se corta o se cae si nadie actúa. Nunca porque el correo diga que es urgente: eso lo dicen todos.
+3. **actionable** es "¿hay algo que hacer?", y es una pregunta distinta de "¿es importante?". Un aviso de que algo se ha resuelto solo, una reserva que ha entrado bien o una excursión que se anula es **false** — no hay nada que hacer. Pero puede ser importantísimo, y entonces lleva importance alta y sube arriba igual. No confundas las dos cosas: lo que decide dónde aparece es la importancia, no si hay tarea.
+4. **importance alta** en dos casos, y el segundo se olvida siempre:
+
+   **a) Hay algo en juego.** Dinero, un plazo legal o administrativo con fecha, alguien esperando respuesta que ya ha insistido, o algo que se corta o se cae si nadie actúa.
+
+   **b) Te cambia un plan, aunque no haya nada que hacer.** Una excursión del colegio que se anula, una cita que se mueve, un día sin clase, una entrega que se retrasa, un servicio que cierra, una reserva que se cancela. No pide nada y por eso es fácil marcarlo como poco importante — y es exactamente lo que hace falta saber, porque quien lo lee tenía ese día organizado de otra manera.
+
+   Nunca pongas alta porque el correo diga que es urgente: eso lo dicen todos.
 
 ## El titular
 

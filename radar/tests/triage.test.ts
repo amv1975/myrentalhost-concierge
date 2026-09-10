@@ -90,7 +90,17 @@ describe("prompt de clasificación", () => {
     // Un aviso de que algo se resolvió solo importa y no es una tarea. Sin esa
     // distinción, la lista de pendientes se llena de cosas ya cerradas.
     const prompt = buildTriageSystemPrompt(context);
-    expect(prompt).toContain("no hace falta que hagas nada");
+    expect(prompt).toContain("es una pregunta distinta de");
+    expect(prompt).toContain("lo que decide dónde aparece es la importancia");
+  });
+
+  it("lo que te cambia un plan es importante aunque no pida nada", () => {
+    // El caso real: el colegio anula la excursión a Montserrat. No hay tarea,
+    // no hay plazo, no hay dinero — y aun así hay que enterarse, porque ese
+    // día estaba organizado de otra manera. Sin esta regla se hundía al fondo.
+    const prompt = buildTriageSystemPrompt(context);
+    expect(prompt).toContain("Te cambia un plan, aunque no haya nada que hacer");
+    expect(prompt).toContain("excursión del colegio que se anula");
   });
 
   it("fecha el correo por cuándo llegó, no por hoy", () => {

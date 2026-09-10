@@ -60,6 +60,7 @@ Señales de que es **none** aunque parezca del sector:
 Señales de que **sí** es family o work aunque venga de un desconocido:
 - Menciona una factura, un contrato, una reserva concreta, una incidencia, una gestión, una cita, un plazo o una firma.
 - Alguien escribe con nombre y apellido sobre un asunto específico.
+- **Anuncia que algo cambia o se anula**: una salida del colegio que se suspende, una cita que se mueve, un día sin clase, un corte de servicio, una reserva cancelada. No pide nada, y precisamente por eso es fácil confundirlo con un boletín — pero quien lo recibe tenía ese día planeado de otra manera y necesita enterarse.
 
 Ante la duda entre family y work, elige la que encaje mejor. Ante la duda entre una de las dos y none, elige **none**: lo que se quede fuera sigue estando en Gmail, mientras que colar publicidad llena la aplicación de ruido y hace que se deje de usar.
 

@@ -68,6 +68,8 @@ export interface Email {
   /** Si pide algo concreto; solo entonces se le buscan compromisos. */
   actionable: boolean;
   importance: Importance;
+  /** Quién clasificó: el modelo que lo hizo, o "usuario" si lo corregiste tú. */
+  triage_model: string | null;
   triaged_at: string | null;
   /** Marcado como visto en el parte. Sigue intacto en Gmail. */
   dismissed_at: string | null;

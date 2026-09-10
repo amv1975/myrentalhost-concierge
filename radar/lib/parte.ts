@@ -43,6 +43,8 @@ export interface ParteEntry {
   subject: string | null;
   gmailMessageId: string;
   needsReview: boolean;
+  /** Marcado a mano como importante. Sube arriba y no se cae con el tiempo. */
+  starred: boolean;
 }
 
 export interface Parte {
@@ -75,7 +77,7 @@ export async function getParte(): Promise<Parte> {
     ]),
   );
 
-  const [itemRows, emailRows] = await Promise.all([
+  const [itemRows, emailRows, starredRows] = await Promise.all([
     supabase
       .from("items")
       .select("*, emails(subject, from_email, from_name, received_at)")
@@ -89,6 +91,16 @@ export async function getParte(): Promise<Parte> {
       .not("summary", "is", null)
       .is("dismissed_at", null)
       .order("received_at", { ascending: false }),
+    // Lo marcado a mano no se cae de la lista porque pasen dos días: si lo
+    // señalaste es porque sigue pendiente hasta que tú digas lo contrario.
+    supabase
+      .from("emails")
+      .select("*")
+      .eq("triage_model", "usuario")
+      .eq("importance", "alta")
+      .is("dismissed_at", null)
+      .order("received_at", { ascending: false })
+      .limit(50),
   ]);
 
   const items = ((itemRows.data ?? []) as (Item & {
@@ -103,7 +115,16 @@ export async function getParte(): Promise<Parte> {
     // confirmada sigue siendo un compromiso abierto hasta que se marca hecha.
     .filter((i) => i.status !== "confirmed" || i.type === "action");
 
-  const emails = (emailRows.data ?? []) as Email[];
+  const byId = new Map<string, Email>();
+  for (const email of [
+    ...((emailRows.data ?? []) as Email[]),
+    ...((starredRows.data ?? []) as Email[]),
+  ]) {
+    byId.set(email.id, email);
+  }
+  const emails = [...byId.values()].sort((a, b) =>
+    b.received_at.localeCompare(a.received_at),
+  );
 
   const withItem = new Set(items.map((i) => i.email_id));
 
@@ -114,7 +135,12 @@ export async function getParte(): Promise<Parte> {
       .map((email) => emailEntry(email, lifeById)),
   ].filter((entry): entry is ParteEntry => entry !== null);
 
-  entries.sort((a, b) => b.at.localeCompare(a.at));
+  // Lo que has marcado tú manda sobre la hora: es lo único de esta pantalla
+  // que dice explícitamente "esto por encima de lo demás".
+  entries.sort(
+    (a, b) =>
+      Number(b.starred) - Number(a.starred) || b.at.localeCompare(a.at),
+  );
 
   const noise = user ? await getNoise(user.id, since) : { list: [], count: 0 };
 
@@ -164,6 +190,7 @@ function itemEntry(
     subject: item.emails?.subject ?? null,
     gmailMessageId: item.gmail_message_id,
     needsReview: item.status === "needs_review",
+    starred: item.pinned,
   };
 }
 
@@ -188,6 +215,7 @@ function emailEntry(
     subject: email.subject,
     gmailMessageId: email.gmail_message_id,
     needsReview: false,
+    starred: email.triage_model === "usuario" && email.importance === "alta",
   };
 }
 

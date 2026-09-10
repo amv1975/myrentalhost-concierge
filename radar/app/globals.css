@@ -204,27 +204,89 @@ body:has(.parte) {
   color: var(--p-rule);
 }
 
+/* El contenedor no se mueve; lo que se desliza es la fila de dentro, para que
+   lo que asoma detrás se quede quieto. */
+.parte-item {
+  position: relative;
+  border-top: 1px solid var(--p-rule-soft);
+  overflow: hidden;
+}
+.parte-item:first-child {
+  border-top: 0;
+}
+
+.parte-behind {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.parte-behind[data-side="descartar"] {
+  justify-content: flex-start;
+  color: var(--p-alert);
+  background: var(--p-alert-soft);
+}
+.parte-behind[data-side="listo"] {
+  justify-content: flex-end;
+  color: var(--p-work);
+  background: var(--p-work-soft);
+}
+
 .parte-row {
   display: grid;
-  grid-template-columns: 3.1rem 1fr;
+  grid-template-columns: 3.1rem 1fr auto;
   gap: 0 10px;
   align-items: start;
-  width: 100%;
+  padding: 11px 0;
+  background: var(--p-paper);
+  position: relative;
+}
+
+.parte-open {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
   text-align: left;
   background: none;
   border: 0;
-  border-top: 1px solid var(--p-rule-soft);
-  padding: 11px 0;
+  padding: 0;
+  margin: 0;
   color: inherit;
   font: inherit;
   cursor: pointer;
 }
-.parte-row:first-of-type {
-  border-top: 0;
-}
-.parte-row:focus-visible {
+.parte-open:focus-visible {
   outline: 2px solid var(--p-work);
   outline-offset: 3px;
+}
+
+/* Diana ancha aunque el dibujo sea pequeño: se pulsa con el pulgar y a ciegas. */
+.parte-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: -6px -8px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--p-faint);
+  cursor: pointer;
+}
+.parte-star[aria-pressed="true"] {
+  color: var(--p-alert);
+}
+.parte-star:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 2px;
 }
 
 .parte-at {
@@ -235,12 +297,7 @@ body:has(.parte) {
   padding-top: 2px;
 }
 
-.parte-main {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
+
 
 .parte-headline {
   font-size: 14.5px;
@@ -286,10 +343,10 @@ body:has(.parte) {
   color: var(--p-muted);
 }
 
-.parte-urgent .parte-row {
+.parte-urgent .parte-item {
   border-top-color: var(--p-rule);
 }
-.parte-urgent .parte-main {
+.parte-urgent .parte-open {
   border-left: 2px solid var(--p-alert);
   padding-left: 11px;
   margin-left: -1px;
@@ -308,7 +365,7 @@ body:has(.parte) {
 }
 
 .parte-detail {
-  grid-column: 2;
+  grid-column: 2 / -1;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -512,4 +569,49 @@ body:has(.parte) {
   padding: 8px 10px;
   border-radius: 2px;
   margin: 0;
+}
+
+/* Filtrar por vida. Los recuentos van dentro del propio botón: así se ve qué
+   hay en cada lado antes de tocarlo, y no hay que entrar para descubrirlo. */
+.parte-filter {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.parte-filter button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 11px;
+  border: 1px solid var(--p-rule);
+  border-radius: 2px;
+  background: none;
+  color: var(--p-muted);
+  cursor: pointer;
+}
+
+.parte-filter button .n {
+  font-variant-numeric: tabular-nums;
+  color: var(--p-faint);
+}
+
+.parte-filter button[aria-pressed="true"] {
+  border-color: var(--p-ink);
+  background: var(--p-ink);
+  color: var(--p-paper);
+}
+
+.parte-filter button[aria-pressed="true"] .n {
+  color: var(--p-paper);
+  opacity: 0.65;
+}
+
+.parte-filter button:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 2px;
 }

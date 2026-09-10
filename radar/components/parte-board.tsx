@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ParteRow } from "@/components/parte-row";
+import { ParteList } from "@/components/parte-list";
 import { RefreshButton } from "@/components/refresh-button";
-import type { Parte, ParteEntry } from "@/lib/parte";
+import type { Parte } from "@/lib/parte";
 
 export function ParteBoard({ parte }: { parte: Parte }) {
   const total = parte.urgent.length + parte.rest.length;
@@ -48,14 +48,7 @@ export function ParteBoard({ parte }: { parte: Parte }) {
           </span>
         </p>
       ) : (
-        <>
-          <Section
-            title="Hay que mirarlo hoy"
-            entries={parte.urgent}
-            urgent
-          />
-          <Section title="Lo demás que es tuyo" entries={parte.rest} />
-        </>
+        <ParteList urgent={parte.urgent} rest={parte.rest} />
       )}
 
       {parte.discarded > 0 ? (
@@ -91,32 +84,6 @@ export function ParteBoard({ parte }: { parte: Parte }) {
         </span>
       </p>
     </div>
-  );
-}
-
-function Section({
-  title,
-  entries,
-  urgent = false,
-}: {
-  title: string;
-  entries: ParteEntry[];
-  urgent?: boolean;
-}) {
-  if (entries.length === 0) return null;
-
-  return (
-    <section className={urgent ? "parte-urgent" : undefined}>
-      <h2>
-        {title}
-        <span className="count">{entries.length}</span>
-      </h2>
-      <div>
-        {entries.map((entry) => (
-          <ParteRow key={`${entry.kind}-${entry.id}`} entry={entry} />
-        ))}
-      </div>
-    </section>
   );
 }
 

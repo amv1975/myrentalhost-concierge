@@ -3,11 +3,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sourceLabel } from "@/lib/source-label";
 import {
   buildIgnoredSection,
+  buildStarredSection,
   subjectShape,
   type IgnoredExample,
+  type StarredExample,
 } from "@/lib/triage/learned-prompt";
 
-export { buildIgnoredSection, type IgnoredExample };
+export {
+  buildIgnoredSection,
+  buildStarredSection,
+  type IgnoredExample,
+  type StarredExample,
+};
 
 /** Bastantes para que se vea el patrón, pocos para que el lote no engorde. */
 const MAX_EXAMPLES = 20;
@@ -54,6 +61,58 @@ export async function getIgnoredExamples(): Promise<IgnoredExample[]> {
     } else {
       groups.set(key, { who, subject, count: 1 });
     }
+  }
+
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, MAX_EXAMPLES);
+}
+
+/**
+ * Lo que ha marcado como importante a mano.
+ *
+ * Se reconocen por `triage_model = 'usuario'`: ese campo dice quién clasificó
+ * el correo, y cuando la persona corrige al modelo pasa a ser ella. Sin esa
+ * marca no habría forma de distinguir un "alta" que puso ella de uno que puso
+ * el modelo, y el filtro acabaría aprendiendo de sus propias decisiones.
+ */
+export async function getStarredExamples(): Promise<StarredExample[]> {
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from("emails")
+    .select("from_email, from_name, subject")
+    .eq("triage_model", USER_MARK)
+    .eq("importance", "alta")
+    .order("received_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+
+  return group(
+    (data ?? []) as {
+      from_email: string;
+      from_name: string | null;
+      subject: string | null;
+    }[],
+  );
+}
+
+/** Quién clasificó el correo, cuando deja de ser el modelo. */
+export const USER_MARK = "usuario";
+
+function group(
+  rows: { from_email: string; from_name: string | null; subject: string | null }[],
+): StarredExample[] {
+  const groups = new Map<string, StarredExample>();
+
+  for (const row of rows) {
+    const who = sourceLabel(row.from_email, row.from_name) ?? row.from_email;
+    const subject = row.subject ?? "(sin asunto)";
+    const key = `${who}::${subjectShape(subject)}`;
+
+    const existing = groups.get(key);
+    if (existing) existing.count += 1;
+    else groups.set(key, { who, subject, count: 1 });
   }
 
   return [...groups.values()]

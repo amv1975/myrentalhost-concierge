@@ -10,7 +10,12 @@ import {
   type GateContext,
   type GateEmail,
 } from "@/lib/triage/gate-prompt";
-import { buildIgnoredSection, getIgnoredExamples } from "@/lib/triage/learned";
+import {
+  buildIgnoredSection,
+  buildStarredSection,
+  getIgnoredExamples,
+  getStarredExamples,
+} from "@/lib/triage/learned";
 import { readUsage, type Spend } from "@/lib/usage";
 import type { Email, Space, TriageCategory } from "@/lib/types";
 
@@ -95,9 +100,18 @@ export async function gatePending(
 
     const pending = (data ?? []) as ScreenedEmail[];
 
-    // Una sola consulta por pasada: lo aprendido no cambia entre lotes, y va
-    // en el prompt de sistema, que además está en caché.
-    const learned = buildIgnoredSection(await getIgnoredExamples());
+    // Dos consultas por pasada, no por lote: lo aprendido no cambia entre
+    // lotes y va en el prompt de sistema, que además está en caché.
+    //
+    // Lo marcado va después de lo descartado a propósito: cuando un correo se
+    // parece a las dos listas, lo último que lee el modelo es que ante la duda
+    // suba. Perderse algo cuesta más que enseñar algo de más.
+    const [ignored, starred] = await Promise.all([
+      getIgnoredExamples(),
+      getStarredExamples(),
+    ]);
+    const learned =
+      buildIgnoredSection(ignored) + buildStarredSection(starred);
 
     const batches: ScreenedEmail[][] = [];
     for (let i = 0; i < pending.length; i += BATCH) {

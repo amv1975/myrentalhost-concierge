@@ -22,6 +22,44 @@ export interface IgnoredExample {
   count: number;
 }
 
+export interface StarredExample {
+  who: string;
+  subject: string;
+  count: number;
+}
+
+/**
+ * Lo que esta persona ha marcado a mano como importante.
+ *
+ * Es la otra mitad, y la que más duele cuando falta: descartar enseña qué no
+ * traer, pero eso solo hace el parte más corto. Lo que hace que sea fiable es
+ * aprender qué NO se puede perder — un correo que no subió y tenía que subir no
+ * deja rastro en ningún sitio salvo aquí, cuando la persona lo encuentra en
+ * Gmail y lo marca.
+ *
+ * Y pesa más que lo descartado: equivocarse por exceso cuesta un toque para
+ * quitarlo; equivocarse por defecto cuesta perderse una notificación de la
+ * Seguridad Social.
+ */
+export function buildStarredSection(examples: StarredExample[]): string {
+  if (examples.length === 0) return "";
+
+  const lines = examples.map((e) => {
+    const veces = e.count > 1 ? ` (marcado ${e.count} veces)` : "";
+    return `- ${e.who}: «${e.subject}»${veces}`;
+  });
+
+  return `
+
+## Lo que esta persona ha marcado como importante
+
+Estos correos los marcó a mano porque le importaban. Sube al parte lo que se les parezca en intención, aunque cambien los nombres, las fechas o los importes:
+
+${lines.join("\n")}
+
+Esta lista pesa más que la de descartados. Si un correo se parece a algo de aquí, sube aunque dudes: colar uno de más le cuesta un toque para quitarlo, y dejar fuera uno de estos le puede costar un plazo, un cobro o un cliente.`;
+}
+
 /**
  * Lo que esta persona ha marcado como que no le interesa, para el filtro.
  *

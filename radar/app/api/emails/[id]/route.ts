@@ -12,6 +12,10 @@ import { assertSpaceMember } from "@/lib/spaces";
  * - **descartar** — esto no era mío. Además de desaparecer, reclasifica el
  *   correo como ruido, y de ahí sale lo que el filtro aprende: la próxima vez
  *   que llegue un aviso del mismo tipo no sube al parte.
+ * - **destacar** — esto sí me importa. Sube arriba, deja de caducar con la
+ *   ventana de dos días, y le enseña al filtro qué no puede volver a dejarse
+ *   fuera. Es la mitad que más pesa: un correo que no subió y tenía que subir
+ *   no deja rastro en ninguna parte salvo aquí.
  *
  * Descartar es una corrección al modelo, no una papelera. El correo sigue
  * intacto en Gmail: aquí no se borra, ni se archiva, ni se toca el buzón.
@@ -23,7 +27,15 @@ export async function PATCH(
   const { id } = await params;
   const body = (await request.json()) as { action?: string };
 
-  if (!["visto", "descartar", "reabrir"].includes(body.action ?? "")) {
+  const ACCIONES = [
+    "visto",
+    "descartar",
+    "reabrir",
+    "destacar",
+    "quitar-destacado",
+  ];
+
+  if (!ACCIONES.includes(body.action ?? "")) {
     return NextResponse.json(
       { error: `Acción no permitida: ${body.action ?? "(vacía)"}` },
       { status: 400 },
@@ -74,12 +86,19 @@ export async function PATCH(
   //
   // El espacio se conserva aunque la categoría cambie, y por eso deshacer
   // funciona: sin él no habría a qué vida devolverlo.
+  // `triage_model` dice quién clasificó el correo. Cuando la persona corrige al
+  // modelo pasa a ser ella, y esa marca es la que permite aprender de sus
+  // decisiones sin aprender de las propias.
   const change =
     body.action === "descartar"
-      ? { dismissed_at: now, triage_category: "none" }
+      ? { dismissed_at: now, triage_category: "none", triage_model: "usuario" }
       : body.action === "visto"
         ? { dismissed_at: now }
-        : { dismissed_at: null, triage_category: spaceKey };
+        : body.action === "destacar"
+          ? { importance: "alta", triage_model: "usuario", dismissed_at: null }
+          : body.action === "quitar-destacado"
+            ? { importance: "normal", triage_model: "usuario" }
+            : { dismissed_at: null, triage_category: spaceKey };
 
   const { error: updateError } = await admin
     .from("emails")

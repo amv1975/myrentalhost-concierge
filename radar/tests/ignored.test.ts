@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildIgnoredSection,
+  buildStarredSection,
   subjectShape,
 } from "@/lib/triage/learned-prompt";
 
@@ -49,5 +50,34 @@ describe("agrupar lo descartado", () => {
     expect(subjectShape("Reservation confirmed")).not.toBe(
       subjectShape("Reservation cancelled"),
     );
+  });
+});
+
+describe("lo que la app aprende a no perderse", () => {
+  it("sin nada marcado no añade nada al prompt", () => {
+    expect(buildStarredSection([])).toBe("");
+  });
+
+  it("pesa más que lo descartado, y lo dice", () => {
+    // No es simetría bonita: equivocarse por exceso cuesta un toque para
+    // quitarlo, y por defecto cuesta perderse un plazo de la Seguridad Social.
+    const section = buildStarredSection([
+      { who: "Seguridad Social", subject: "Aviso de notificación", count: 2 },
+    ]);
+    expect(section).toContain("pesa más");
+    expect(section).toContain("sube aunque dudes");
+    expect(section).toContain("marcado 2 veces");
+  });
+
+  it("las dos listas empujan en sentidos contrarios", () => {
+    // Si dijeran lo mismo, una de las dos sobraría.
+    const fuera = buildIgnoredSection([
+      { who: "Airbnb", subject: "Entrada del huésped", count: 3 },
+    ]);
+    const dentro = buildStarredSection([
+      { who: "Gestoría", subject: "Factura pendiente", count: 3 },
+    ]);
+    expect(fuera).toContain("none");
+    expect(dentro).toContain("Sube al parte");
   });
 });

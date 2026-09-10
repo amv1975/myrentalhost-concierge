@@ -69,6 +69,8 @@ export interface Email {
   actionable: boolean;
   importance: Importance;
   triaged_at: string | null;
+  /** Marcado como visto en el parte. Sigue intacto en Gmail. */
+  dismissed_at: string | null;
   extraction_status: ExtractionStatus;
   extraction_attempts: number;
   extraction_error: string | null;

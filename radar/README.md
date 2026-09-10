@@ -15,9 +15,14 @@ app exista:
   firmar una autorización, decidir el precio de un late check-out. Son las que
   se pierden hoy, y el calendario no sabe guardarlas.
 
-Dos espacios que no se mezclan nunca: **Familia** (el colegio) y **Trabajo**
-(los canales de reserva). Separados en la base de datos con RLS, no solo en la
-interfaz.
+Se abre en **el parte de la mañana**: una sola lista con lo que hay que mirar
+hoy arriba, el resto de lo tuyo debajo, y al final cuántos correos se tiraron y
+cuáles — sin poder comprobar eso, nadie se fía de un filtro que decide por él.
+
+Cada línea lleva su etiqueta, **Familia** (el colegio) o **Trabajo** (el
+negocio), porque a las siete de la mañana no quieres elegir en qué mitad de tu
+vida mirar. Los dos espacios siguen separados donde de verdad importa: en la
+base de datos, con RLS, no en la pantalla.
 
 En producción: **https://radar-sigma-five.vercel.app**
 

@@ -15,6 +15,12 @@ export function SpaceTabs({
   activeSlug?: string;
 }) {
   const pathname = usePathname();
+
+  // El parte trae su propia cabecera con la fecha, y encima de ella una barra
+  // de pestañas solo estorbaría: lo primero que se ve por la mañana tiene que
+  // ser qué pasa hoy, no dónde estás.
+  if (forcedSlug === undefined && pathname === "/") return null;
+
   const activeSlug = forcedSlug ?? pathname.split("/")[1] ?? "";
   const isPreview = forcedSlug !== undefined;
   const href = (slug: string) =>

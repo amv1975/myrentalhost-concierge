@@ -50,7 +50,9 @@ alter table emails
   add column if not exists recipients text[] not null default '{}',
   -- Trae List-Unsubscribe: es un envío masivo, no un correo escrito para ti.
   -- Es la pista más barata que hay de que algo es ruido.
-  add column if not exists bulk boolean not null default false;
+  add column if not exists bulk boolean not null default false,
+  -- Despachado desde el parte. No se borra nada del buzón: solo deja de subir.
+  add column if not exists dismissed_at timestamptz;
 
 -- El cuerpo ya no se guarda al ingerir: se pide a Gmail solo cuando el correo
 -- ha pasado el filtro por asunto. La inmensa mayoría se queda sin él para

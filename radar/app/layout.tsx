@@ -1,5 +1,27 @@
 import type { Metadata, Viewport } from "next";
+import { Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+
+/**
+ * Las dos caras del parte: una serif con carácter para la fecha, que es lo
+ * primero que se ve al abrir por la mañana, y una mono para las horas y los
+ * recuentos, donde los dígitos tienen que alinearse. El cuerpo sigue siendo la
+ * tipografía del sistema: se lee bien en cualquier móvil y no cuesta nada.
+ */
+const serif = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["400", "500"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Radar",
@@ -33,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={`${serif.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -82,3 +82,393 @@ body {
 .tnum {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------------------------------------------------------------------------
+   El parte de la mañana.
+   
+   Tiene paleta y tipografía propias porque es otra cosa que las fichas: no se
+   opera, se lee de un vistazo con el café. Un cuerpo serio para la fecha, una
+   mono para las horas y los recuentos, y el color gastado en un solo sitio —
+   la barra roja de lo que urge.
+   --------------------------------------------------------------------------- */
+
+.parte {
+  --p-paper: #eef0ee;
+  --p-surface: #f8f9f7;
+  --p-ink: #141816;
+  --p-muted: #5a6360;
+  --p-faint: #8b9490;
+  --p-rule: #d6dbd7;
+  --p-rule-soft: #e4e8e5;
+  --p-work: #0b4f4a;
+  --p-work-soft: #dbe7e4;
+  --p-family: #6b2d4e;
+  --p-family-soft: #eddfe5;
+  --p-alert: #a3301a;
+  --p-alert-soft: #f3ded8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .parte {
+    --p-paper: #0f1211;
+    --p-surface: #171b19;
+    --p-ink: #e4e8e5;
+    --p-muted: #97a19d;
+    --p-faint: #6b7571;
+    --p-rule: #272d2a;
+    --p-rule-soft: #1f2422;
+    --p-work: #6fbfb2;
+    --p-work-soft: #12302c;
+    --p-family: #d69db6;
+    --p-family-soft: #33202a;
+    --p-alert: #e8846a;
+    --p-alert-soft: #381d15;
+  }
+
+  body:has(.parte) {
+    background: #0f1211;
+    color: #e4e8e5;
+  }
+}
+
+/* Sin esto el parte sería un rectángulo claro sobre el gris de la app. */
+body:has(.parte) {
+  background: #eef0ee;
+}
+
+.parte {
+  background: var(--p-paper);
+  color: var(--p-ink);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.parte-eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--p-faint);
+}
+
+.parte-date {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(26px, 8vw, 33px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  margin: 8px 0 0;
+}
+.parte-date em {
+  font-style: italic;
+  color: var(--p-muted);
+}
+
+.parte-tally {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--p-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--p-rule);
+  font-variant-numeric: tabular-nums;
+}
+.parte-tally b {
+  font-weight: 500;
+  color: var(--p-ink);
+}
+.parte-tally .sep {
+  color: var(--p-rule);
+}
+
+.parte h2 {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--p-faint);
+  margin: 0 0 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.parte h2 .count {
+  color: var(--p-rule);
+}
+
+.parte-row {
+  display: grid;
+  grid-template-columns: 3.1rem 1fr;
+  gap: 0 10px;
+  align-items: start;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--p-rule-soft);
+  padding: 11px 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.parte-row:first-of-type {
+  border-top: 0;
+}
+.parte-row:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 3px;
+}
+
+.parte-at {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--p-faint);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+
+.parte-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.parte-headline {
+  font-size: 14.5px;
+  line-height: 1.42;
+  text-wrap: pretty;
+}
+
+.parte-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 7px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--p-faint);
+}
+.parte-who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 15rem;
+}
+
+.parte-chip {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+.parte-chip[data-life="work"] {
+  color: var(--p-work);
+  background: var(--p-work-soft);
+}
+.parte-chip[data-life="family"] {
+  color: var(--p-family);
+  background: var(--p-family-soft);
+}
+
+.parte-when {
+  color: var(--p-muted);
+}
+
+.parte-urgent .parte-row {
+  border-top-color: var(--p-rule);
+}
+.parte-urgent .parte-main {
+  border-left: 2px solid var(--p-alert);
+  padding-left: 11px;
+  margin-left: -1px;
+}
+.parte-urgent .parte-headline {
+  font-weight: 500;
+  font-size: 15.5px;
+}
+
+.parte-flag {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--p-alert);
+  text-transform: uppercase;
+}
+
+.parte-detail {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 0 4px;
+  border-top: 1px dashed var(--p-rule);
+  margin-top: 11px;
+}
+.parte-urgent .parte-detail {
+  padding-left: 13px;
+}
+.parte-detail p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--p-muted);
+  max-width: 62ch;
+}
+.parte-subject {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--p-faint);
+  word-break: break-word;
+}
+
+.parte-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.parte-btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 13px;
+  border-radius: 2px;
+  border: 1px solid var(--p-rule);
+  background: var(--p-surface);
+  color: var(--p-ink);
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+}
+.parte-btn:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 2px;
+}
+.parte-btn.primary {
+  border-color: var(--p-ink);
+  background: var(--p-ink);
+  color: var(--p-paper);
+}
+.parte-btn[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.parte-noise {
+  border-top: 1px solid var(--p-rule);
+  padding-top: 14px;
+}
+.parte-noise summary {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--p-muted);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+}
+.parte-noise summary::-webkit-details-marker {
+  display: none;
+}
+.parte-noise summary::before {
+  content: "›";
+  color: var(--p-faint);
+}
+.parte-noise[open] summary::before {
+  content: "⌄";
+}
+.parte-noise summary:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 3px;
+}
+.parte-noise ul {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 17rem;
+  overflow-y: auto;
+}
+.parte-noise li {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--p-faint);
+  display: flex;
+  gap: 7px;
+}
+.parte-noise .nfrom {
+  color: var(--p-muted);
+  flex: 0 0 8.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.parte-noise .nsubj {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.parte-noise .note {
+  font-size: 12px;
+  color: var(--p-faint);
+  margin: 12px 0 0;
+  max-width: 58ch;
+}
+
+.parte-empty {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 19px;
+  color: var(--p-muted);
+  margin: 0;
+}
+.parte-empty span {
+  display: block;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--p-faint);
+  margin-top: 6px;
+}
+
+.parte-foot {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--p-faint);
+  border-top: 1px solid var(--p-rule);
+  padding-top: 14px;
+  line-height: 1.7;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.parte-foot a {
+  color: var(--p-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* El botón de actualizar viene de la otra pantalla, con la paleta de la otra
+   pantalla. Aquí se viste con la del parte para que no cante en oscuro. */
+.parte-refresh button {
+  background: var(--p-ink);
+  color: var(--p-paper);
+  border-radius: 2px;
+  font-size: 15px;
+}
+
+.parte-refresh p {
+  color: var(--p-muted);
+}

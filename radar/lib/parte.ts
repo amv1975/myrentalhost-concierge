@@ -4,6 +4,7 @@ import { sourceLabel } from "@/lib/source-label";
 import { formatDate, formatDateTime, daysBetween } from "@/lib/format";
 import type { Email, Item, SpaceKey } from "@/lib/types";
 import { describeError } from "@/lib/errors";
+import { MARCA_USUARIO } from "@/lib/triage/estados";
 
 /**
  * El parte de la mañana.
@@ -144,7 +145,7 @@ async function buildParte(): Promise<Parte> {
     supabase
       .from("emails")
       .select("*")
-      .eq("triage_model", "usuario")
+      .eq("triage_model", MARCA_USUARIO)
       .eq("importance", "alta")
       .is("dismissed_at", null)
       .order("received_at", { ascending: false })
@@ -305,7 +306,7 @@ function emailEntry(
     link: email.link_note,
     gmailMessageId: email.gmail_message_id,
     needsReview: false,
-    starred: email.triage_model === "usuario" && email.importance === "alta",
+    starred: email.triage_model === MARCA_USUARIO && email.importance === "alta",
   };
 }
 

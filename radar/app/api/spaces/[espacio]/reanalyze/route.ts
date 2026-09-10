@@ -8,6 +8,7 @@ import { buildTriageContext } from "@/lib/triage/context";
 import { getVisibleSpaces } from "@/lib/spaces";
 import { Spend } from "@/lib/usage";
 import { slugToSpaceKey, type Item } from "@/lib/types";
+import { MARCA_USUARIO } from "@/lib/triage/estados";
 
 export const maxDuration = 60;
 
@@ -108,7 +109,7 @@ export async function POST(
     })
     .eq("space_id", space.id)
     .is("dismissed_at", null)
-    .or("triage_model.is.null,triage_model.neq.usuario");
+    .or(`triage_model.is.null,triage_model.neq.${MARCA_USUARIO}`);
   if (triageError) throw triageError;
 
   const { data: emailRows, error: emailsError } = await admin

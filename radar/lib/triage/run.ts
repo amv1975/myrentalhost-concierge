@@ -265,8 +265,6 @@ async function save(
       actionable: triage.actionable,
       importance: triage.importance,
       space_id: spaceId,
-      triage_model: TRIAGE_MODEL,
-      triaged_at: new Date().toISOString(),
       // Lo que no pide nada no llega al modelo caro: se queda con su resumen.
       extraction_status: triage.actionable ? "pending" : "skipped",
     })

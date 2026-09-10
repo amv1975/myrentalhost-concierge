@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sourceLabel } from "@/lib/source-label";
+import { MARCA_USUARIO } from "@/lib/triage/estados";
 import {
   buildIgnoredSection,
   buildStarredSection,
@@ -82,7 +83,7 @@ export async function getStarredExamples(): Promise<StarredExample[]> {
   const { data, error } = await admin
     .from("emails")
     .select("from_email, from_name, subject")
-    .eq("triage_model", USER_MARK)
+    .eq("triage_model", MARCA_USUARIO)
     .eq("importance", "alta")
     .order("received_at", { ascending: false })
     .limit(200);
@@ -97,8 +98,7 @@ export async function getStarredExamples(): Promise<StarredExample[]> {
   );
 }
 
-/** Quién clasificó el correo, cuando deja de ser el modelo. */
-export const USER_MARK = "usuario";
+
 
 function group(
   rows: { from_email: string; from_name: string | null; subject: string | null }[],

@@ -122,3 +122,16 @@ describe("de quién es cada correo", () => {
     }
   });
 });
+
+describe("el sello del criterio", () => {
+  it("lo que decidiste tú no caduca nunca", async () => {
+    // Un cambio de reglas devuelve al filtro los correos juzgados con el
+    // criterio viejo. Lo que corregiste a mano lleva otro sello justamente
+    // para que no lo pise el modelo la próxima vez.
+    const { CRITERIO_ACTUAL, MARCA_USUARIO } = await import(
+      "@/lib/triage/estados"
+    );
+    expect(MARCA_USUARIO).not.toBe(CRITERIO_ACTUAL);
+    expect(CRITERIO_ACTUAL).toMatch(/\/v\d+$/);
+  });
+});

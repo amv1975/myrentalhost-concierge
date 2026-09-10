@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { GateResultSchema } from "@/lib/triage/gate-schema";
 import { knownSpaceFor } from "@/lib/ingest/query";
+import { CRITERIO_ACTUAL } from "@/lib/triage/estados";
 import {
   buildGateSystemPrompt,
   buildGateUserPrompt,
@@ -224,6 +225,7 @@ async function runBatch(
         triage_category: category,
         space_id: spaceIdByKey.get(category) ?? null,
         triage_status: "pending",
+        triage_model: CRITERIO_ACTUAL,
         triaged_at: new Date().toISOString(),
       })
       .eq("id", email.id);
@@ -243,7 +245,7 @@ async function runBatch(
         space_id: null,
         actionable: false,
         extraction_status: "skipped",
-        triage_model: GATE_MODEL,
+        triage_model: CRITERIO_ACTUAL,
         triaged_at: new Date().toISOString(),
       })
       .in("id", noise);

@@ -47,3 +47,19 @@ export function tocaLeer(email: EstadoCorreo): boolean {
 export function estaTerminado(email: EstadoCorreo): boolean {
   return !tocaFiltro(email) && !tocaLeer(email);
 }
+
+/**
+ * El sello del criterio con el que se juzgó un correo.
+ *
+ * Cambia cada vez que se afinan las reglas del filtro. Los correos sellados
+ * con uno anterior vuelven a la cola solos, sin que nadie tenga que acordarse
+ * de pulsar nada: un criterio nuevo que solo se aplica a lo que llegue mañana
+ * no arregla la bandeja de hoy, que es justo lo que se está mirando.
+ *
+ * Sube el número al cambiar el prompt del filtro de forma que cambie lo que
+ * entra o lo que sale.
+ */
+export const CRITERIO_ACTUAL = "haiku-4.5/v2";
+
+/** El sello de lo que decidiste tú. Este no caduca nunca. */
+export const MARCA_USUARIO = "usuario";

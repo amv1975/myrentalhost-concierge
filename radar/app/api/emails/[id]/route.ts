@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember } from "@/lib/spaces";
+import { MARCA_USUARIO } from "@/lib/triage/estados";
 
 /**
  * Quitar del parte un correo que solo se resume.
@@ -91,13 +92,13 @@ export async function PATCH(
   // decisiones sin aprender de las propias.
   const change =
     body.action === "descartar"
-      ? { dismissed_at: now, triage_category: "none", triage_model: "usuario" }
+      ? { dismissed_at: now, triage_category: "none", triage_model: MARCA_USUARIO }
       : body.action === "visto"
         ? { dismissed_at: now }
         : body.action === "destacar"
-          ? { importance: "alta", triage_model: "usuario", dismissed_at: null }
+          ? { importance: "alta", triage_model: MARCA_USUARIO, dismissed_at: null }
           : body.action === "quitar-destacado"
-            ? { importance: "normal", triage_model: "usuario" }
+            ? { importance: "normal", triage_model: MARCA_USUARIO }
             : { dismissed_at: null, triage_category: spaceKey };
 
   const { error: updateError } = await admin

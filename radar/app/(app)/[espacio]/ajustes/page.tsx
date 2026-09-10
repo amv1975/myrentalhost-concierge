@@ -11,6 +11,7 @@ import { getMonthSpend } from "@/lib/spend";
 import { formatUsd } from "@/lib/usage";
 import { PantallaRota } from "@/components/pantalla-rota";
 import { describeError } from "@/lib/errors";
+import { checkSchema } from "@/lib/schema-check";
 
 export default async function SettingsPage({
   params,
@@ -30,6 +31,8 @@ export default async function SettingsPage({
   } catch (error) {
     spendError = describeError(error);
   }
+
+  const schema = await checkSchema();
 
   const space = await getSpaceByKey(key);
   if (!space) notFound();
@@ -79,6 +82,34 @@ export default async function SettingsPage({
           ← Volver
         </Link>
       </div>
+
+      <section>
+        <h2 className="text-sm font-semibold">Estado de la base de datos</h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Si el código espera una columna que la base de datos no tiene, la app
+          falla a mitad de una actualización y el motivo no se ve hasta que
+          revientas algo. Aquí se comprueban todas de golpe.
+        </p>
+        {schema.ok ? (
+          <p className="mt-3 text-sm font-medium text-[var(--color-ok)]">
+            Al día. No falta nada.
+          </p>
+        ) : (
+          <div className="mt-3 rounded-xl bg-[var(--color-danger-soft)] px-4 py-3">
+            <p className="text-sm font-semibold text-[var(--color-danger)]">
+              {schema.error
+                ? "No se pudo comprobar"
+                : `Faltan ${schema.missing.length} columnas`}
+            </p>
+            <p className="mt-1 font-mono text-xs text-[var(--color-danger)]">
+              {schema.error ?? schema.missing.join(", ")}
+            </p>
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
+              Pásale esta lista a Claude y te da el SQL para ponerla al día.
+            </p>
+          </div>
+        )}
+      </section>
 
       <section>
         <h2 className="text-sm font-semibold">Gasto de este mes</h2>

@@ -156,7 +156,10 @@ body:has(.parte) {
 
 .parte-date {
   font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(26px, 8vw, 33px);
+  /* Ajustada para que "Jueves, 10 de septiembre" quepa en una sola línea en un
+     móvil estrecho: dos líneas para una fecha es mucho papel para poco dato. */
+  font-size: clamp(19px, 5.4vw, 27px);
+  white-space: nowrap;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.01em;

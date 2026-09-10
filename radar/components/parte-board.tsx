@@ -21,9 +21,7 @@ export function ParteBoard({
     <div className="parte">
       <header>
         <p className="parte-eyebrow">Parte de la mañana</p>
-        <h1 className="parte-date">
-          {longDate()} <em>{new Date().getFullYear()}</em>
-        </h1>
+        <h1 className="parte-date">{longDate()}</h1>
         <div className="parte-tally">
           <span>
             <b>{parte.scanned}</b> correos mirados
@@ -116,13 +114,16 @@ export function ParteBoard({
   );
 }
 
+/** Sin año: si estás leyendo el parte de la mañana, ya sabes en qué año vives. */
 function longDate(): string {
-  return new Intl.DateTimeFormat("es-ES", {
+  const texto = new Intl.DateTimeFormat("es-ES", {
     timeZone: "Europe/Madrid",
     weekday: "long",
     day: "numeric",
     month: "long",
   }).format(new Date());
+
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 function hhmm(iso: string): string {

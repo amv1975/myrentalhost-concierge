@@ -9,7 +9,7 @@ import { buildTriageContext } from "@/lib/triage/context";
 import { extractPending } from "@/lib/extraction/run";
 import { syncSpace } from "@/lib/calendar/sync";
 import { Spend } from "@/lib/usage";
-import { deadlineIn, type Deadline } from "@/lib/deadline";
+import { deadlineIn, porcion, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 import { CATEGORIAS_PROPIAS, ESTADOS_LEIBLES } from "@/lib/triage/estados";
@@ -69,10 +69,10 @@ export async function runPipeline(
    *
    * No son los 60 s que da Vercel a propósito. Una petición de un minuto desde
    * un móvil con la pantalla encendida a medias se muere sola —"Failed to
-   * fetch"— y entonces no avanzas nada y encima no sabes por qué. Veinticinco
-   * segundos siempre llegan, y quien llama vuelve a llamar hasta terminar.
+   * fetch"— y entonces no avanzas nada y encima no sabes por qué. Treinta y
+   * cinco llegan bien, y quien llama vuelve a llamar hasta terminar.
    */
-  totalMs = 25_000,
+  totalMs = 35_000,
 ): Promise<PipelineResult> {
   const plazo: Deadline = deadlineIn(totalMs);
   const spend = new Spend();
@@ -118,7 +118,12 @@ export async function runPipeline(
   // tiempo de esta pasada rinde mucho más vaciándola.
   const backlog = await countBacklog();
   if (backlog < BACKLOG_LIMIT) {
-    const ingested = await ingestInbox(accessToken, spaces, desde, plazo);
+    const ingested = await ingestInbox(
+      accessToken,
+      spaces,
+      desde,
+      porcion(plazo, REPARTO.bajar),
+    );
     result.messagesNew = ingested.messagesNew;
     if (ingested.error) result.errors.push(ingested.error);
   }
@@ -135,11 +140,18 @@ export async function runPipeline(
     return result;
   }
 
-  const gated = await gatePending(spaces, context, spend, plazo);
+  const gated = await gatePending(
+    spaces,
+    context,
+    spend,
+    porcion(plazo, REPARTO.filtrar),
+  );
   result.screened = gated.screened;
   result.discarded = gated.discarded;
   if (gated.error) result.errors.push(gated.error);
 
+  // La lectura va con el plazo entero, no con una porción: es la etapa que
+  // produce lo que se ve, y lo que le sobre a las anteriores es suyo.
   const triaged = await triagePending(accessToken, spaces, context, spend, plazo);
   result.read = triaged.read;
   result.family = triaged.family;
@@ -185,6 +197,19 @@ export async function runPipeline(
 
 /** Con más de esto en cola, esta pasada no baja correos nuevos. */
 const BACKLOG_LIMIT = 60;
+
+/**
+ * Cuánto puede llevarse cada etapa antes de dejar paso.
+ *
+ * Sin este reparto, la descarga se comía el plazo entero y la lectura no leía
+ * ni un correo — pasada tras pasada, con el contador clavado. Bajar y filtrar
+ * tienen techo; leer se queda con lo que sobre, porque es la única etapa que
+ * produce algo que se ve en pantalla.
+ */
+const REPARTO = {
+  bajar: 8_000,
+  filtrar: 10_000,
+};
 
 /**
  * Cuánto se solapa con la pasada anterior.

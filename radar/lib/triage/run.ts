@@ -170,32 +170,38 @@ export async function triagePending(
       const batch = emails.slice(i, i + CONCURRENCY);
 
       // El cuerpo se pide aquí, no en la ingesta: son estos pocos y no los
-      // cientos que entraron.
-      const withBody: Email[] = [];
-      for (const email of batch) {
-        if (email.body_text !== null) {
-          withBody.push(email);
-          continue;
-        }
-        if (!accessToken) continue;
-        try {
-          const bodyText = await getMessageBody(
-            accessToken,
-            email.gmail_message_id,
-          );
-          await admin
-            .from("emails")
-            .update({ body_text: bodyText })
-            .eq("id", email.id);
-          withBody.push({ ...email, body_text: bodyText });
-        } catch (caught) {
-          if (caught instanceof GmailRateLimitError) {
-            result.error = caught.message;
-            break;
+      // cientos que entraron. En paralelo, porque uno detrás de otro son diez
+      // esperas seguidas y se comían la mitad del plazo de la etapa.
+      const bajados = await Promise.all(
+        batch.map(async (email) => {
+          if (email.body_text !== null) return { email, error: null };
+          if (!accessToken) return { email: null, error: null };
+
+          try {
+            const bodyText = await getMessageBody(
+              accessToken,
+              email.gmail_message_id,
+            );
+            await admin
+              .from("emails")
+              .update({ body_text: bodyText })
+              .eq("id", email.id);
+            return { email: { ...email, body_text: bodyText }, error: null };
+          } catch (caught) {
+            if (caught instanceof GmailRateLimitError) {
+              return { email: null, error: caught.message };
+            }
+            throw caught;
           }
-          throw caught;
-        }
-      }
+        }),
+      );
+
+      const cortado = bajados.find((b) => b.error);
+      if (cortado?.error) result.error = cortado.error;
+
+      const withBody = bajados
+        .map((b) => b.email)
+        .filter((email): email is Email => email !== null);
 
       const outcomes = await Promise.all(
         withBody.map(async (email) => {

@@ -44,7 +44,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#16171a",
+  // La barra de estado del móvil va del color del suelo de la app, y cambia
+  // con el modo del sistema. Fija en negro, dejaba una franja oscura pegada
+  // encima de una pantalla clara.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#eef0ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1211" },
+  ],
   // Que el fondo llegue bajo la barra de estado y el área del gesto de inicio.
   viewportFit: "cover",
 };

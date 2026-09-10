@@ -7,9 +7,13 @@
   --color-muted: #757e8c;
   --color-faint: #9aa3b0;
 
-  /* Superficies */
+  /* Superficies.
+
+     Un solo suelo para toda la app. Antes había dos —el gris de las fichas y
+     el papel del parte— y solo el parte tenía versión oscura: con el móvil en
+     modo noche salía una lámina oscura flotando sobre un fondo claro. */
   --color-surface: #ffffff;
-  --color-ground: #f4f5f7;
+  --color-ground: #eef0ee;
   --color-line: #e3e6eb;
   --color-line-soft: #eef0f4;
 
@@ -26,15 +30,30 @@
   --color-warn-soft: #fdf3e0;
   --color-ok: #0f7a4a;
   --color-ok-soft: #e6f5ee;
+
+  /* Los botones sólidos. Mismo motivo que --p-solid en el parte: en oscuro,
+     "fondo de color tinta con texto blanco" se convierte en fondo claro con
+     texto blanco, que no se lee. El sólido se define aparte para cada modo en
+     vez de salir de invertir el texto. */
+  --color-solid: #14161a;
+  --color-solid-ink: #ffffff;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Sin esto, el rebote del scroll y las zonas fuera del contenido enseñan el
+     blanco del navegador por debajo. */
+  background: var(--color-ground);
+  /* Que los controles nativos —scrollbars, selects, el teclado— vayan a juego
+     en vez de aparecer en claro sobre una pantalla oscura. */
+  color-scheme: light;
 }
 
 body {
   background: var(--color-ground);
   color: var(--color-ink);
+  /* El contenido corto no deja una franja de otro color debajo del pie. */
+  min-height: 100dvh;
   font-family:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   /* Instalada como app no hay barra del navegador, así que el contenido
@@ -93,7 +112,9 @@ body {
    --------------------------------------------------------------------------- */
 
 .parte {
-  --p-paper: #eef0ee;
+  /* El mismo suelo que el resto de la app, claro u oscuro. Tener el suyo
+     propio es lo que dejaba el parte flotando sobre otro color. */
+  --p-paper: var(--color-ground);
   --p-surface: #f8f9f7;
   --p-ink: #141816;
   --p-muted: #5a6360;
@@ -106,11 +127,57 @@ body {
   --p-family-soft: #eddfe5;
   --p-alert: #a3301a;
   --p-alert-soft: #f3ded8;
+
+  /* Lo que va en sólido: el botón de actualizar y el filtro activo.
+     En claro es tinta sobre papel. En oscuro NO se invierte a papel sobre
+     tinta: una losa blanca en mitad de una pantalla negra deslumbra y se
+     lleva toda la atención, que es justo lo que no queremos de un botón que
+     se pulsa una vez al día. */
+  --p-solid: #141816;
+  --p-solid-ink: #eef0ee;
+  --p-solid-line: #141816;
 }
 
+/* ---------------------------------------------------------------------------
+   Modo noche, para la app entera.
+
+   Solo el parte lo tenía, y el resultado era peor que no tenerlo: la barra de
+   espacios y los ajustes seguían en blanco mientras el parte se volvía negro.
+   Media pantalla clara y media oscura se lee peor que cualquiera de las dos.
+   --------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
+  :root {
+    --color-ink: #e4e8e5;
+    --color-body: #b9c2be;
+    --color-muted: #97a19d;
+    --color-faint: #6b7571;
+
+    --color-surface: #171b19;
+    --color-ground: #0f1211;
+    --color-line: #272d2a;
+    --color-line-soft: #1f2422;
+
+    --color-family: #4fb8ab;
+    --color-family-soft: #10302d;
+    --color-work: #9a95f0;
+    --color-work-soft: #1f1d3d;
+
+    --color-danger: #e8846a;
+    --color-danger-soft: #381d15;
+    --color-warn: #d9a441;
+    --color-warn-soft: #2e2412;
+    --color-ok: #6fbf8f;
+    --color-ok-soft: #12301f;
+
+    --color-solid: #2b332f;
+    --color-solid-ink: #e9edea;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
   .parte {
-    --p-paper: #0f1211;
     --p-surface: #171b19;
     --p-ink: #e4e8e5;
     --p-muted: #97a19d;
@@ -123,23 +190,16 @@ body {
     --p-family-soft: #33202a;
     --p-alert: #e8846a;
     --p-alert-soft: #381d15;
-  }
 
-  body:has(.parte) {
-    background: #0f1211;
-    color: #e4e8e5;
+    --p-solid: #262d2a;
+    --p-solid-ink: #e4e8e5;
+    --p-solid-line: #39423e;
   }
-}
-
-/* Sin esto el parte sería un rectángulo claro sobre el gris de la app. */
-body:has(.parte) {
-  background: #eef0ee;
 }
 
 .parte {
   background: var(--p-paper);
   color: var(--p-ink);
-  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -415,9 +475,9 @@ body:has(.parte) {
   outline-offset: 2px;
 }
 .parte-btn.primary {
-  border-color: var(--p-ink);
-  background: var(--p-ink);
-  color: var(--p-paper);
+  border-color: var(--p-solid-line);
+  background: var(--p-solid);
+  color: var(--p-solid-ink);
 }
 .parte-btn[disabled] {
   opacity: 0.55;
@@ -523,8 +583,9 @@ body:has(.parte) {
 /* El botón de actualizar viene de la otra pantalla, con la paleta de la otra
    pantalla. Aquí se viste con la del parte para que no cante en oscuro. */
 .parte-refresh button {
-  background: var(--p-ink);
-  color: var(--p-paper);
+  background: var(--p-solid);
+  color: var(--p-solid-ink);
+  border: 1px solid var(--p-solid-line);
   border-radius: 2px;
   font-size: 15px;
 }
@@ -604,13 +665,13 @@ body:has(.parte) {
 }
 
 .parte-filter button[aria-pressed="true"] {
-  border-color: var(--p-ink);
-  background: var(--p-ink);
-  color: var(--p-paper);
+  border-color: var(--p-solid-line);
+  background: var(--p-solid);
+  color: var(--p-solid-ink);
 }
 
 .parte-filter button[aria-pressed="true"] .n {
-  color: var(--p-paper);
+  color: var(--p-solid-ink);
   opacity: 0.65;
 }
 

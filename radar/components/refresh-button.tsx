@@ -107,7 +107,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
       <button
         onClick={run}
         disabled={busy}
-        className="w-full rounded-xl bg-[var(--color-ink)] px-4 py-3.5 text-base font-medium text-white shadow-sm transition active:scale-[0.99] disabled:opacity-60"
+        className="w-full rounded-xl bg-[var(--color-solid)] px-4 py-3.5 text-base font-medium text-[var(--color-solid-ink)] shadow-sm transition active:scale-[0.99] disabled:opacity-60"
       >
         {busy ? (message ?? "Buscando y analizando…") : "Actualizar"}
       </button>

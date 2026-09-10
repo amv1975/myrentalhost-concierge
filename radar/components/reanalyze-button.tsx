@@ -42,7 +42,7 @@ export function ReanalyzeButton({ espacio }: { espacio: string }) {
 
   if (asking) {
     return (
-      <div className="rounded-lg border border-[var(--color-line)] bg-white p-4">
+      <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
         <p className="text-sm">
           Se vuelven a analizar los correos y se rehacen los compromisos que
           todavía no has confirmado. Lo que ya está en tu calendario no se toca.
@@ -50,7 +50,7 @@ export function ReanalyzeButton({ espacio }: { espacio: string }) {
         <div className="mt-3 flex gap-2">
           <button
             onClick={run}
-            className="flex-1 rounded-lg bg-[var(--color-ink)] px-3 py-2.5 text-sm font-medium text-white"
+            className="flex-1 rounded-lg bg-[var(--color-solid)] px-3 py-2.5 text-sm font-medium text-[var(--color-solid-ink)]"
           >
             Reanalizar
           </button>
@@ -70,7 +70,7 @@ export function ReanalyzeButton({ espacio }: { espacio: string }) {
       <button
         onClick={() => setAsking(true)}
         disabled={busy}
-        className="w-full rounded-lg border border-[var(--color-line)] bg-white px-4 py-3 text-left text-sm disabled:opacity-60"
+        className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-left text-sm disabled:opacity-60"
       >
         {busy ? "Reanalizando…" : "Volver a analizar los correos"}
         <span className="block text-xs text-[var(--color-muted)]">

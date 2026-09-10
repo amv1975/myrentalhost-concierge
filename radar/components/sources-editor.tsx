@@ -66,7 +66,7 @@ export function SourcesEditor({
         {sources.map((source) => (
           <li
             key={source.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-line)] bg-white px-3 py-2.5"
+            className="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2.5"
           >
             <span className="truncate text-sm">
               {source.value}
@@ -94,12 +94,12 @@ export function SourcesEditor({
           inputMode="email"
           autoCapitalize="off"
           autoCorrect="off"
-          className="min-w-0 flex-1 rounded-lg border border-[var(--color-line)] bg-white px-3 py-2.5 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2.5 text-sm"
         />
         <button
           type="submit"
           disabled={busy || !value.trim()}
-          className="shrink-0 rounded-lg bg-[var(--color-ink)] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+          className="shrink-0 rounded-lg bg-[var(--color-solid)] px-4 py-2.5 text-sm font-medium text-[var(--color-solid-ink)] disabled:opacity-50"
         >
           Añadir
         </button>

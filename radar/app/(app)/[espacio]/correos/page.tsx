@@ -53,7 +53,7 @@ export default async function EmailsPage({
       </Link>
 
       {emails.length === 0 ? (
-        <p className="rounded-xl border border-[var(--color-line)] bg-white px-4 py-8 text-center text-sm text-[var(--color-muted)]">
+        <p className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-8 text-center text-sm text-[var(--color-muted)]">
           Todavía no hay correos. Pulsa «Actualizar» para traerlos.
         </p>
       ) : (
@@ -61,7 +61,7 @@ export default async function EmailsPage({
           {emails.map((email) => (
             <li
               key={email.id}
-              className="rounded-xl border border-[var(--color-line)] bg-white p-4"
+              className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4"
             >
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate text-sm font-medium">

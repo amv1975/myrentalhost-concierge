@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { SpaceBoard } from "@/components/space-board";
 import { SpaceTabs } from "@/components/space-tabs";
 import { SAMPLE_FAMILY, SAMPLE_WORK } from "@/lib/preview/sample";
+import { SAMPLE_AGENDA, SAMPLE_PARTE } from "@/lib/preview/parte-sample";
+import { ParteBoard } from "@/components/parte-board";
 import type { Space } from "@/lib/types";
 
 /** Los dos espacios como los devolvería la base de datos. */
@@ -29,11 +31,26 @@ const PREVIEW_SPACES: Space[] = (["family", "work"] as const).map((key) => ({
 export default async function PreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ espacio?: string }>;
+  searchParams: Promise<{ espacio?: string; vista?: string }>;
 }) {
   if (process.env.RADAR_PREVIEW !== "1") notFound();
 
-  const { espacio } = await searchParams;
+  const { espacio, vista } = await searchParams;
+
+  // ?vista=parte abre la pantalla principal con datos fijos. Sirve sobre todo
+  // para mirarla en claro y en oscuro sin desplegar y sin buzón.
+  if (vista === "parte") {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
+        <ParteBoard
+          parte={SAMPLE_PARTE}
+          agenda={SAMPLE_AGENDA}
+          espacios={["family", "work"]}
+        />
+      </main>
+    );
+  }
+
   const slug = espacio === "trabajo" ? "trabajo" : "familia";
   const view = slug === "trabajo" ? SAMPLE_WORK : SAMPLE_FAMILY;
 

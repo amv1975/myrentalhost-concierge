@@ -352,7 +352,7 @@ function Footer({
           <>
             <button
               onClick={() => act("confirmar")}
-              className="flex-1 rounded-xl bg-[var(--color-ink)] px-3 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
+              className="flex-1 rounded-xl bg-[var(--color-solid)] px-3 py-2.5 text-sm font-semibold text-[var(--color-solid-ink)] transition active:scale-[0.98]"
             >
               {item.type === "event" ? "Confirmar y añadir" : "Confirmar"}
             </button>

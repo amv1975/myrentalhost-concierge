@@ -49,7 +49,7 @@ export function AutoConfirmToggle({
         aria-checked={on}
         onClick={toggle}
         disabled={busy}
-        className="flex w-full items-center justify-between gap-4 rounded-lg border border-[var(--color-line)] bg-white px-4 py-3 text-left disabled:opacity-60"
+        className="flex w-full items-center justify-between gap-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-left disabled:opacity-60"
       >
         <span className="text-sm">
           Confirmar solas las de confianza alta
@@ -60,11 +60,11 @@ export function AutoConfirmToggle({
         <span
           aria-hidden
           className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-            on ? "bg-[var(--color-ink)]" : "bg-[var(--color-line)]"
+            on ? "bg-[var(--color-solid)]" : "bg-[var(--color-line)]"
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-[var(--color-solid-ink)] shadow transition-all ${
               on ? "left-[1.375rem]" : "left-0.5"
             }`}
           />

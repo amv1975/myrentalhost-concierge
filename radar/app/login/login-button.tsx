@@ -34,7 +34,7 @@ export function LoginButton({ next }: { next?: string }) {
     <button
       onClick={signIn}
       disabled={loading}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--color-line)] bg-white px-4 py-3.5 text-sm font-medium shadow-sm transition active:scale-[0.99] disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3.5 text-sm font-medium shadow-sm transition active:scale-[0.99] disabled:opacity-60"
     >
       <svg viewBox="0 0 24 24" aria-hidden className="h-5 w-5">
         <path

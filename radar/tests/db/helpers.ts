@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "../..");
@@ -8,11 +8,15 @@ export const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
   "postgres://radar:radar@127.0.0.1:5432/radar_test";
 
+const MIGRATIONS = path.join(ROOT, "supabase/migrations");
+
 /**
  * Base de datos limpia con el esquema real aplicado.
  *
- * Se aplica 0001_init.sql tal cual se despliega: si la migración se rompe, los
- * tests se rompen. Un esquema paralelo escrito para los tests no probaría nada.
+ * Se aplican TODAS las migraciones, en orden y tal cual se pegan en Supabase:
+ * si una se rompe, los tests se rompen aquí y no en producción con el SQL ya
+ * pegado a mano. Un esquema paralelo escrito para los tests no probaría nada, y
+ * aplicar solo la primera dejaría sin cubrir justo lo que se acaba de añadir.
  */
 export async function freshDatabase(): Promise<Client> {
   const client = new Client({ connectionString: TEST_DATABASE_URL });
@@ -23,9 +27,13 @@ export async function freshDatabase(): Promise<Client> {
   await client.query("create schema public");
 
   await client.query(readFileSync(path.join(__dirname, "shim.sql"), "utf8"));
-  await client.query(
-    readFileSync(path.join(ROOT, "supabase/migrations/0001_init.sql"), "utf8"),
-  );
+
+  const migrations = readdirSync(MIGRATIONS)
+    .filter((name) => name.endsWith(".sql"))
+    .sort();
+  for (const name of migrations) {
+    await client.query(readFileSync(path.join(MIGRATIONS, name), "utf8"));
+  }
   await client.query(readFileSync(path.join(ROOT, "supabase/seed.sql"), "utf8"));
 
   return client;

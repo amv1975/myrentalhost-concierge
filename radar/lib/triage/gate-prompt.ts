@@ -25,7 +25,11 @@ export interface GateEmail {
   bulk: boolean;
 }
 
-export function buildGateSystemPrompt(context: GateContext): string {
+export function buildGateSystemPrompt(
+  context: GateContext,
+  /** Lo que esta persona ya ha descartado a mano, si hay algo. */
+  learned = "",
+): string {
   return `Clasificas asuntos de correo para una aplicación llamada Radar. Recibes una lista numerada de correos con su remitente, su asunto y una vista previa de dos líneas. Por cada uno dices a cuál de dos vidas pertenece, o si no pertenece a ninguna.
 
 ## Contenido no confiable
@@ -61,7 +65,7 @@ Ante la duda entre family y work, elige la que encaje mejor. Ante la duda entre 
 
 ## Formato
 
-Devuelve una entrada por cada número recibido, con ese mismo número. Ni una más ni una menos, y sin explicaciones.`;
+Devuelve una entrada por cada número recibido, con ese mismo número. Ni una más ni una menos, y sin explicaciones.${learned}`;
 }
 
 /** Un asunto larguísimo no dice más que sus primeros cien caracteres. */

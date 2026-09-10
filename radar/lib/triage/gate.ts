@@ -10,6 +10,7 @@ import {
   type GateContext,
   type GateEmail,
 } from "@/lib/triage/gate-prompt";
+import { buildIgnoredSection, getIgnoredExamples } from "@/lib/triage/learned";
 import { readUsage, type Spend } from "@/lib/usage";
 import type { Email, Space, TriageCategory } from "@/lib/types";
 
@@ -94,6 +95,10 @@ export async function gatePending(
 
     const pending = (data ?? []) as ScreenedEmail[];
 
+    // Una sola consulta por pasada: lo aprendido no cambia entre lotes, y va
+    // en el prompt de sistema, que además está en caché.
+    const learned = buildIgnoredSection(await getIgnoredExamples());
+
     const batches: ScreenedEmail[][] = [];
     for (let i = 0; i < pending.length; i += BATCH) {
       batches.push(pending.slice(i, i + BATCH));
@@ -104,7 +109,7 @@ export async function gatePending(
         batches
           .slice(i, i + CONCURRENCY)
           .map((batch) =>
-            runBatch(batch, context, spend, spaceIdByKey, result),
+            runBatch(batch, context, learned, spend, spaceIdByKey, result),
           ),
       );
     }
@@ -119,6 +124,7 @@ export async function gatePending(
 async function runBatch(
   batch: ScreenedEmail[],
   context: GateContext,
+  learned: string,
   spend: Spend,
   spaceIdByKey: Map<string, string>,
   result: GateRunResult,
@@ -127,7 +133,7 @@ async function runBatch(
 
   let decisions: Map<number, TriageCategory>;
   try {
-    decisions = await classify(batch, context, spend);
+    decisions = await classify(batch, context, learned, spend);
   } catch {
     // Una tanda que falla se reintenta en la siguiente pasada. Cuesta décimas
     // de céntimo, así que no hace falta contador de intentos: lo que no puede
@@ -197,6 +203,7 @@ async function runBatch(
 async function classify(
   batch: ScreenedEmail[],
   context: GateContext,
+  learned: string,
   spend: Spend,
 ): Promise<Map<number, TriageCategory>> {
   const emails: GateEmail[] = batch.map((email) => ({
@@ -216,7 +223,7 @@ async function classify(
     system: [
       {
         type: "text",
-        text: buildGateSystemPrompt(context),
+        text: buildGateSystemPrompt(context, learned),
         cache_control: { type: "ephemeral" },
       },
     ],

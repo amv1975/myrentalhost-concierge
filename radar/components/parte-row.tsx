@@ -8,40 +8,68 @@ import type { ParteEntry } from "@/lib/parte";
 /**
  * Una línea del parte.
  *
- * Cerrada dice qué pasa en una frase; abierta, el detalle y las dos únicas
- * cosas que se pueden hacer con ella: ir al correo original o quitarla de en
- * medio. Nada más — cuantas más decisiones tenga una línea, menos se despacha.
+ * Cerrada dice qué pasa en una frase; abierta, el detalle y tres cosas que
+ * hacer con ella, ni una más. Las dos últimas se parecen pero no son lo mismo,
+ * y esa distinción es lo que hace que la app mejore con el uso:
+ *
+ * - **Listo** — ya me he ocupado. Se va y no vuelve.
+ * - **Descartar** — esto no era para mí. Se va, y además le enseña al filtro a
+ *   no volver a subir avisos de ese tipo.
+ *
+ * Ninguna de las dos toca tu correo: siguen los dos en Gmail igual que estaban.
  */
 export function ParteRow({ entry }: { entry: ParteEntry }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [gone, setGone] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [gone, setGone] = useState<null | "listo" | "descartado">(null);
+  const [failed, setFailed] = useState(false);
 
-  // Desaparece al pulsar, no cuando el servidor contesta: esperar dos segundos
-  // a que se vaya una tarjeta hace que revisar veinte se haga eterno.
-  if (gone) return null;
-
-  async function dismiss() {
-    setBusy(true);
-    setGone(true);
+  async function act(gesture: "listo" | "descartado") {
+    // Se va al pulsar, no cuando contesta el servidor: esperar dos segundos por
+    // tarjeta hace que despachar veinte se haga eterno.
+    setGone(gesture);
+    setFailed(false);
     try {
       const response = await fetch(endpoint(entry), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        // "Listo" es «ya me he ocupado», no «no me enseñes más cosas así»:
-        // por eso un compromiso se marca hecho y no descartado, que es lo que
-        // alimenta lo que la extracción aprende a no traer.
-        body: JSON.stringify({
-          action: entry.kind === "item" ? "hecho" : "descartar",
-        }),
+        body: JSON.stringify({ action: actionFor(entry, gesture) }),
       });
       if (!response.ok) throw new Error("no");
       router.refresh();
     } catch {
-      setGone(false);
-      setBusy(false);
+      setGone(null);
+      setFailed(true);
     }
+  }
+
+  async function undo() {
+    setGone(null);
+    try {
+      await fetch(endpoint(entry), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reabrir" }),
+      });
+      router.refresh();
+    } catch {
+      /* Vuelve a estar en pantalla, que es lo que importa. */
+    }
+  }
+
+  // Descartar es la única de las dos que enseña algo, así que es la única que
+  // conviene poder deshacer sin ir a buscarla a Ajustes.
+  if (gone) {
+    return (
+      <div className="parte-undo">
+        <span>
+          {gone === "descartado" ? "Descartado. No volverá." : "Listo."}
+        </span>
+        <button type="button" onClick={undo}>
+          Deshacer
+        </button>
+      </div>
+    );
   }
 
   const life = entry.life === "family" ? "family" : "work";
@@ -78,6 +106,11 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
           {entry.subject ? (
             <p className="parte-subject">{entry.subject}</p>
           ) : null}
+          {failed ? (
+            <p className="parte-error">
+              No se pudo guardar. Vuelve a pulsar.
+            </p>
+          ) : null}
           <div className="parte-actions">
             <a
               className="parte-btn"
@@ -94,12 +127,21 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
             <button
               type="button"
               className="parte-btn primary"
-              onClick={dismiss}
-              disabled={busy}
+              onClick={() => act("listo")}
             >
               Listo
             </button>
+            <button
+              type="button"
+              className="parte-btn"
+              onClick={() => act("descartado")}
+            >
+              Descartar
+            </button>
           </div>
+          <p className="parte-hint">
+            Descartar le enseña a no subir más avisos de este tipo.
+          </p>
         </div>
       ) : null}
     </>
@@ -111,6 +153,15 @@ function endpoint(entry: ParteEntry): string {
   return entry.kind === "item"
     ? `/api/items/${entry.id}`
     : `/api/emails/${entry.id}`;
+}
+
+/**
+ * "Listo" es «ya me he ocupado» y no debe enseñar nada: solo "Descartar"
+ * alimenta lo que la app aprende a no traer.
+ */
+function actionFor(entry: ParteEntry, gesture: "listo" | "descartado"): string {
+  if (gesture === "descartado") return "descartar";
+  return entry.kind === "item" ? "hecho" : "visto";
 }
 
 function hhmm(iso: string): string {

@@ -72,14 +72,24 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
 
   if (spaces.length === 0) return result;
 
-  const userId = await getIngestUserId(spaces[0].id);
-  if (!userId) {
+  // Conseguir el token es lo primero que puede fallar —permiso caducado, red,
+  // Google de mal humor— y hasta ahora reventaba sin decir por qué.
+  let accessToken: string;
+  try {
+    const userId = await getIngestUserId(spaces[0].id);
+    if (!userId) {
+      result.errors.push(
+        "No hay credenciales de Google guardadas. Entra una vez en la app para concederlas.",
+      );
+      return result;
+    }
+    accessToken = await getAccessToken(userId);
+  } catch (error) {
     result.errors.push(
-      "No hay credenciales de Google guardadas. Entra una vez en la app para concederlas.",
+      error instanceof Error ? error.message : String(error),
     );
     return result;
   }
-  const accessToken = await getAccessToken(userId);
 
   // El buzón es uno solo; la ventana, la más amplia de las configuradas.
   const lookbackDays = Math.max(...spaces.map((s) => s.lookback_days || 14));
@@ -88,7 +98,17 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
   result.messagesNew = ingested.messagesNew;
   if (ingested.error) result.errors.push(ingested.error);
 
-  const context = await buildTriageContext(spaces);
+  let context;
+  try {
+    context = await buildTriageContext(spaces);
+  } catch (error) {
+    result.errors.push(
+      `No se pudo leer la configuración de los espacios: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return result;
+  }
 
   const gated = await gatePending(spaces, context, spend);
   result.screened = gated.screened;
@@ -133,7 +153,9 @@ async function recordSpend(
   result: PipelineResult,
 ): Promise<void> {
   const admin = createAdminClient();
-  await admin.from("sync_runs").insert({
+  // Apuntar lo gastado es contabilidad, no trabajo: si falla, se pierde una
+  // línea del histórico, no la actualización que el usuario acaba de pedir.
+  const { error } = await admin.from("sync_runs").insert({
     kind: "triage",
     status: result.errors.length > 0 ? "error" : "ok",
     finished_at: new Date().toISOString(),
@@ -146,4 +168,8 @@ async function recordSpend(
     cost_usd: spend.usd,
     error: result.errors[0] ?? null,
   });
+
+  if (error) {
+    result.errors.push(`No se pudo apuntar el gasto: ${error.message}`);
+  }
 }

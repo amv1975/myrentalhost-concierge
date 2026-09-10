@@ -22,7 +22,11 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
     try {
       const response = await fetch("/api/refresh", { method: "POST" });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error ?? "No se pudo actualizar");
+      if (!response.ok) {
+        throw new Error(
+          body.error ?? `El servidor respondió ${response.status}`,
+        );
+      }
 
       if (body.error) {
         setMessage(readable(body.error));
@@ -49,7 +53,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
         {busy ? "Buscando y analizando…" : "Actualizar"}
       </button>
       {message ? (
-        <p className="mt-1.5 text-center text-xs text-[var(--color-muted)]">
+        <p className="mt-1.5 text-center text-xs leading-relaxed text-[var(--color-muted)]">
           {message}
         </p>
       ) : null}
@@ -111,5 +115,7 @@ function readable(raw: string): string {
   if (/insufficient|insufficientPermissions|403/i.test(raw)) {
     return "Google rechazó la petición por permisos. Vuelve a entrar aceptando el acceso a Gmail y Calendar.";
   }
-  return raw.length > 160 ? `${raw.slice(0, 160)}…` : raw;
+  // Un error desconocido se enseña casi entero: cortarlo a una línea es lo que
+  // hacía imposible saber qué pasaba.
+  return raw.length > 300 ? `${raw.slice(0, 300)}…` : raw;
 }

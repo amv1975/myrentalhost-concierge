@@ -24,11 +24,22 @@ export async function POST() {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const spaces = await getVisibleSpaces();
-  const result = await runPipeline(spaces);
+  let result;
+  try {
+    result = await runPipeline(await getVisibleSpaces());
+  } catch (error) {
+    // Sin esto, cualquier fallo inesperado llegaba al móvil como "No se pudo
+    // actualizar" y no había forma de saber qué había pasado sin los logs de
+    // Vercel. Una app que esconde sus propios errores no se puede arreglar.
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
-    spaces: spaces.length,
     messagesNew: result.messagesNew,
     screened: result.screened,
     discarded: result.discarded,

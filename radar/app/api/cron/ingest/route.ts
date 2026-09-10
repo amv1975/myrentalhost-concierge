@@ -11,10 +11,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const spaces = await getAllSpaces();
-  const result = await runPipeline(spaces);
-
-  return NextResponse.json(result, {
-    status: result.errors.length > 0 ? 207 : 200,
-  });
+  try {
+    const result = await runPipeline(await getAllSpaces());
+    return NextResponse.json(result, {
+      status: result.errors.length > 0 ? 207 : 200,
+    });
+  } catch (error) {
+    // El cron corre solo de madrugada: si revienta sin decir qué, nadie se
+    // entera hasta que el parte aparece vacío por la mañana.
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
+  }
 }

@@ -8,9 +8,10 @@ import { formatDateTime } from "@/lib/format";
 import { RefreshButton } from "@/components/refresh-button";
 
 /**
- * Los correos tal como llegaron, antes de extraer nada. Sirve para comprobar
- * que las fuentes están bien configuradas: si aquí aparece ruido, el problema
- * está en los remitentes, no en la extracción.
+ * Los correos que el filtro ha dado por tuyos, tal como llegaron. Sirve para
+ * comprobar que el filtro acierta: si aquí aparece publicidad, el problema está
+ * en la descripción del espacio, no en la extracción. Lo que se descartó por el
+ * asunto no sale — de eso ni siquiera se guardó el cuerpo.
  */
 export default async function EmailsPage({
   params,

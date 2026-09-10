@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { formatUsd } from "@/lib/usage";
 
 /**
  * Busca correos, extrae compromisos y sincroniza el calendario, en los dos
@@ -59,29 +60,37 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
 /**
  * Qué contar después de actualizar.
  *
- * Se leen todos los correos, así que "sin novedades" a secas haría dudar de si
- * ha funcionado. El recuento de leídos es la prueba de que sí, y separar los
- * que son de tus dos vidas del resto explica por qué no ha salido nada.
+ * Se mira todo el buzón, así que "sin novedades" a secas haría dudar de si ha
+ * funcionado. Y como detrás hay un modelo que cobra por correo, el importe va
+ * en la misma línea: es la única forma de que leer la bandeja entera no dé
+ * miedo. Se enseña siempre, aunque sean céntimos, porque el día que suba se
+ * tiene que ver ahí mismo y no en la factura.
  */
 function summary(body: {
   created?: number;
   updated?: number;
+  screened?: number;
+  discarded?: number;
   read?: number;
-  family?: number;
-  work?: number;
+  costUsd?: number;
 }): string {
   const nuevos = body.created ?? 0;
   const cambios = body.updated ?? 0;
+  const mirados = body.screened ?? 0;
+  const ruido = body.discarded ?? 0;
   const leidos = body.read ?? 0;
-  const tuyos = (body.family ?? 0) + (body.work ?? 0);
+  const coste = body.costUsd ? ` · ${formatUsd(body.costUsd)}` : "";
 
   if (nuevos + cambios > 0) {
-    const compromisos = `${nuevos} nuevos${cambios ? `, ${cambios} con cambios` : ""}`;
-    return leidos > 0 ? `${compromisos} · ${leidos} correos leídos` : compromisos;
+    return `${nuevos} nuevos${cambios ? `, ${cambios} con cambios` : ""}${coste}`;
+  }
+
+  if (mirados > 0) {
+    return `${mirados} correos mirados, ${ruido} descartados, ${leidos} leídos${coste}`;
   }
 
   if (leidos > 0) {
-    return `${leidos} correos leídos, ${tuyos} tuyos, ningún compromiso nuevo`;
+    return `${leidos} correos leídos, ningún compromiso nuevo${coste}`;
   }
 
   return "Sin novedades";

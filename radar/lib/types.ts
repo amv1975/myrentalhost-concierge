@@ -59,6 +59,8 @@ export interface Email {
   body_text: string | null;
   received_at: string;
   recipients: string[];
+  /** Envío masivo: trae List-Unsubscribe. Casi siempre es ruido. */
+  bulk: boolean;
   triage_status: TriageStatus;
   triage_category: TriageCategory | null;
   /** De qué va, en una frase. Lo pone el clasificador. */

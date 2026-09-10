@@ -41,17 +41,28 @@ tests/                         lógica pura y esquema contra Postgres
 
 ## Las cinco decisiones que sostienen esto
 
-**Se lee todo, pero no con el mismo modelo.** Una lista blanca de remitentes no
-cubre un buzón real: la gestoría que manda la factura, el proveedor nuevo, el
-banco — ninguno está en ella, y son justo los que no se pueden perder. Así que
-entra la bandeja entera (menos lo que Gmail ya aparta como promoción, red social
-o foro, que es la mayor parte del volumen y no trae compromisos) y hay dos
-etapas: un modelo rápido y barato clasifica y resume **cada** correo en una
-frase, y solo lo que resulta pedir algo llega al modelo caro que extrae los
-compromisos. Lo que no pide nada se queda con su resumen, que también es
-información: saber que algo llegó y poder ignorarlo. Los remitentes de confianza
-siguen existiendo, pero ya no deciden qué entra: solo se saltan la
-clasificación.
+**Se lee todo, pero por escalones, de barato a caro.** Una lista blanca de
+remitentes no cubre un buzón real: la gestoría que manda la factura, el
+proveedor nuevo, el banco — ninguno está en ella, y son justo los que no se
+pueden perder. Así que entra la bandeja entera. El problema entonces es el
+dinero: pasar un modelo bueno por trescientos correos al día, de los que el 99%
+es publicidad, sería absurdo. La solución es la misma que usa una persona con el
+pulgar en la bandeja — mirar el asunto:
+
+| | Qué se hace | Cuántos correos | Coste |
+|---|---|---|---|
+| 1 | Bajar de Gmail remitente, asunto y vista previa | todos | 0 |
+| 2 | Mirar **veinte asuntos por llamada** al modelo más barato | todos | ~0,0001 $ cada uno |
+| 3 | Bajar el cuerpo y resumirlo en una frase | los que sobreviven | ~0,002 $ |
+| 4 | Extraer compromisos con sus fechas | los que además piden algo | ~0,02 $ |
+
+El escalón 2 es el que sostiene todo: el prompt de sistema se paga una vez por
+llamada y se reparte entre veinte correos, va marcado como caché, y la respuesta
+es una palabra por correo. Los remitentes de confianza siguen existiendo, pero
+ya no deciden qué entra: solo se saltan ese escalón.
+
+Lo que sobrevive pero no pide nada se queda con su resumen y aparece en "Qué más
+ha llegado": saber que algo llegó y poder ignorarlo también es información.
 
 
 **Un correo se ingiere y se extrae una sola vez.** `emails.gmail_message_id` es
@@ -83,6 +94,13 @@ guardó la sincronización, y nunca se leen ni se listan los eventos que ya
 tenías. `tests/permissions.test.ts` falla si la lista de scopes crece, si
 aparece una llamada de escritura a Gmail, si Calendar empieza a leer, o si la
 extracción declara herramientas.
+
+**El importe se enseña, no se esconde.** Cada llamada cuenta sus tokens y su
+precio; el botón Actualizar dice lo que ha costado esa pasada y Ajustes lo que
+llevas de mes. Una app que lee tu bandeja entera con un modelo detrás da miedo
+justo por esto, y la respuesta no es prometer que es barato: es enseñar el
+número cada vez. Hay además topes por pasada — cuarenta cuerpos leídos, quince
+extracciones — para que un fallo del filtro tenga techo.
 
 ## Estado
 

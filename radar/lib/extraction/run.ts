@@ -6,6 +6,7 @@ import {
   buildLearnedSection,
   getDismissedExamples,
 } from "@/lib/extraction/learned";
+import type { Spend } from "@/lib/usage";
 import type { Email, Space } from "@/lib/types";
 
 export interface ExtractRunResult {
@@ -31,6 +32,15 @@ const MAX_ATTEMPTS = 3;
 const CONCURRENCY = 4;
 
 /**
+ * Tope de correos a los que se les extraen compromisos por pasada.
+ *
+ * Es la llamada cara del sistema. Aquí solo llega lo que ha pasado dos filtros
+ * y encima pide algo, así que quince sobran para un día normal; el tope está
+ * por si algo se desmadra, para que el susto tenga techo.
+ */
+const MAX_PER_RUN = 15;
+
+/**
  * Extrae los correos pendientes de un espacio.
  *
  * La cola es `emails.extraction_status`: cada mensaje se procesa una sola vez.
@@ -39,7 +49,8 @@ const CONCURRENCY = 4;
  */
 export async function extractPending(
   space: Space,
-  limit = 25,
+  spend?: Spend,
+  limit = MAX_PER_RUN,
 ): Promise<ExtractRunResult> {
   const admin = createAdminClient();
   const result: ExtractRunResult = {
@@ -65,7 +76,7 @@ export async function extractPending(
       .in("extraction_status", ["pending", "failed"])
       .lt("extraction_attempts", MAX_ATTEMPTS)
       .order("received_at", { ascending: true })
-      .limit(limit);
+      .limit(Math.min(limit, MAX_PER_RUN));
     if (error) throw error;
 
     // Una sola consulta por tanda: lo aprendido no cambia entre correos.
@@ -78,7 +89,7 @@ export async function extractPending(
 
       // Lo lento es preguntarle a Claude, y eso va en paralelo.
       const extracted = await Promise.all(
-        batch.map((email) => extractOne(email, space, learned)),
+        batch.map((email) => extractOne(email, space, learned, spend)),
       );
 
       // Guardar va en serie a propósito: el emparejamiento de un ítem mira los
@@ -109,6 +120,7 @@ async function extractOne(
   email: Email,
   space: Space,
   learned: string,
+  spend?: Spend,
 ): Promise<ExtractOutcome> {
   const admin = createAdminClient();
 
@@ -121,7 +133,11 @@ async function extractOne(
     .eq("id", email.id);
 
   try {
-    return { email, items: await extractItems(email, space, learned), error: null };
+    return {
+      email,
+      items: await extractItems(email, space, learned, spend),
+      error: null,
+    };
   } catch (error) {
     // Un correo que falla no puede tumbar la tanda entera.
     return {

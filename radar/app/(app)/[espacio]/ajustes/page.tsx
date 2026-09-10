@@ -7,6 +7,8 @@ import { SourcesEditor } from "@/components/sources-editor";
 import { AutoConfirmToggle } from "@/components/auto-confirm-toggle";
 import { ReanalyzeButton } from "@/components/reanalyze-button";
 import { LearnedList, type LearnedEntry } from "@/components/learned-list";
+import { getMonthSpend } from "@/lib/spend";
+import { formatUsd } from "@/lib/usage";
 
 export default async function SettingsPage({
   params,
@@ -17,6 +19,7 @@ export default async function SettingsPage({
   const key = slugToSpaceKey(espacio);
   if (!key) notFound();
 
+  const spend = await getMonthSpend();
   const space = await getSpaceByKey(key);
   if (!space) notFound();
 
@@ -65,6 +68,22 @@ export default async function SettingsPage({
           ← Volver
         </Link>
       </div>
+
+      <section>
+        <h2 className="text-sm font-semibold">Gasto de este mes</h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Lo que llevan costando las llamadas al modelo. Radar mira el asunto de
+          todo lo que entra con el modelo más barato y solo lee entero lo que
+          parece tuyo, que es de donde sale que esto valga céntimos y no euros.
+        </p>
+        <p className="mt-3 text-2xl font-semibold tabular-nums">
+          {formatUsd(spend.usd)}
+        </p>
+        <p className="text-xs text-[var(--color-muted)]">
+          {spend.screened} correos mirados en {spend.runs}{" "}
+          {spend.runs === 1 ? "actualización" : "actualizaciones"}
+        </p>
+      </section>
 
       <section>
         <h2 className="text-sm font-semibold">Remitentes de confianza</h2>

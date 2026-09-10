@@ -1,68 +1,104 @@
 import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
 import { ingestInbox } from "@/lib/ingest/ingest";
+import { gatePending } from "@/lib/triage/gate";
 import { triagePending } from "@/lib/triage/run";
 import { buildTriageContext } from "@/lib/triage/context";
 import { extractPending } from "@/lib/extraction/run";
 import { syncSpace } from "@/lib/calendar/sync";
+import { Spend } from "@/lib/usage";
 import type { Space } from "@/lib/types";
 
 export interface PipelineResult {
-  /** Correos nuevos descargados del buzón. */
+  /** Correos nuevos vistos en el buzón (solo cabeceras). */
   messagesNew: number;
-  /** Correos clasificados en esta pasada. */
+  /** Mirados por encima, con el asunto. */
+  screened: number;
+  /** Descartados ahí mismo por ruido, sin llegar a abrirse. */
+  discarded: number;
+  /** Leídos enteros y resumidos. */
   read: number;
   family: number;
   work: number;
-  ignored: number;
   created: number;
   updated: number;
+  /** Lo que ha costado esta pasada, en dólares. */
+  costUsd: number;
   errors: string[];
 }
 
 /**
- * El ciclo completo, en orden: traer, clasificar, extraer, sincronizar.
+ * El ciclo completo, en orden y en un solo sitio.
  *
- * Está en un solo sitio a propósito. El botón Actualizar y el cron hacen
- * exactamente lo mismo; si fueran dos secuencias distintas acabarían
- * divergiendo y lo que ves al pulsar no sería lo que pasa por la noche.
+ * El orden es la arquitectura entera del coste, y va de barato a caro:
+ *
+ *  1. **Cabeceras** — se baja de Gmail el remitente, el asunto y dos líneas de
+ *     vista previa de todo lo que ha entrado. Gratis.
+ *  2. **Filtro por asunto** — veinte correos por llamada al modelo más barato,
+ *     que dice de qué vida es cada uno o si es ruido. Aquí muere el 95%, por
+ *     una fracción de céntimo cada uno.
+ *  3. **Lectura** — a los supervivientes se les baja el cuerpo y se les paga un
+ *     resumen. Son unos pocos al día.
+ *  4. **Extracción** — solo a los que además piden algo se les buscan
+ *     compromisos con fechas. Es la llamada cara, y la que menos veces ocurre.
+ *  5. **Calendario** — lo confirmado se sincroniza.
+ *
+ * Está aquí y no repartido porque el botón Actualizar y el cron hacen
+ * exactamente lo mismo; si fueran dos secuencias, acabarían divergiendo y lo
+ * que ves al pulsar no sería lo que pasa por la noche.
  *
  * Cada etapa captura su propio error y devuelve lo que llevaba hecho: que
- * Gmail corte por cuota no puede impedir que se clasifique lo ya descargado,
- * ni que un fallo de calendario borre el trabajo de extracción.
+ * Gmail corte por cuota no puede impedir que se clasifique lo ya descargado.
  */
 export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
+  const spend = new Spend();
   const result: PipelineResult = {
     messagesNew: 0,
+    screened: 0,
+    discarded: 0,
     read: 0,
     family: 0,
     work: 0,
-    ignored: 0,
     created: 0,
     updated: 0,
+    costUsd: 0,
     errors: [],
   };
 
   if (spaces.length === 0) return result;
 
+  const userId = await getIngestUserId(spaces[0].id);
+  if (!userId) {
+    result.errors.push(
+      "No hay credenciales de Google guardadas. Entra una vez en la app para concederlas.",
+    );
+    return result;
+  }
+  const accessToken = await getAccessToken(userId);
+
   // El buzón es uno solo; la ventana, la más amplia de las configuradas.
   const lookbackDays = Math.max(...spaces.map((s) => s.lookback_days || 14));
 
-  const ingested = await ingestInbox(spaces, lookbackDays);
+  const ingested = await ingestInbox(accessToken, spaces, lookbackDays);
   result.messagesNew = ingested.messagesNew;
   if (ingested.error) result.errors.push(ingested.error);
 
-  const triaged = await triagePending(
-    spaces,
-    await buildTriageContext(spaces),
-  );
+  const context = await buildTriageContext(spaces);
+
+  const gated = await gatePending(spaces, context, spend);
+  result.screened = gated.screened;
+  result.discarded = gated.discarded;
+  if (gated.error) result.errors.push(gated.error);
+
+  const triaged = await triagePending(accessToken, spaces, context, spend);
   result.read = triaged.read;
   result.family = triaged.family;
   result.work = triaged.work;
-  result.ignored = triaged.ignored;
   if (triaged.error) result.errors.push(triaged.error);
 
   for (const space of spaces) {
-    const extracted = await extractPending(space);
+    const extracted = await extractPending(space, spend);
     result.created += extracted.created;
     result.updated += extracted.updated;
     if (extracted.error) result.errors.push(extracted.error);
@@ -71,5 +107,34 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
     if (synced.error) result.errors.push(synced.error);
   }
 
+  result.costUsd = spend.usd;
+  await recordSpend(spend, result);
+
   return result;
+}
+
+/**
+ * Deja constancia de lo gastado, para poder sumar el mes.
+ *
+ * Sin esto, el importe solo existiría mientras la pantalla está abierta y no
+ * habría forma de contestar a "¿cuánto llevo?" sin ir a la factura.
+ */
+async function recordSpend(
+  spend: Spend,
+  result: PipelineResult,
+): Promise<void> {
+  const admin = createAdminClient();
+  await admin.from("sync_runs").insert({
+    kind: "triage",
+    status: result.errors.length > 0 ? "error" : "ok",
+    finished_at: new Date().toISOString(),
+    messages_seen: result.screened,
+    messages_new: result.messagesNew,
+    items_created: result.created,
+    items_updated: result.updated,
+    input_tokens: spend.inputTokens,
+    output_tokens: spend.outputTokens,
+    cost_usd: spend.usd,
+    error: result.errors[0] ?? null,
+  });
 }

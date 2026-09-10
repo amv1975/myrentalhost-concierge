@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Cliente de Gmail. Expone exactamente dos operaciones, ambas de lectura.
+ * Cliente de Gmail. Expone listar y leer, y nada más: todas de lectura.
  *
  * No hay aquí — ni debe haber en ninguna parte del proyecto — envoltorio de
  * messages.send, messages.modify, messages.trash, messages.batchModify,
@@ -12,7 +12,15 @@ import "server-only";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
-export interface GmailMessage {
+/**
+ * Un correo sin cuerpo: quién lo manda, a quién, de qué y cuándo.
+ *
+ * Es lo primero que se baja de cada mensaje, y para la mayoría es lo único que
+ * se baja nunca. Con el remitente, el asunto y las dos líneas de vista previa
+ * que regala Gmail ya se decide si el correo es de esta persona o es ruido, y
+ * el 99% es ruido: bajarle el cuerpo entero sería trabajo y dinero tirados.
+ */
+export interface GmailHeaders {
   id: string;
   threadId: string;
   fromEmail: string;
@@ -21,8 +29,13 @@ export interface GmailMessage {
   recipients: string[];
   subject: string | null;
   snippet: string | null;
-  bodyText: string;
   receivedAt: Date;
+  /** Trae List-Unsubscribe, es decir: es un envío masivo, no un correo a ti. */
+  bulk: boolean;
+}
+
+export interface GmailMessage extends GmailHeaders {
+  bodyText: string;
 }
 
 interface GmailPart {
@@ -65,11 +78,14 @@ export class GmailRateLimitError extends Error {
 async function gmailGet<T>(
   accessToken: string,
   path: string,
-  params?: Record<string, string>,
+  params?: Record<string, string | string[]>,
 ): Promise<T> {
   const url = new URL(`${GMAIL_API}${path}`);
   for (const [key, value] of Object.entries(params ?? {})) {
-    url.searchParams.set(key, value);
+    // Gmail espera metadataHeaders repetido, no una lista separada por comas.
+    for (const single of Array.isArray(value) ? value : [value]) {
+      url.searchParams.append(key, single);
+    }
   }
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -141,6 +157,50 @@ export async function listMessageIds(
   return ids;
 }
 
+/** Solo las cabeceras que se usan. Pedir menos es bajar menos por cada correo. */
+const WANTED_HEADERS = [
+  "From",
+  "To",
+  "Cc",
+  "Delivered-To",
+  "X-Forwarded-To",
+  "Subject",
+  "Date",
+  "List-Unsubscribe",
+];
+
+/**
+ * Cabeceras y vista previa, sin cuerpo. Es la llamada que se hace por cada
+ * correo del buzón.
+ */
+export async function getMessageHeaders(
+  accessToken: string,
+  messageId: string,
+): Promise<GmailHeaders> {
+  const raw = await gmailGet<RawMessage>(
+    accessToken,
+    `/messages/${messageId}`,
+    { format: "metadata", metadataHeaders: WANTED_HEADERS },
+  );
+  return toHeaders(raw);
+}
+
+/**
+ * El cuerpo, ya decodificado. Solo se pide de los correos que han pasado el
+ * primer filtro: son unos pocos al día, así que aquí no hay problema de cuota.
+ */
+export async function getMessageBody(
+  accessToken: string,
+  messageId: string,
+): Promise<string> {
+  const raw = await gmailGet<RawMessage>(
+    accessToken,
+    `/messages/${messageId}`,
+    { format: "full" },
+  );
+  return extractBody(raw.payload);
+}
+
 export async function getMessage(
   accessToken: string,
   messageId: string,
@@ -150,10 +210,12 @@ export async function getMessage(
     `/messages/${messageId}`,
     { format: "full" },
   );
+  return { ...toHeaders(raw), bodyText: extractBody(raw.payload) };
+}
 
+function toHeaders(raw: RawMessage): GmailHeaders {
   const headers = raw.payload?.headers ?? [];
-  const from = headerValue(headers, "From") ?? "";
-  const { email, name } = parseFrom(from);
+  const { email, name } = parseFrom(headerValue(headers, "From") ?? "");
 
   return {
     id: raw.id,
@@ -163,8 +225,8 @@ export async function getMessage(
     recipients: parseRecipients(headers),
     subject: headerValue(headers, "Subject"),
     snippet: raw.snippet ? decodeEntities(raw.snippet) : null,
-    bodyText: extractBody(raw.payload),
     receivedAt: receivedAt(raw, headers),
+    bulk: headerValue(headers, "List-Unsubscribe") !== null,
   };
 }
 

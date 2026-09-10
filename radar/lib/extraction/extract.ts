@@ -4,9 +4,19 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { env } from "@/lib/env";
 import { ExtractionResultSchema, type ExtractedItem } from "@/lib/extraction/schema";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/extraction/prompt";
+import { readUsage, type Spend } from "@/lib/usage";
 import type { Email, Space } from "@/lib/types";
 
-export const EXTRACTION_MODEL = "claude-opus-5";
+/**
+ * El modelo caro, el único que lee correos enteros buscando fechas.
+ *
+ * Es Sonnet y no Opus por una razón de dinero: aquí llega poco correo, pero
+ * cada llamada cuesta cinco veces más con Opus, y sacar "reunión el miércoles a
+ * las 18:00" de un texto que ya se sabe que pide algo no es un problema que
+ * necesite el modelo más potente que existe. Si algún día se ve que se le
+ * escapan fechas, esta línea es el sitio donde subirlo.
+ */
+export const EXTRACTION_MODEL = "claude-sonnet-5";
 
 let client: Anthropic | null = null;
 
@@ -31,6 +41,7 @@ export async function extractItems(
   space: Space,
   /** Lo que esta persona ya ha descartado, para no volver a traérselo. */
   learned = "",
+  spend?: Spend,
 ): Promise<ExtractedItem[]> {
   const body = (email.body_text ?? "").trim();
   if (body.length === 0) return [];
@@ -44,7 +55,14 @@ export async function extractItems(
       effort: "medium",
       format: zodOutputFormat(ExtractionResultSchema),
     },
-    system: buildSystemPrompt(space, learned),
+    // Igual en toda la tanda: en caché, las repeticiones cuestan una décima.
+    system: [
+      {
+        type: "text",
+        text: buildSystemPrompt(space, learned),
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [
       {
         role: "user",
@@ -59,6 +77,8 @@ export async function extractItems(
       },
     ],
   });
+
+  spend?.add(EXTRACTION_MODEL, readUsage(response.usage));
 
   if (response.stop_reason === "refusal") {
     throw new Error(

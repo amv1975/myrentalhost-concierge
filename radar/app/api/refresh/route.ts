@@ -30,12 +30,14 @@ export async function POST() {
   return NextResponse.json({
     spaces: spaces.length,
     messagesNew: result.messagesNew,
+    screened: result.screened,
+    discarded: result.discarded,
     read: result.read,
     family: result.family,
     work: result.work,
-    ignored: result.ignored,
     created: result.created,
     updated: result.updated,
+    costUsd: result.costUsd,
     // Un solo mensaje: repetir el mismo problema por cada etapa no informa.
     error: result.errors.length > 0 ? [...new Set(result.errors)][0] : null,
   });

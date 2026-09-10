@@ -100,7 +100,7 @@ export async function POST(
     if (error) throw error;
   }
 
-  const result = await extractPending(space, toReprocess.length || 1);
+  const result = await extractPending(space, undefined, toReprocess.length || 1);
 
   return NextResponse.json(
     {

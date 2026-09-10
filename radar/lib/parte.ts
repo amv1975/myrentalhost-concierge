@@ -62,9 +62,40 @@ export interface Parte {
   fyi: ParteEntry[];
   /** Qué se tiró. Vacío si este usuario no es el dueño del buzón. */
   noise: { who: string; subject: string }[];
+  /** Qué ha fallado al construir el parte, si ha fallado algo. */
+  error?: string;
 }
 
+const VACIO: Parte = {
+  scanned: 0,
+  discarded: 0,
+  updatedAt: null,
+  urgent: [],
+  rest: [],
+  fyi: [],
+  noise: [],
+};
+
+/**
+ * El parte nunca lanza.
+ *
+ * Es la pantalla de inicio: si revienta, no se ve nada de nada, ni siquiera el
+ * botón de actualizar, y encima el navegador enseña "a server error occurred",
+ * que no dice qué ha pasado. Vale mil veces más una pantalla medio vacía que
+ * cuenta el problema.
+ */
 export async function getParte(): Promise<Parte> {
+  try {
+    return await buildParte();
+  } catch (error) {
+    return {
+      ...VACIO,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function buildParte(): Promise<Parte> {
   const supabase = await createClient();
   const {
     data: { user },

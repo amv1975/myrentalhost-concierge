@@ -703,3 +703,34 @@ body:has(.parte) {
   margin-top: 2px;
   text-wrap: pretty;
 }
+
+/* Cuando el parte no se puede montar. Enseña el error de verdad: una pantalla
+   en blanco que dice "a server error occurred" no se puede arreglar. */
+.parte-broken {
+  border-left: 2px solid var(--p-alert);
+  padding-left: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.parte-broken .que {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 17px;
+  margin: 0;
+}
+
+.parte-broken .detalle {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--p-alert);
+  margin: 0;
+  word-break: break-word;
+}
+
+.parte-broken .que-hacer {
+  font-size: 12.5px;
+  color: var(--p-faint);
+  margin: 0;
+}

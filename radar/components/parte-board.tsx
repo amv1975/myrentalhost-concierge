@@ -44,6 +44,17 @@ export function ParteBoard({
         <RefreshButton />
       </div>
 
+      {parte.error ? (
+        <div className="parte-broken">
+          <p className="que">Algo se ha roto al montar el parte</p>
+          <p className="detalle">{parte.error}</p>
+          <p className="que-hacer">
+            Tus correos están intactos. Pásale este mensaje a Claude y lo
+            arregla.
+          </p>
+        </div>
+      ) : null}
+
       <ParteAgenda agenda={agenda} />
 
       {total === 0 ? (

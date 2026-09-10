@@ -93,11 +93,12 @@ un correo pueda hacer ejecutar.
 
 **Permisos mínimos, y verificados.** Gmail en solo lectura: no hay en todo el
 proyecto una sola llamada que pueda enviar, responder, etiquetar o borrar un
-correo. Calendar sí escribe, porque poner eventos es el objetivo, pero solo
-sobre eventos que Radar creó — cada operación exige el `google_event_id` que
-guardó la sincronización, y nunca se leen ni se listan los eventos que ya
-tenías. `tests/permissions.test.ts` falla si la lista de scopes crece, si
-aparece una llamada de escritura a Gmail, si Calendar empieza a leer, o si la
+correo. Calendar escribe solo sobre eventos que Radar creó — cada operación
+exige el `google_event_id` que guardó la sincronización — y lee una ventana de
+dos días para poder decirte si hoy tienes reuniones, sin llegar nunca a la
+lista de calendarios de la cuenta ni a su configuración.
+`tests/permissions.test.ts` falla si la lista de scopes crece, si aparece una
+llamada de escritura a Gmail, si Calendar toca lo que no debe, o si la
 extracción declara herramientas.
 
 **El importe se enseña, no se esconde.** Cada llamada cuenta sus tokens y su

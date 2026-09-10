@@ -5,9 +5,13 @@
 -- hace falta para decidir —el importe corregido, el plazo convertido en fecha,
 -- quién espera respuesta y desde cuándo, qué se rompe si nadie lo mira— está en
 -- mitad del cuerpo, y había que abrir Gmail para verlo.
---
--- Ahora eso se escribe al leer el correo y se guarda aquí. Es la diferencia
--- entre "la gestoría pregunta por una factura" y "pide siete justificantes,
--- corrige el importe en unos 350 € menos y avisa de que pedirá rectificativa".
 alter table emails
-  add column if not exists detail text;
+  add column if not exists detail text,
+  -- Lo que este correo tiene que ver con otro del mismo día.
+  --
+  -- Un correo suelto se entiende mal. "Airbnb ha suspendido el anuncio de
+  -- Horta" es un aviso; "Airbnb ha suspendido el anuncio de Horta, y la huésped
+  -- que está ahí escribió esta mañana que el grafiti sigue sin limpiar" es una
+  -- causa y una tarea. Eso solo se ve mirando los correos del día juntos, no de
+  -- uno en uno, y por eso se calcula aparte y se guarda aquí.
+  add column if not exists link_note text;

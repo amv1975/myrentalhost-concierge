@@ -4,6 +4,7 @@ import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
 import { ingestInbox } from "@/lib/ingest/ingest";
 import { gatePending } from "@/lib/triage/gate";
 import { triagePending } from "@/lib/triage/run";
+import { connectRecent } from "@/lib/triage/connect";
 import { buildTriageContext } from "@/lib/triage/context";
 import { extractPending } from "@/lib/extraction/run";
 import { syncSpace } from "@/lib/calendar/sync";
@@ -40,9 +41,12 @@ export interface PipelineResult {
  *     una fracción de céntimo cada uno.
  *  3. **Lectura** — a los supervivientes se les baja el cuerpo y se les paga un
  *     resumen. Son unos pocos al día.
- *  4. **Extracción** — solo a los que además piden algo se les buscan
+ *  4. **Cruce** — una sola llamada sobre los resúmenes del día, mirándolos
+ *     juntos, para ver lo que no se ve de uno en uno: que la queja de una
+ *     huésped explica la suspensión de un anuncio.
+ *  5. **Extracción** — solo a los que además piden algo se les buscan
  *     compromisos con fechas. Es la llamada cara, y la que menos veces ocurre.
- *  5. **Calendario** — lo confirmado se sincroniza.
+ *  6. **Calendario** — lo confirmado se sincroniza.
  *
  * Está aquí y no repartido porque el botón Actualizar y el cron hacen
  * exactamente lo mismo; si fueran dos secuencias, acabarían divergiendo y lo
@@ -96,6 +100,11 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
   result.family = triaged.family;
   result.work = triaged.work;
   if (triaged.error) result.errors.push(triaged.error);
+
+  // Va después de resumir porque cruza los resúmenes, no los correos en crudo,
+  // y antes de extraer porque no depende de los compromisos.
+  const linked = await connectRecent(spend);
+  if (linked.error) result.errors.push(linked.error);
 
   for (const space of spaces) {
     const extracted = await extractPending(space, spend);

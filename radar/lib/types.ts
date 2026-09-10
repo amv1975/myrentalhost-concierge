@@ -68,6 +68,8 @@ export interface Email {
   /** Lo que hace falta para decidir sin abrir Gmail: cifras, plazos, quién
    *  espera qué y qué se rompe si nadie lo mira. */
   detail: string | null;
+  /** Qué tiene que ver con otro correo del día. Sale de mirarlos juntos. */
+  link_note: string | null;
   /** Si pide algo concreto; solo entonces se le buscan compromisos. */
   actionable: boolean;
   importance: Importance;

@@ -100,11 +100,22 @@ describe("superficie de Calendar", () => {
     }
   });
 
-  it("no lista ni lee los eventos que ya tienes en el calendario", () => {
-    // El scope calendar.events permitiría leerlos; no hacerlo es una decisión.
+  it("lee eventos, pero nunca la lista de calendarios de la cuenta", () => {
+    // Radar SÍ lee el calendario desde que el parte dice si hoy tienes
+    // reuniones: sin eso no organiza el día, solo lo describe a medias. Lo que
+    // sigue sin poder hacer es descubrir qué otros calendarios tienes.
     const source = calendar();
-    expect(source).not.toMatch(/method:\s*"GET"/);
     expect(source).not.toContain("calendarList");
+    expect(source).not.toContain("/users/me/");
+  });
+
+  it("solo escribe con verbos de escritura, y solo con un eventId", () => {
+    // La lectura no puede colarse como escritura: si alguna vez un GET
+    // apareciera junto a un body, sería otra cosa distinta de listar.
+    const source = calendar();
+    const listing = source.slice(source.indexOf("export async function listEvents"));
+    expect(listing).toContain('method: "GET"');
+    expect(listing).not.toContain("body:");
   });
 
   it("no toca la configuración de la cuenta ni otros calendarios", () => {

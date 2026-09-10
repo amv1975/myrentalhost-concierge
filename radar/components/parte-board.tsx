@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { ParteList } from "@/components/parte-list";
+import { ParteAgenda } from "@/components/parte-agenda";
 import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
+import type { Agenda } from "@/lib/agenda";
 
-export function ParteBoard({ parte }: { parte: Parte }) {
+export function ParteBoard({
+  parte,
+  agenda,
+}: {
+  parte: Parte;
+  agenda: Agenda;
+}) {
   const total = parte.urgent.length + parte.rest.length + parte.fyi.length;
 
   return (
@@ -35,6 +43,8 @@ export function ParteBoard({ parte }: { parte: Parte }) {
       <div className="parte-refresh">
         <RefreshButton />
       </div>
+
+      <ParteAgenda agenda={agenda} />
 
       {total === 0 ? (
         <p className="parte-empty">

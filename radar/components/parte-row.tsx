@@ -157,6 +157,9 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
               <span className="parte-flag">· cambió</span>
             ) : null}
           </span>
+          {entry.link ? (
+            <span className="parte-link">{entry.link}</span>
+          ) : null}
         </button>
 
         <button

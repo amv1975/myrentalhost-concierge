@@ -1,15 +1,19 @@
 import "server-only";
 
 /**
- * Cliente de Google Calendar. Tres operaciones, todas sobre eventos que Radar
- * ha creado: insertar, actualizar por id y cancelar por id.
+ * Cliente de Google Calendar. Cuatro operaciones: insertar, actualizar por id,
+ * cancelar por id, y listar lo que hay en una ventana de fechas.
  *
  * Ojo con la diferencia respecto a Gmail: aquí sí hay escritura, porque el
  * propósito de la app es poner eventos en el calendario. Lo que no hay es
- * ninguna forma de tocar un evento que Radar no haya creado — todas las
- * funciones exigen el eventId que se guardó en items.google_event_id, y ese
- * campo solo lo escribe la sincronización. Tampoco se leen los eventos
- * existentes del calendario ni se listan.
+ * ninguna forma de tocar un evento que Radar no haya creado — las tres
+ * operaciones de escritura exigen el eventId que se guardó en
+ * items.google_event_id, y ese campo solo lo escribe la sincronización.
+ *
+ * La lectura se añadió a propósito y a petición: un parte que no sabe si hoy
+ * tienes reuniones no te organiza el día, te lo describe a medias. Solo lee, en
+ * una ventana de dos días, y nunca lista los calendarios de la cuenta ni toca
+ * su configuración. tests/permissions.test.ts vigila exactamente eso.
  */
 
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3/calendars";
@@ -140,4 +144,61 @@ export async function cancelEvent(
     if (status === 404 || status === 410) return;
     throw error;
   }
+}
+
+
+export interface CalendarEntry {
+  id: string;
+  summary: string;
+  /** Null en los eventos de día completo. */
+  start: Date | null;
+  end: Date | null;
+  /** Los bloqueos de estancias son de día completo; las citas, no. */
+  allDay: boolean;
+  location: string | null;
+}
+
+/**
+ * Lo que hay en el calendario entre dos instantes.
+ *
+ * `singleEvents` expande las series repetidas en sus ocurrencias: sin eso, una
+ * reunión semanal aparecería como un único evento con su regla de repetición y
+ * habría que resolverla a mano.
+ */
+export async function listEvents(
+  accessToken: string,
+  calendarId: string,
+  timeMin: Date,
+  timeMax: Date,
+): Promise<CalendarEntry[]> {
+  const data = await calendarRequest<{
+    items?: {
+      id: string;
+      summary?: string;
+      status?: string;
+      location?: string;
+      start?: { dateTime?: string; date?: string };
+      end?: { dateTime?: string; date?: string };
+    }[];
+  }>(accessToken, `/${encodeURIComponent(calendarId)}/events`, {
+    method: "GET",
+    params: {
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      singleEvents: "true",
+      orderBy: "startTime",
+      maxResults: "50",
+    },
+  });
+
+  return (data.items ?? [])
+    .filter((event) => event.status !== "cancelled")
+    .map((event) => ({
+      id: event.id,
+      summary: event.summary?.trim() || "(sin título)",
+      start: event.start?.dateTime ? new Date(event.start.dateTime) : null,
+      end: event.end?.dateTime ? new Date(event.end.dateTime) : null,
+      allDay: !event.start?.dateTime,
+      location: event.location ?? null,
+    }));
 }

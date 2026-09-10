@@ -3,8 +3,10 @@
  *
  * gmail.readonly: leer correos. No permite enviar, responder, etiquetar,
  * archivar ni borrar — la API los rechaza aunque el código lo intentara.
- * calendar.events: crear y actualizar eventos. No da acceso a la lista de
- * calendarios ni a la configuración de la cuenta.
+ * calendar.events: crear y actualizar eventos, y leer los que ya tienes en una
+ * ventana de dos días —eso último es lo que permite que el parte te diga si hoy
+ * tienes reuniones—. No da acceso a la lista de calendarios de la cuenta ni a
+ * su configuración.
  *
  * Cualquier añadido aquí amplía lo que la app puede hacer sobre tu cuenta.
  * tests/permissions.test.ts falla si esta lista crece o si aparece en el

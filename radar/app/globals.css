@@ -615,3 +615,91 @@ body:has(.parte) {
   outline: 2px solid var(--p-work);
   outline-offset: 2px;
 }
+
+/* ---------- La agenda ---------- */
+
+.parte-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-left: 2px solid var(--p-rule);
+  padding-left: 13px;
+}
+
+.parte-agenda .libre {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--p-ink);
+  margin: 0;
+}
+
+.parte-agenda .libre span {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--p-faint);
+}
+
+.parte-agenda .dia {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.parte-agenda .cuando {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--p-faint);
+  flex: 0 0 4.2rem;
+}
+
+.parte-agenda .nada {
+  font-size: 14px;
+  color: var(--p-faint);
+}
+
+.parte-agenda ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.parte-agenda li {
+  display: flex;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.parte-agenda .hora {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-muted);
+  padding-top: 1px;
+}
+
+.parte-agenda .donde {
+  color: var(--p-faint);
+}
+
+/* ---------- Lo que un correo tiene que ver con otro ---------- */
+
+/* Con su propia marca a la izquierda: no es lo que dice el correo, es lo que
+   se ve al mirar el día entero, y conviene que se note que es otra voz. */
+.parte-link {
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--p-muted);
+  border-left: 2px solid var(--p-alert);
+  padding-left: 9px;
+  margin-top: 2px;
+  text-wrap: pretty;
+}

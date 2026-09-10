@@ -43,6 +43,8 @@ export interface ParteEntry {
   subject: string | null;
   /** Si hay algo que hacer. Un aviso de que algo se resolvió solo, no lo hay. */
   actionable: boolean;
+  /** Qué tiene que ver con otro correo del día, si tiene que ver con alguno. */
+  link: string | null;
   gmailMessageId: string;
   needsReview: boolean;
   /** Marcado a mano como importante. Sube arriba y no se cae con el tiempo. */
@@ -197,6 +199,7 @@ function itemEntry(
     fromEmail: item.emails?.from_email ?? null,
     subject: item.emails?.subject ?? null,
     actionable: true,
+    link: null,
     gmailMessageId: item.gmail_message_id,
     needsReview: item.status === "needs_review",
     starred: item.pinned,
@@ -225,6 +228,7 @@ function emailEntry(
     fromEmail: email.from_email,
     subject: email.subject,
     actionable: email.actionable,
+    link: email.link_note,
     gmailMessageId: email.gmail_message_id,
     needsReview: false,
     starred: email.triage_model === "usuario" && email.importance === "alta",

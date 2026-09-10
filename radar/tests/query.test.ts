@@ -17,17 +17,24 @@ function source(overrides: Partial<Source & { space_key: string }>): Source & {
 }
 
 describe("buildInboxQuery", () => {
-  it("se lleva la bandeja entera dentro de la ventana", () => {
+  it("pide desde un instante concreto, no una ventana fija", () => {
+    // Pedir "los últimos catorce días" en cada pasada hacía recorrer miles de
+    // mensajes ya guardados para descubrir que ya estaban guardados.
+    const desde = new Date("2026-09-10T14:00:00Z");
+    const query = buildInboxQuery(desde);
+    expect(query).toContain(`after:${Math.floor(desde.getTime() / 1000)}`);
+    expect(query).not.toContain("newer_than");
+  });
+
+  it("se lleva todo lo nuevo, venga de quien venga", () => {
     // Ya no hay lista blanca: lo que importa suele venir de quien no esperas.
-    const query = buildInboxQuery(14);
-    expect(query).toContain("newer_than:14d");
-    expect(query).not.toContain("from:");
+    expect(buildInboxQuery(new Date())).not.toContain("from:");
   });
 
   it("deja fuera lo que Gmail ya ha apartado", () => {
     // Es la mayor parte del volumen y ahí no hay compromisos: leerlo con el
     // modelo sería pagar por ruido.
-    const query = buildInboxQuery(7);
+    const query = buildInboxQuery(new Date());
     for (const excluded of [
       "-category:promotions",
       "-category:social",

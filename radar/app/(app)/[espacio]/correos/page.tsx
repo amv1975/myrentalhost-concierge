@@ -40,7 +40,7 @@ export default async function EmailsPage({
       <div>
         <h1 className="text-lg font-semibold">Correos recibidos</h1>
         <p className="text-xs text-[var(--color-muted)]">
-          {emails.length} en los últimos {space.lookback_days} días
+          {emails.length} guardados
         </p>
       </div>
       <RefreshButton />

@@ -117,21 +117,13 @@ export async function runPipeline(
     return result;
   }
 
-  // El buzón es uno solo, y la ventana la marca lo que el parte enseña: dos
-  // días. Estaba en catorce, que a doscientos correos diarios son casi tres
-  // mil mensajes — la ingesta no terminaba nunca, se comía el tiempo entero de
-  // cada pasada y las etapas siguientes no llegaban a correr. Bajar lo que no
-  // se va a mirar es trabajo puro y duro tirado.
-  const lookbackDays = Math.min(
-    Math.max(...spaces.map((s) => s.lookback_days || 2)),
-    VENTANA_DIAS,
-  );
+  const desde = await desdeCuandoMirar();
 
   // Con la cola llena, bajar más correos es cavar más hondo el agujero: el
   // tiempo de esta pasada rinde mucho más vaciándola.
   const backlog = await countBacklog();
   if (backlog < BACKLOG_LIMIT) {
-    const ingested = await ingestInbox(accessToken, spaces, lookbackDays, plazo);
+    const ingested = await ingestInbox(accessToken, spaces, desde, plazo);
     result.messagesNew = ingested.messagesNew;
     if (ingested.error) result.errors.push(ingested.error);
   }
@@ -201,8 +193,50 @@ export async function runPipeline(
 /** Con más de esto en cola, esta pasada no baja correos nuevos. */
 const BACKLOG_LIMIT = 60;
 
-/** Días de buzón que se descargan. Es la ventana que enseña el parte. */
-const VENTANA_DIAS = 2;
+/**
+ * Cuánto se solapa con la pasada anterior.
+ *
+ * Un correo puede llegar a Gmail con la fecha ligeramente movida, y entre que
+ * una pasada termina y se guarda pasan segundos. Media hora de solape no
+ * cuesta nada —los mensajes ya guardados ni se piden— y evita el único fallo
+ * que sería grave aquí: saltarse un correo para siempre.
+ */
+const SOLAPE_MS = 30 * 60_000;
+
+/** Lo máximo que se mira hacia atrás la primera vez, o tras un parón largo. */
+const VENTANA_MAX_MS = 2 * 86_400_000;
+
+/**
+ * Desde cuándo hay que mirar el buzón.
+ *
+ * Desde que terminó la última ingesta buena, con un poco de solape. Antes se
+ * pedía una ventana fija en cada pasada —catorce días— y cada actualización
+ * volvía a recorrer miles de mensajes ya guardados para descubrir que ya
+ * estaban guardados: media hora de trabajo para no traer nada.
+ *
+ * El tope existe para el primer día y para cuando la app lleva tiempo parada:
+ * el parte enseña dos días, así que traer más sería bajar correos que no se
+ * van a mirar.
+ */
+async function desdeCuandoMirar(): Promise<Date> {
+  const admin = createAdminClient();
+
+  const { data } = await admin
+    .from("sync_runs")
+    .select("finished_at")
+    .eq("kind", "ingest")
+    .eq("status", "ok")
+    .not("finished_at", "is", null)
+    .order("finished_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const tope = Date.now() - VENTANA_MAX_MS;
+  const ultima = (data as { finished_at: string } | null)?.finished_at;
+  if (!ultima) return new Date(tope);
+
+  return new Date(Math.max(Date.parse(ultima) - SOLAPE_MS, tope));
+}
 
 /**
  * Devuelve al filtro lo que se juzgó con un criterio viejo.

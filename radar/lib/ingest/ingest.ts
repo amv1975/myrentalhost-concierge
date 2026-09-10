@@ -17,8 +17,8 @@ export interface IngestResult {
 }
 
 /**
- * Trae del buzón lo que aún no se ha visto: remitente, asunto y vista previa.
- * Sin cuerpo.
+ * Trae del buzón lo que ha entrado desde la última vez: remitente, asunto y
+ * vista previa. Sin cuerpo.
  *
  * Se ingiere el buzón entero, no una lista de remitentes, porque lo que más
  * importa suele venir de quien no esperas. Lo que Gmail ya aparta como
@@ -44,9 +44,10 @@ export interface IngestResult {
 export async function ingestInbox(
   accessToken: string,
   spaces: Space[],
-  lookbackDays: number,
+  /** Desde cuándo mirar. Lo calcula el pipeline con la última pasada buena. */
+  since: Date,
   plazo: Deadline = SIN_PLAZO,
-  maxMessages = 400,
+  maxMessages = 200,
 ): Promise<IngestResult> {
   const admin = createAdminClient();
   const result: IngestResult = { messagesSeen: 0, messagesNew: 0 };
@@ -61,7 +62,7 @@ export async function ingestInbox(
   try {
     const messageIds = await listMessageIds(
       accessToken,
-      buildInboxQuery(lookbackDays),
+      buildInboxQuery(since),
       maxMessages,
     );
     result.messagesSeen = messageIds.length;

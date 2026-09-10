@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { SpaceView } from "@/lib/items";
 import type { Item } from "@/lib/types";
 import { ItemCard } from "@/components/item-card";
+import { EmailDigest } from "@/components/email-digest";
 
 /**
  * El tablero de un espacio. Recibe los datos ya resueltos, así que la página
@@ -21,10 +22,11 @@ export function SpaceBoard({
   /** El botón de actualizar, que la previsualización no monta. */
   children?: React.ReactNode;
 }) {
-  const nothingAtAll =
+  const noItems =
     view.toReview.length === 0 &&
     view.openActions.length === 0 &&
     view.upcomingEvents.length === 0;
+  const nothingAtAll = noItems && view.digest.length === 0;
 
   return (
     <div className="space-y-7">
@@ -39,7 +41,7 @@ export function SpaceBoard({
 
       {nothingAtAll ? (
         <EmptyState />
-      ) : (
+      ) : noItems ? null : (
         <>
           <Section
             title="Para revisar"
@@ -62,6 +64,8 @@ export function SpaceBoard({
           />
         </>
       )}
+
+      <EmailDigest emails={view.digest} />
 
       {demo ? null : (
         <div className="flex gap-5 border-t border-[var(--color-line)] pt-4 text-sm">

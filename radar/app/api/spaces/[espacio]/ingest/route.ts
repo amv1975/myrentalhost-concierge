@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getSpaceByKey, assertSpaceMember } from "@/lib/spaces";
-import { ingestSpace } from "@/lib/ingest/ingest";
+import { getSpaceByKey, assertSpaceMember, getVisibleSpaces } from "@/lib/spaces";
+import { runPipeline } from "@/lib/pipeline";
 import { slugToSpaceKey } from "@/lib/types";
 
 export const maxDuration = 300;
 
-/** Disparo manual de la ingesta desde la UI, para el espacio que se está viendo. */
+/**
+ * Disparo manual desde la UI.
+ *
+ * El buzón es uno solo y la clasificación decide después a qué espacio va cada
+ * correo, así que no se puede "actualizar solo Trabajo": se trae todo y se
+ * reparte. El espacio de la URL sigue sirviendo para comprobar que quien pulsa
+ * es miembro de algo.
+ */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ espacio: string }> },
@@ -34,6 +41,8 @@ export async function POST(
   }
   await assertSpaceMember(user.id, space.id);
 
-  const result = await ingestSpace(space);
-  return NextResponse.json(result, { status: result.error ? 500 : 200 });
+  const result = await runPipeline(await getVisibleSpaces());
+  return NextResponse.json(result, {
+    status: result.errors.length > 0 ? 500 : 200,
+  });
 }

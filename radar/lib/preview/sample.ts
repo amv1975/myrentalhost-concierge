@@ -1,4 +1,4 @@
-import type { SpaceView } from "@/lib/items";
+import type { EmailBrief, SpaceView } from "@/lib/items";
 import type { Item } from "@/lib/types";
 
 /**
@@ -53,6 +53,20 @@ function item(overrides: Partial<Item> & Pick<Item, "id" | "title">): Item {
     updated_at: new Date().toISOString(),
     email_from: "avisos@lestonnacbcn.org",
     email_from_name: null,
+    ...overrides,
+  };
+}
+
+/** Un correo resumido, de los que no piden nada pero conviene saber que están. */
+function brief(overrides: Partial<EmailBrief> & { id: string }): EmailBrief {
+  return {
+    gmail_message_id: `gm-${overrides.id}`,
+    from_email: "avisos@lestonnacbcn.org",
+    from_name: null,
+    subject: null,
+    summary: null,
+    importance: "normal",
+    received_at: new Date(Date.now() - DIA).toISOString(),
     ...overrides,
   };
 }
@@ -134,6 +148,26 @@ export const SAMPLE_FAMILY: SpaceView = {
   ],
 
   oldestPendingDays: 3,
+
+  digest: [
+    brief({
+      id: "fb1",
+      from_email: "info@clinicadental-bcn.es",
+      from_name: "Clínica Dental",
+      subject: "Recordatorio de revisión",
+      summary:
+        "Confirman la revisión anual de Lucía; no hace falta responder salvo cambio.",
+    }),
+    brief({
+      id: "fb2",
+      from_email: "no-reply@endesaclientes.com",
+      from_name: "Endesa",
+      subject: "Tu factura de octubre",
+      summary: "Factura de la luz de octubre: 84,20 € con cargo el día 5.",
+      importance: "baja",
+      received_at: new Date(Date.now() - 2 * DIA).toISOString(),
+    }),
+  ],
 };
 
 export const SAMPLE_WORK: SpaceView = {
@@ -190,4 +224,34 @@ export const SAMPLE_WORK: SpaceView = {
   ],
 
   oldestPendingDays: 5,
+
+  digest: [
+    brief({
+      id: "wb1",
+      from_email: "gestoria@connectandenjoy.com",
+      from_name: "Gestoría",
+      subject: "Modelo 303 tercer trimestre",
+      summary:
+        "La gestoría avisa de que el modelo 303 se presenta antes del día 20.",
+      importance: "alta",
+      received_at: new Date(Date.now() - 6 * 3_600_000).toISOString(),
+    }),
+    brief({
+      id: "wb2",
+      from_email: "noreply@guest.booking.com",
+      from_name: "Booking.com",
+      subject: "Nueva reserva",
+      summary: "Entra un huésped el 14 en el piso de Gràcia, 3 noches.",
+      importance: "baja",
+    }),
+    brief({
+      id: "wb3",
+      from_email: "noticias@apartur.com",
+      from_name: "Apartur",
+      subject: "Boletín semanal",
+      summary:
+        "Boletín: el Ayuntamiento aplaza a enero la revisión de licencias turísticas.",
+      received_at: new Date(Date.now() - 3 * DIA).toISOString(),
+    }),
+  ],
 };

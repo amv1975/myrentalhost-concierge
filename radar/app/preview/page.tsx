@@ -9,6 +9,7 @@ const PREVIEW_SPACES: Space[] = (["family", "work"] as const).map((key) => ({
   id: key,
   key,
   name: key,
+  description: null,
   timezone: "Europe/Madrid",
   default_location: null,
   google_calendar_id: "primary",

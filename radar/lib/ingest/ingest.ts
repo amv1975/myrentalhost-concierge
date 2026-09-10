@@ -6,69 +6,72 @@ import {
   listMessageIds,
   GmailRateLimitError,
 } from "@/lib/google/gmail";
-import { buildGmailQuery, matchesSource } from "@/lib/ingest/query";
-import type { Source, Space } from "@/lib/types";
+import { buildInboxQuery, knownSpaceFor } from "@/lib/ingest/query";
+import type { Source, Space, SpaceKey } from "@/lib/types";
 
 export interface IngestResult {
-  space: string;
   messagesSeen: number;
   messagesNew: number;
-  skipped: number;
   error?: string;
 }
 
 /**
- * Trae los correos nuevos de un espacio y los guarda en crudo. No extrae nada.
+ * Trae del buzón lo que aún no se ha visto y lo guarda en crudo. No clasifica
+ * ni extrae nada: de eso se encargan las etapas siguientes.
  *
- * Idempotente por construcción: el INSERT lleva ON CONFLICT DO NOTHING sobre
- * emails.gmail_message_id, así que ejecutarlo veinte veces seguidas deja la
- * misma fila. Es lo que permite que el cron pase cada hora sobre la misma
- * ventana de 14 días sin acumular basura.
+ * Se ingiere el buzón entero, no una lista de remitentes, porque lo que más
+ * importa suele venir de quien no esperas. Lo que Gmail ya aparta como
+ * promoción, red social o foro se queda fuera: es la mayor parte del volumen y
+ * ahí no hay compromisos.
+ *
+ * Idempotente por construcción: los mensajes conocidos ni siquiera se piden a
+ * la API, y el INSERT se apoya en el UNIQUE de gmail_message_id para el caso de
+ * dos ejecuciones a la vez.
  */
-export async function ingestSpace(space: Space): Promise<IngestResult> {
+export async function ingestInbox(
+  spaces: Space[],
+  lookbackDays: number,
+  maxMessages = 400,
+): Promise<IngestResult> {
   const admin = createAdminClient();
-  const result: IngestResult = {
-    space: space.key,
-    messagesSeen: 0,
-    messagesNew: 0,
-    skipped: 0,
-  };
+  const result: IngestResult = { messagesSeen: 0, messagesNew: 0 };
 
   const { data: runRow } = await admin
     .from("sync_runs")
-    .insert({ space_id: space.id, kind: "ingest" })
+    .insert({ kind: "ingest" })
     .select("id")
     .single();
   const runId = runRow?.id as string | undefined;
 
   try {
-    const { data: sourceRows, error: sourcesError } = await admin
-      .from("sources")
-      .select("*")
-      .eq("space_id", space.id)
-      .eq("enabled", true);
-    if (sourcesError) throw sourcesError;
-
-    const sources = (sourceRows ?? []) as Source[];
-    const query = buildGmailQuery(sources, space.lookback_days);
-    if (!query) {
-      await finishRun(runId, "ok", result);
-      return result;
-    }
-
-    const userId = await getIngestUserId(space.id);
+    const userId =
+      spaces.length > 0 ? await getIngestUserId(spaces[0].id) : null;
     if (!userId) {
       throw new Error(
-        `Ningún miembro de ${space.name} tiene credenciales de Google guardadas. Entra una vez en la app para concederlas.`,
+        "No hay credenciales de Google guardadas. Entra una vez en la app para concederlas.",
       );
     }
     const accessToken = await getAccessToken(userId);
 
-    const messageIds = await listMessageIds(accessToken, query);
+    // Remitentes de confianza: ya no deciden qué entra, solo ahorran la
+    // clasificación de lo que se sabe de antemano de qué espacio es.
+    const { data: sourceRows } = await admin
+      .from("sources")
+      .select("*, spaces(key)")
+      .eq("enabled", true);
+    const sources = ((sourceRows ?? []) as (Source & {
+      spaces: { key: string } | null;
+    })[]).map((s) => ({ ...s, space_key: s.spaces?.key }));
+
+    const spaceIdByKey = new Map(spaces.map((s) => [s.key, s.id]));
+
+    const messageIds = await listMessageIds(
+      accessToken,
+      buildInboxQuery(lookbackDays),
+      maxMessages,
+    );
     result.messagesSeen = messageIds.length;
 
-    // Los que ya tenemos no se vuelven a pedir a la API: ahorra cuota y hace
-    // que la ejecución típica del cron sea casi gratis.
     const known = await knownMessageIds(messageIds);
     const fresh = messageIds.filter((id) => !known.has(id));
 
@@ -77,9 +80,8 @@ export async function ingestSpace(space: Space): Promise<IngestResult> {
       try {
         message = await getMessage(accessToken, messageId);
       } catch (error) {
-        // Si Gmail corta por cuota, se conserva todo lo descargado hasta aquí y
-        // se termina la tanda. Los que falten entran en la siguiente pasada:
-        // como la ingesta es idempotente, no se pierde ni se duplica nada.
+        // Si Gmail corta por cuota, se conserva lo descargado y se termina la
+        // tanda. El resto entra en la siguiente pasada, sin duplicar nada.
         if (error instanceof GmailRateLimitError) {
           result.error = error.message;
           break;
@@ -87,28 +89,36 @@ export async function ingestSpace(space: Space): Promise<IngestResult> {
         throw error;
       }
 
-
-      if (!matchesSource(message.fromEmail, sources, message.recipients)) {
-        result.skipped += 1;
-        continue;
-      }
-
-      const { error: insertError } = await admin.from("emails").insert(
-        {
-          space_id: space.id,
-          gmail_message_id: message.id,
-          gmail_thread_id: message.threadId,
-          from_email: message.fromEmail,
-          from_name: message.fromName,
-          subject: message.subject,
-          snippet: message.snippet,
-          body_text: message.bodyText,
-          received_at: message.receivedAt.toISOString(),
-        },
-        // Otra ejecución concurrente puede haberlo insertado entre la
-        // comprobación y aquí; el UNIQUE lo resuelve sin ruido.
-        { count: "exact" },
+      const knownKey = knownSpaceFor(
+        message.fromEmail,
+        message.recipients,
+        sources,
       );
+      const knownSpaceId = knownKey
+        ? (spaceIdByKey.get(knownKey as SpaceKey) ?? null)
+        : null;
+
+      const { error: insertError } = await admin.from("emails").insert({
+        space_id: knownSpaceId,
+        gmail_message_id: message.id,
+        gmail_thread_id: message.threadId,
+        from_email: message.fromEmail,
+        from_name: message.fromName,
+        recipients: message.recipients,
+        subject: message.subject,
+        snippet: message.snippet,
+        body_text: message.bodyText,
+        received_at: message.receivedAt.toISOString(),
+        // De un remitente conocido ya se sabe la vida y que interesa: se salta
+        // la clasificación y va directo a buscarle compromisos.
+        ...(knownKey
+          ? {
+              triage_status: "done",
+              triage_category: knownKey,
+              actionable: true,
+            }
+          : {}),
+      });
 
       if (insertError) {
         if (insertError.code === "23505") continue;

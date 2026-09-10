@@ -1,6 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 import { daysBetween } from "@/lib/format";
-import type { Item } from "@/lib/types";
+import type { Importance, Item } from "@/lib/types";
+
+/**
+ * Un correo resumido en una frase.
+ *
+ * No todo lo que llega es un compromiso, pero saber que llegó y de qué iba
+ * también es información: es la diferencia entre "no me ha llegado nada" y
+ * "me ha llegado esto y puedo ignorarlo".
+ */
+export interface EmailBrief {
+  id: string;
+  gmail_message_id: string;
+  from_email: string;
+  from_name: string | null;
+  subject: string | null;
+  summary: string | null;
+  importance: Importance;
+  received_at: string;
+}
 
 export interface SpaceView {
   /** Lo que hay que revisar: primero lo que cambió, luego lo nuevo. */
@@ -11,6 +29,8 @@ export interface SpaceView {
   upcomingEvents: Item[];
   /** Días que lleva esperando el ítem pendiente más antiguo. */
   oldestPendingDays: number | null;
+  /** El resto del correo de este espacio, en una frase cada uno. */
+  digest: EmailBrief[];
 }
 
 /**
@@ -77,7 +97,43 @@ export async function getSpaceView(spaceId: string): Promise<SpaceView> {
     ? Math.abs(daysBetween(oldestPending.created_at, now))
     : null;
 
-  return { toReview, openActions, upcomingEvents, oldestPendingDays };
+  // Los correos que ya han producido una tarjeta no se repiten abajo: verlos
+  // dos veces haría dudar de si son dos cosas distintas.
+  const withItems = new Set(items.map((i) => i.email_id));
+  const digest = (await getDigest(spaceId)).filter(
+    (email) => !withItems.has(email.id),
+  );
+
+  return { toReview, openActions, upcomingEvents, oldestPendingDays, digest };
+}
+
+/** Cuántos correos resumidos se muestran. Más allá, ya es la bandeja. */
+const DIGEST_LIMIT = 40;
+
+async function getDigest(spaceId: string): Promise<EmailBrief[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("emails")
+    .select(
+      "id, gmail_message_id, from_email, from_name, subject, summary, importance, received_at",
+    )
+    .eq("space_id", spaceId)
+    .eq("triage_status", "done")
+    .not("summary", "is", null)
+    .order("received_at", { ascending: false })
+    .limit(DIGEST_LIMIT);
+  if (error) throw error;
+
+  const briefs = (data ?? []) as EmailBrief[];
+
+  // Lo importante arriba; dentro de cada grupo, lo más reciente primero.
+  const rank: Record<Importance, number> = { alta: 0, normal: 1, baja: 2 };
+  return briefs.sort(
+    (a, b) =>
+      rank[a.importance] - rank[b.importance] ||
+      b.received_at.localeCompare(a.received_at),
+  );
 }
 
 /** Lo fijado sube. Empate si ninguno lo está o si lo están los dos. */

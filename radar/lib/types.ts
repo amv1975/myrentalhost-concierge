@@ -20,11 +20,16 @@ export type ExtractionStatus =
  * escriben.
  */
 export type SourceKind = "domain" | "email" | "to_domain" | "to_email";
+export type TriageCategory = "family" | "work" | "none";
+export type TriageStatus = "pending" | "processing" | "done" | "failed";
+export type Importance = "alta" | "normal" | "baja";
 
 export interface Space {
   id: string;
   key: SpaceKey;
   name: string;
+  /** Qué entra en esta vida. Lo lee el clasificador para decidir. */
+  description: string | null;
   timezone: string;
   default_location: string | null;
   google_calendar_id: string;
@@ -43,7 +48,8 @@ export interface Source {
 
 export interface Email {
   id: string;
-  space_id: string;
+  /** Null hasta que el clasificador decide de qué vida es. */
+  space_id: string | null;
   gmail_message_id: string;
   gmail_thread_id: string;
   from_email: string;
@@ -52,6 +58,15 @@ export interface Email {
   snippet: string | null;
   body_text: string | null;
   received_at: string;
+  recipients: string[];
+  triage_status: TriageStatus;
+  triage_category: TriageCategory | null;
+  /** De qué va, en una frase. Lo pone el clasificador. */
+  summary: string | null;
+  /** Si pide algo concreto; solo entonces se le buscan compromisos. */
+  actionable: boolean;
+  importance: Importance;
+  triaged_at: string | null;
   extraction_status: ExtractionStatus;
   extraction_attempts: number;
   extraction_error: string | null;

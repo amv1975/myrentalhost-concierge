@@ -1,48 +1,47 @@
 import type { Source } from "@/lib/types";
 
 /**
- * Query de Gmail para un espacio, a partir de sus fuentes habilitadas.
+ * Qué correos se descargan del buzón.
  *
- * Sin fuentes devuelve null en vez de una query vacía: una query vacía se
- * llevaría la bandeja entera, que es exactamente lo que no queremos.
+ * Radar ya no filtra por una lista de remitentes: un buzón real recibe lo que
+ * importa desde direcciones que nunca estarían en esa lista — la gestoría, un
+ * proveedor nuevo, el banco. Se descarga todo y se clasifica después.
+ *
+ * Lo único que se descarta de entrada es lo que Gmail ya ha apartado por su
+ * cuenta: promociones, redes sociales y foros. Ahí no hay compromisos y es la
+ * mayor parte del volumen, así que quitarlo no pierde nada y evita pagar por
+ * leerlo. Los correos que el propio usuario ha enviado tampoco cuentan.
  */
-export function buildGmailQuery(
-  sources: Source[],
-  lookbackDays: number,
-): string | null {
-  const enabled = sources.filter((s) => s.enabled && s.value.trim() !== "");
-  if (enabled.length === 0) return null;
-
-  const terms = enabled.map((s) => {
-    const value = s.value.trim().toLowerCase();
-    // Gmail entiende to: igual que from:, y con eso basta para capturar lo que
-    // llega a un buzón venga de quien venga.
-    const field = s.kind.startsWith("to_") ? "to" : "from";
-    return `${field}:${value}`;
-  });
-  const unique = [...new Set(terms)];
-
-  return `(${unique.join(" OR ")}) newer_than:${lookbackDays}d`;
+export function buildInboxQuery(lookbackDays: number): string {
+  return [
+    `newer_than:${lookbackDays}d`,
+    "-category:promotions",
+    "-category:social",
+    "-category:forums",
+    "-in:spam",
+    "-in:trash",
+    "-in:sent",
+    "-in:draft",
+  ].join(" ");
 }
 
 /**
- * Comprobación del lado de Radar de que un mensaje encaja de verdad con una
- * fuente del espacio. Gmail ya filtra con la query, pero `from:` y `to:` hacen
- * match amplio (subdominios, alias) y esto evita que un correo cualquiera acabe
- * clasificado en un espacio al que no pertenece.
+ * Remitentes de confianza: los que se saltan la clasificación.
  *
- * Los destinatarios incluyen las copias: un correo en el que estás en CC es
- * tan tuyo como uno dirigido solo a ti.
+ * Sigue habiendo lista, pero cambia de papel. Antes decidía qué entraba; ahora
+ * solo dice "de este ya sabemos de qué espacio es", lo que ahorra una llamada
+ * por correo y evita que un colegio o un canal de reservas acabe clasificado
+ * como ruido por un correo mal redactado.
  */
-export function matchesSource(
+export function knownSpaceFor(
   fromEmail: string,
-  sources: Source[],
-  recipients: string[] = [],
-): boolean {
+  recipients: string[],
+  sources: (Source & { space_key?: string })[],
+): string | null {
   const from = fromEmail.trim().toLowerCase();
   const to = recipients.map((r) => r.trim().toLowerCase()).filter(Boolean);
 
-  const matchesAddress = (address: string, source: Source) => {
+  const matches = (address: string, source: Source) => {
     const value = source.value.trim().toLowerCase();
     const domain = address.split("@")[1] ?? "";
     if (source.kind === "email" || source.kind === "to_email") {
@@ -51,11 +50,13 @@ export function matchesSource(
     return domain === value || domain.endsWith(`.${value}`);
   };
 
-  return sources.some((source) => {
-    if (!source.enabled) return false;
-    if (source.kind.startsWith("to_")) {
-      return to.some((address) => matchesAddress(address, source));
-    }
-    return matchesAddress(from, source);
-  });
+  for (const source of sources) {
+    if (!source.enabled) continue;
+    const hit = source.kind.startsWith("to_")
+      ? to.some((address) => matches(address, source))
+      : matches(from, source);
+    if (hit) return source.space_key ?? null;
+  }
+
+  return null;
 }

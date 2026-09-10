@@ -3,7 +3,8 @@
 Los compromisos que llegan por correo, en un solo sitio.
 
 Hay correos que traen compromisos pero no llegan como invitación ni como tarea:
-llegan como texto y se pierden en la bandeja. Radar los lee, saca lo que hay que
+llegan como texto y se pierden en la bandeja. Radar lee la bandeja entera, dice
+de qué va cada correo en una frase, y de los que piden algo saca lo que hay que
 hacer y lo pone donde se ve.
 
 De cada correo pueden salir dos cosas, y la distinción es el motivo de que la
@@ -31,12 +32,27 @@ Claude para la extracción. Mobile-first, en español.
 app/(app)/[espacio]/           vista, correos y ajustes de cada espacio
 app/api/                       cron, ingesta, extracción, mutaciones
 lib/google/gmail.ts            cliente de Gmail: dos funciones, ambas de lectura
+lib/pipeline.ts                el ciclo completo, en un solo sitio
+lib/triage/                    primera etapa: de qué vida es cada correo y de qué va
 lib/extraction/                prompt, esquema, fechas, matching, persistencia
 supabase/migrations/           el esquema real
 tests/                         lógica pura y esquema contra Postgres
 ```
 
-## Las cuatro decisiones que sostienen esto
+## Las cinco decisiones que sostienen esto
+
+**Se lee todo, pero no con el mismo modelo.** Una lista blanca de remitentes no
+cubre un buzón real: la gestoría que manda la factura, el proveedor nuevo, el
+banco — ninguno está en ella, y son justo los que no se pueden perder. Así que
+entra la bandeja entera (menos lo que Gmail ya aparta como promoción, red social
+o foro, que es la mayor parte del volumen y no trae compromisos) y hay dos
+etapas: un modelo rápido y barato clasifica y resume **cada** correo en una
+frase, y solo lo que resulta pedir algo llega al modelo caro que extrae los
+compromisos. Lo que no pide nada se queda con su resumen, que también es
+información: saber que algo llegó y poder ignorarlo. Los remitentes de confianza
+siguen existiendo, pero ya no deciden qué entra: solo se saltan la
+clasificación.
+
 
 **Un correo se ingiere y se extrae una sola vez.** `emails.gmail_message_id` es
 único y `extraction_status` hace de cola. El cron puede pasar cada hora sobre la
@@ -70,8 +86,9 @@ extracción declara herramientas.
 
 ## Estado
 
-Funciona el ciclo completo: autenticación, ingesta, extracción, revisión y
-sincronización con Google Calendar, con el cron que lo repite cada hora.
+Funciona el ciclo completo: autenticación, ingesta de la bandeja, clasificación,
+extracción, revisión y sincronización con Google Calendar, con el cron que lo
+repite cada día.
 
 Confirmar un evento lo crea en el calendario e invita a quien corresponda;
 cuando el colegio mueve la hora se actualiza el evento existente por su

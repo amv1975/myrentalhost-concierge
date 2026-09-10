@@ -67,10 +67,12 @@ export default async function SettingsPage({
       </div>
 
       <section>
-        <h2 className="text-sm font-semibold">Remitentes</h2>
+        <h2 className="text-sm font-semibold">Remitentes de confianza</h2>
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Solo se leen los correos que vengan de estos dominios o direcciones.
-          Un dominio cubre también sus subdominios.
+          Radar lee toda la bandeja y decide por el contenido de qué va cada
+          correo. Estos remitentes se saltan esa decisión: lo que venga de
+          ellos entra siempre en este espacio. Un dominio cubre también sus
+          subdominios.
         </p>
         <div className="mt-3">
           <SourcesEditor espacio={espacio} sources={(data ?? []) as Source[]} />

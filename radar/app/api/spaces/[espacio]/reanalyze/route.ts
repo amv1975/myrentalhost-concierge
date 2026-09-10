@@ -75,10 +75,13 @@ export async function POST(
     if (error) throw error;
   }
 
+  // Solo los que el clasificador marcó como que piden algo. Reanalizar los
+  // demás sería pagarle al modelo caro por lo que ya se descartó por barato.
   const { data: emailRows, error: emailsError } = await admin
     .from("emails")
     .select("id")
-    .eq("space_id", space.id);
+    .eq("space_id", space.id)
+    .eq("actionable", true);
   if (emailsError) throw emailsError;
 
   const toReprocess = ((emailRows ?? []) as { id: string }[])

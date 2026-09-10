@@ -14,8 +14,11 @@ personales y los dominios del colegio.
    - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `service_role` → `SUPABASE_SERVICE_ROLE_KEY` (esta no lleva nunca el
      prefijo `NEXT_PUBLIC_`: salta RLS)
-3. En **SQL Editor**, pega y ejecuta primero
-   `supabase/migrations/0001_init.sql` y después `supabase/seed.sql`.
+3. En **SQL Editor**, pega y ejecuta las migraciones **en orden**
+   (`supabase/migrations/0001_init.sql`, `0002_pinned.sql`,
+   `0003_recipient_sources.sql`, `0004_triage.sql`) y después
+   `supabase/seed.sql`. Cada una es idempotente: volver a ejecutarla no rompe
+   nada.
 
 El seed te da de alta a ti en los dos espacios y a Victoria solo en Familia. Si
 alguno de los dos ya se había registrado, el trigger le concede el acceso sin

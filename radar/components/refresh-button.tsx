@@ -26,13 +26,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
       if (body.error) {
         setMessage(readable(body.error));
       } else {
-        const nuevos = body.created ?? 0;
-        const cambios = body.updated ?? 0;
-        setMessage(
-          nuevos + cambios === 0
-            ? `Sin novedades (${body.messagesNew ?? 0} correos nuevos)`
-            : `${nuevos} nuevos${cambios ? `, ${cambios} con cambios` : ""}`,
-        );
+        setMessage(summary(body));
       }
       startTransition(() => router.refresh());
     } catch (error) {
@@ -60,6 +54,37 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Qué contar después de actualizar.
+ *
+ * Se leen todos los correos, así que "sin novedades" a secas haría dudar de si
+ * ha funcionado. El recuento de leídos es la prueba de que sí, y separar los
+ * que son de tus dos vidas del resto explica por qué no ha salido nada.
+ */
+function summary(body: {
+  created?: number;
+  updated?: number;
+  read?: number;
+  family?: number;
+  work?: number;
+}): string {
+  const nuevos = body.created ?? 0;
+  const cambios = body.updated ?? 0;
+  const leidos = body.read ?? 0;
+  const tuyos = (body.family ?? 0) + (body.work ?? 0);
+
+  if (nuevos + cambios > 0) {
+    const compromisos = `${nuevos} nuevos${cambios ? `, ${cambios} con cambios` : ""}`;
+    return leidos > 0 ? `${compromisos} · ${leidos} correos leídos` : compromisos;
+  }
+
+  if (leidos > 0) {
+    return `${leidos} correos leídos, ${tuyos} tuyos, ningún compromiso nuevo`;
+  }
+
+  return "Sin novedades";
 }
 
 /**

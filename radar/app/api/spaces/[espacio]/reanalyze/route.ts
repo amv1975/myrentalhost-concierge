@@ -86,14 +86,29 @@ export async function POST(
 
   // Solo los que el clasificador marcó como que piden algo. Reanalizar los
   // demás sería pagarle al modelo caro por lo que ya se descartó por barato.
-  // Los resúmenes se rehacen todos, hayan dado compromisos o no: el detalle
-  // que se ve al desplegar una línea sale de aquí.
+  // Vuelven al principio: al filtro por asunto y después a la lectura. Solo
+  // así se aplican las reglas nuevas — un correo ya juzgado no se vuelve a
+  // mirar, y ahí es donde se quedan congelados los criterios viejos.
+  //
+  // El espacio NO se borra aquí. Se borra, si toca, cuando el filtro decida
+  // que es ruido. Si lo quitáramos ahora, el correo desaparecería del parte
+  // durante toda la cola y la pantalla volvería a parecer vacía.
+  //
+  // Y lo que tú decidiste a mano se queda como está: lo descartado y lo que
+  // corregiste tú no vuelve a pasar por el modelo.
   const { error: triageError } = await admin
     .from("emails")
-    .update({ triage_status: "pending" })
+    .update({
+      triage_status: "pending",
+      triaged_at: null,
+      triage_category: null,
+      summary: null,
+      detail: null,
+      link_note: null,
+    })
     .eq("space_id", space.id)
-    .in("triage_category", ["family", "work"])
-    .not("body_text", "is", null);
+    .is("dismissed_at", null)
+    .or("triage_model.is.null,triage_model.neq.usuario");
   if (triageError) throw triageError;
 
   const { data: emailRows, error: emailsError } = await admin

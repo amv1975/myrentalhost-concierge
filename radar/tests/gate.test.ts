@@ -101,3 +101,27 @@ describe("la pista del remitente", () => {
     expect(buildGateUserPrompt([email()])).not.toContain("remitente habitual");
   });
 });
+
+describe("el caudal de los canales de reservas", () => {
+  it("la regla va por encima de la descripción del espacio", () => {
+    // La descripción dice que el trabajo incluye "reservas de Airbnb", y el
+    // modelo lo leía como "todo lo de Airbnb es trabajo". Con 49 pisos eso son
+    // cientos de avisos al día y la app se vuelve una segunda bandeja.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("va por encima de las descripciones");
+    expect(prompt).toContain("Reservation confirmed");
+    expect(prompt).toContain("si nadie lo abre nunca, ¿pasa algo?");
+  });
+
+  it("distingue el aviso automático del huésped que escribe", () => {
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("Un **huésped escribe**");
+    expect(prompt).toContain("Una **petición que caduca**");
+  });
+
+  it("dice en voz alta cuánto tiene que salir", () => {
+    // Sin una cifra, "la mayoría es none" se interpreta como el 60%.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("entre noventa y noventa y cinco son none");
+  });
+});

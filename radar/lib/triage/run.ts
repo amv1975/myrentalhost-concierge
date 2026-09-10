@@ -152,6 +152,9 @@ export async function triagePending(
       .not("triaged_at", "is", null)
       .is("summary", null)
       .is("dismissed_at", null)
+      // Lo que no es un envío masivo va primero: si la cola es larga, más vale
+      // haber leído a las personas que a las máquinas.
+      .order("bulk", { ascending: true })
       .order("received_at", { ascending: false })
       .limit(Math.min(limit, MAX_PER_RUN));
     if (error) throw error;

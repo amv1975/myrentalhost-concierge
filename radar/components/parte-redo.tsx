@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 /**
  * Rehacer los resúmenes de lo que ya está guardado.
  *
- * Hace falta cuando cambian las reglas: un correo analizado no se vuelve a
- * analizar nunca, así que los viejos se quedan como los dejó el prompt
- * anterior —en catalán, sin detalle, con el criterio antiguo— y no hay forma
- * de que se arreglen solos.
+ * Hace falta cuando cambian las reglas: un correo ya juzgado no se vuelve a
+ * mirar nunca, así que los viejos se quedan congelados con el criterio del
+ * día en que entraron —en catalán, sin detalle, o colados por un filtro que
+ * entonces era más blando— y no hay forma de que se arreglen solos.
  *
  * Vive aquí, en el parte, y no escondido en Ajustes, porque esta es la
  * pantalla en la que se ve el problema: si lees algo raro, lo arreglas donde
@@ -59,8 +59,9 @@ export function ParteRedo({ espacios }: { espacios: string[] }) {
   if (asking) {
     return (
       <span className="parte-redo">
-        Pone los correos guardados en cola para volver a resumirlos. Después
-        hay que pulsar Actualizar, quizá dos veces. Lo que ya confirmaste no se
+        Devuelve los correos guardados al filtro y a la lectura, para que se
+        les apliquen las reglas nuevas. Después hay que pulsar Actualizar,
+        quizá dos o tres veces. Lo que descartaste o marcaste a mano no se
         toca.{" "}
         <button type="button" onClick={run}>
           Hacerlo

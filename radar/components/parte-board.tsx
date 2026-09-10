@@ -126,6 +126,8 @@ export function ParteBoard({
           <Link href="/trabajo">Solo Trabajo</Link>
           {" · "}
           <Link href="/familia/ajustes">Ajustes</Link>
+          {" · "}
+          <Link href="/estado">Por dentro</Link>
         </span>
       </p>
     </div>

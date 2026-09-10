@@ -14,6 +14,7 @@ import {
 import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
 import type { Email, Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
+import { CATEGORIAS_PROPIAS, ESTADOS_LEIBLES } from "@/lib/triage/estados";
 
 /**
  * El modelo rápido y barato de la segunda etapa.
@@ -143,8 +144,14 @@ export async function triagePending(
     const { data, error } = await admin
       .from("emails")
       .select("*")
-      .in("triage_status", ["pending", "failed"])
-      .in("triage_category", ["family", "work"])
+      .in("triage_status", [...ESTADOS_LEIBLES])
+      .in("triage_category", [...CATEGORIAS_PROPIAS])
+      // Que haya pasado el filtro, no solo que tenga categoría: la categoría
+      // podía venir del atajo viejo de remitente conocido, y entonces esto se
+      // pondría a leer enteros avisos que el filtro habría descartado.
+      .not("triaged_at", "is", null)
+      .is("summary", null)
+      .is("dismissed_at", null)
       .order("received_at", { ascending: false })
       .limit(Math.min(limit, MAX_PER_RUN));
     if (error) throw error;

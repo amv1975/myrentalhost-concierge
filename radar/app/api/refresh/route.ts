@@ -56,6 +56,7 @@ export async function POST() {
     updated: result.updated,
     costUsd: result.costUsd,
     remaining: result.remaining,
+    pendingScreen: result.pendingScreen,
     // Un solo mensaje: repetir el mismo problema por cada etapa no informa.
     error: result.errors.length > 0 ? [...new Set(result.errors)][0] : null,
   });

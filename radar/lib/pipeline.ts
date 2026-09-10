@@ -12,6 +12,7 @@ import { Spend } from "@/lib/usage";
 import { deadlineIn, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
+import { CATEGORIAS_PROPIAS, ESTADOS_LEIBLES } from "@/lib/triage/estados";
 
 export interface PipelineResult {
   /** Correos nuevos vistos en el buzón (solo cabeceras). */
@@ -28,8 +29,10 @@ export interface PipelineResult {
   updated: number;
   /** Lo que ha costado esta pasada, en dólares. */
   costUsd: number;
-  /** Cuántos quedan sin leer después de esta pasada. Si es >0, hay que repetir. */
+  /** Cuántos quedan sin leer después de esta pasada. */
   remaining: number;
+  /** Cuántos quedan sin mirar siquiera. Los dos juntos son el trabajo que falta. */
+  pendingScreen: number;
   errors: string[];
 }
 
@@ -84,6 +87,7 @@ export async function runPipeline(
     updated: 0,
     costUsd: 0,
     remaining: 0,
+    pendingScreen: 0,
     errors: [],
   };
 
@@ -145,9 +149,12 @@ export async function runPipeline(
 
   // Va después de resumir porque cruza los resúmenes, no los correos en crudo,
   // y antes de extraer porque no depende de los compromisos.
-  // El cruce solo tiene sentido con los resúmenes ya hechos, así que si no dio
-  // tiempo a resumir, tampoco se cruza: se hace en la siguiente pasada.
-  if (plazo.ok()) {
+  // El cruce compara resúmenes, así que con media cola sin resumir compararía
+  // textos vacíos, pagaría por ello y además borraría las notas de la pasada
+  // anterior. Solo cuando ya no queda nada por leer.
+  result.remaining = await countUnread();
+
+  if (plazo.ok() && result.remaining === 0) {
     const linked = await connectRecent(spend);
     if (linked.error) result.errors.push(linked.error);
   }
@@ -167,7 +174,11 @@ export async function runPipeline(
   }
 
   result.costUsd = spend.usd;
+  // Se vuelve a contar al final: el filtro puede haber convertido correos sin
+  // mirar en correos por leer, y quien llama necesita el trabajo que queda de
+  // verdad, no el de hace veinte segundos.
   result.remaining = await countUnread();
+  result.pendingScreen = await countBacklog();
   await recordSpend(spend, result);
 
   return result;
@@ -186,13 +197,21 @@ async function countBacklog(): Promise<number> {
   return count ?? 0;
 }
 
-/** Lo que ya se sabe que es tuyo y todavía no se ha leído entero. */
+/**
+ * Lo que la siguiente pasada va a intentar leer.
+ *
+ * Tiene que coincidir exactamente con lo que selecciona triagePending. Si
+ * contara de más —correos que ninguna etapa va a tocar— el número no bajaría
+ * nunca de ahí y quien llama seguiría llamando en balde.
+ */
 async function countUnread(): Promise<number> {
   const admin = createAdminClient();
   const { count } = await admin
     .from("emails")
     .select("id", { count: "exact", head: true })
-    .not("space_id", "is", null)
+    .in("triage_status", [...ESTADOS_LEIBLES])
+    .in("triage_category", [...CATEGORIAS_PROPIAS])
+    .not("triaged_at", "is", null)
     .is("summary", null)
     .is("dismissed_at", null);
   return count ?? 0;

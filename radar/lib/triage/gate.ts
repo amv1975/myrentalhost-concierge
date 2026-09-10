@@ -89,16 +89,17 @@ export async function gatePending(
   const spaceIdByKey = new Map(spaces.map((s) => [s.key, s.id]));
 
   try {
-    // "Nunca lo ha mirado un modelo" es exactamente triaged_at nulo. Sirve
-    // para lo recién llegado y también para rescatar lo que entró por el
-    // atajo de remitente conocido, que se saltaba este filtro y llenaba de
-    // avisos automáticos la cola de lectura.
+    // "Nunca lo ha mirado un modelo" es exactamente triaged_at nulo, y esa es
+    // la única condición. Mirar además triage_status dejaba fuera los correos
+    // que una versión vieja de la ingesta marcaba como 'done' al entrar: ni
+    // los veía este filtro ni los leía la etapa siguiente, así que se
+    // quedaban en "leyéndolo" para siempre y el contador de pendientes no
+    // bajaba nunca de ahí.
     const { data, error } = await admin
       .from("emails")
       .select(
         "id, from_email, from_name, subject, snippet, bulk, triage_status",
       )
-      .in("triage_status", ["pending", "failed"])
       .is("triaged_at", null)
       .order("received_at", { ascending: false })
       .limit(limit);
@@ -235,6 +236,11 @@ async function runBatch(
       .update({
         triage_status: "done",
         triage_category: "none",
+        // Se le quita el espacio, y no es un detalle: los correos que entraron
+        // por el atajo viejo ya traían uno puesto. Sin borrarlo, el parte los
+        // seguiría enseñando como "leyéndolo" eternamente aunque el filtro los
+        // acabara de dar por ruido.
+        space_id: null,
         actionable: false,
         extraction_status: "skipped",
         triage_model: GATE_MODEL,

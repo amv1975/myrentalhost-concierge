@@ -30,6 +30,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
     setMessage(null);
 
     let total = { created: 0, updated: 0, screened: 0, discarded: 0, read: 0, costUsd: 0 };
+    let anterior: number | null = null;
 
     for (let vuelta = 1; vuelta <= MAX_VUELTAS; vuelta++) {
       let body: Record<string, number | string | null>;
@@ -65,13 +66,31 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
         break;
       }
 
-      const quedan = (body.remaining as number) ?? 0;
+      // El trabajo que falta son las dos colas juntas. Mirar solo la de leer
+      // daba un falso "no avanza": mientras el filtro trabaja, los correos que
+      // pasan de "sin mirar" a "por leer" hacen SUBIR ese número aunque la
+      // pasada haya hecho justo lo que tenía que hacer.
+      const quedan =
+        ((body.remaining as number) ?? 0) +
+        ((body.pendingScreen as number) ?? 0);
+
       if (quedan === 0) {
         setMessage(summary(total));
         break;
       }
 
-      setMessage(`Leyendo… quedan ${quedan}`);
+      // Si una pasada entera no baja el total, repetir siete veces más son
+      // tres minutos de espera para acabar donde empezaste. Algo lo impide y
+      // hay que decirlo, no seguir dando vueltas.
+      if (anterior !== null && quedan >= anterior) {
+        setMessage(
+          `Quedan ${quedan} y no avanzan. Pulsa otra vez; si sigue igual, avísame.`,
+        );
+        break;
+      }
+      anterior = quedan;
+
+      setMessage(`Procesando… quedan ${quedan}`);
       startTransition(() => router.refresh());
 
       if (vuelta === MAX_VUELTAS) {

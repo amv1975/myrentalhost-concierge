@@ -17,6 +17,8 @@ export interface GmailMessage {
   threadId: string;
   fromEmail: string;
   fromName: string | null;
+  /** Destinatarios, con las copias: estar en CC cuenta igual. */
+  recipients: string[];
   subject: string | null;
   snippet: string | null;
   bodyText: string;
@@ -158,6 +160,7 @@ export async function getMessage(
     threadId: raw.threadId,
     fromEmail: email,
     fromName: name,
+    recipients: parseRecipients(headers),
     subject: headerValue(headers, "Subject"),
     snippet: raw.snippet ? decodeEntities(raw.snippet) : null,
     bodyText: extractBody(raw.payload),
@@ -195,6 +198,30 @@ function receivedAt(
     if (!Number.isNaN(parsed.getTime())) return parsed;
   }
   return new Date();
+}
+
+/**
+ * Todas las direcciones a las que iba el correo: To, Cc y la que Gmail añade
+ * cuando llega por un alias o un reenvío. Sin esas dos últimas, un correo
+ * dirigido al buzón de administración en el que solo estás en copia se
+ * escaparía.
+ */
+export function parseRecipients(
+  headers: { name: string; value: string }[],
+): string[] {
+  const fields = ["To", "Cc", "Delivered-To", "X-Forwarded-To"];
+  const addresses: string[] = [];
+
+  for (const field of fields) {
+    const value = headerValue(headers, field);
+    if (!value) continue;
+    for (const part of value.split(",")) {
+      const { email } = parseFrom(part);
+      if (email.includes("@")) addresses.push(email);
+    }
+  }
+
+  return [...new Set(addresses)];
 }
 
 export function parseFrom(value: string): {

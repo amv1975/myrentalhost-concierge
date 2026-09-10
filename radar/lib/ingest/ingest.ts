@@ -88,7 +88,7 @@ export async function ingestSpace(space: Space): Promise<IngestResult> {
       }
 
 
-      if (!matchesSource(message.fromEmail, sources)) {
+      if (!matchesSource(message.fromEmail, sources, message.recipients)) {
         result.skipped += 1;
         continue;
       }

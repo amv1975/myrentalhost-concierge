@@ -12,7 +12,14 @@ export type ExtractionStatus =
   | "done"
   | "failed"
   | "skipped";
-export type SourceKind = "domain" | "email";
+/**
+ * De quién viene, o a quién llega.
+ *
+ * Los `to_*` existen porque en el trabajo lo estable no es el remitente —un
+ * gestor o un proveedor escriben desde su propio dominio— sino el buzón al que
+ * escriben.
+ */
+export type SourceKind = "domain" | "email" | "to_domain" | "to_email";
 
 export interface Space {
   id: string;

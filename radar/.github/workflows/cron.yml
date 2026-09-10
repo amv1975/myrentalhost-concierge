@@ -1,8 +1,7 @@
 name: Ingesta horaria
 
-# Vercel Cron en plan Hobby no ejecuta cada hora (aproximadamente una vez al
-# día). Este workflow llama al mismo endpoint cada hora sin depender del plan.
-# Si tienes Vercel Pro, puedes usar vercel.json en su lugar y desactivar esto.
+# Vercel Cron en plan Hobby solo admite un cron diario. Este workflow llama al
+# mismo endpoint cada hora, sin coste y sin depender del plan.
 
 on:
   schedule:
@@ -13,11 +12,30 @@ jobs:
   ingest:
     runs-on: ubuntu-latest
     steps:
-      - name: Buscar correos y extraer compromisos
+      - name: Comprobar la configuración
+        id: check
+        env:
+          RADAR_URL: ${{ secrets.RADAR_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          codigo=$(curl -sS -o /tmp/respuesta.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.RADAR_URL }}/api/cron/ingest")
+          # Sin los secretos no hay nada que llamar. Se avisa y se sale limpio:
+          # fallar cada hora llena el correo de avisos que no dicen nada nuevo.
+          if [ -z "$RADAR_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::warning::Faltan los secretos RADAR_URL o CRON_SECRET. Añádelos en Settings → Secrets and variables → Actions."
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Buscar correos y extraer compromisos
+        if: steps.check.outputs.listo == 'si'
+        env:
+          RADAR_URL: ${{ secrets.RADAR_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          codigo=$(curl -sS --max-time 600 -o /tmp/respuesta.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "${RADAR_URL%/}/api/cron/ingest")
 
           cat /tmp/respuesta.json
 

@@ -21,6 +21,16 @@ export interface ExtractRunResult {
 const MAX_ATTEMPTS = 3;
 
 /**
+ * Correos analizados a la vez.
+ *
+ * Uno detrás de otro, veinte correos son veinte esperas seguidas y pulsar
+ * Actualizar se hace eterno. Cuatro en paralelo lo divide por cuatro sin
+ * acercarse a los límites de la API ni disparar el coste, que depende de
+ * cuántos correos se analizan y no de con qué rapidez.
+ */
+const CONCURRENCY = 4;
+
+/**
  * Extrae los correos pendientes de un espacio.
  *
  * La cola es `emails.extraction_status`: cada mensaje se procesa una sola vez.
@@ -61,8 +71,22 @@ export async function extractPending(
     // Una sola consulta por tanda: lo aprendido no cambia entre correos.
     const learned = buildLearnedSection(await getDismissedExamples(space.id));
 
-    for (const email of (data ?? []) as Email[]) {
-      await processOne(email, space, result, learned);
+    const emails = (data ?? []) as Email[];
+
+    for (let i = 0; i < emails.length; i += CONCURRENCY) {
+      const batch = emails.slice(i, i + CONCURRENCY);
+
+      // Lo lento es preguntarle a Claude, y eso va en paralelo.
+      const extracted = await Promise.all(
+        batch.map((email) => extractOne(email, space, learned)),
+      );
+
+      // Guardar va en serie a propósito: el emparejamiento de un ítem mira los
+      // que ya existen, y dos correos del mismo lote hablando del mismo
+      // compromiso se crearían por duplicado en vez de reconocerse.
+      for (const outcome of extracted) {
+        await persistOne(outcome, space, result);
+      }
     }
 
     await finishRun(runId, "ok", result);
@@ -74,12 +98,18 @@ export async function extractPending(
   }
 }
 
-async function processOne(
+interface ExtractOutcome {
+  email: Email;
+  items: Awaited<ReturnType<typeof extractItems>> | null;
+  error: string | null;
+}
+
+/** Solo pregunta. No escribe nada más que el intento, para no reprocesar. */
+async function extractOne(
   email: Email,
   space: Space,
-  result: ExtractRunResult,
   learned: string,
-): Promise<void> {
+): Promise<ExtractOutcome> {
   const admin = createAdminClient();
 
   await admin
@@ -91,7 +121,35 @@ async function processOne(
     .eq("id", email.id);
 
   try {
-    const items = await extractItems(email, space, learned);
+    return { email, items: await extractItems(email, space, learned), error: null };
+  } catch (error) {
+    // Un correo que falla no puede tumbar la tanda entera.
+    return {
+      email,
+      items: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function persistOne(
+  outcome: ExtractOutcome,
+  space: Space,
+  result: ExtractRunResult,
+): Promise<void> {
+  const admin = createAdminClient();
+  const { email, items, error } = outcome;
+
+  if (error !== null || items === null) {
+    await admin
+      .from("emails")
+      .update({ extraction_status: "failed", extraction_error: error })
+      .eq("id", email.id);
+    result.failed += 1;
+    return;
+  }
+
+  try {
     const persisted = await persistItems(email, items, space);
 
     await admin
@@ -109,14 +167,13 @@ async function processOne(
     result.processed += 1;
     result.created += persisted.created;
     result.updated += persisted.updated;
-  } catch (error) {
-    // Un correo que falla no puede tumbar la tanda entera.
+  } catch (caught) {
     await admin
       .from("emails")
       .update({
         extraction_status: "failed",
         extraction_error:
-          error instanceof Error ? error.message : String(error),
+          caught instanceof Error ? caught.message : String(caught),
       })
       .eq("id", email.id);
     result.failed += 1;

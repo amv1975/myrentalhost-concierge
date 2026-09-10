@@ -16,31 +16,71 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  /**
+   * Muchas pasadas cortas en vez de una larga.
+   *
+   * Una sola petición que trabajara hasta terminar tardaba casi un minuto, y
+   * un móvil con la pantalla a medio apagar la mata antes: "Failed to fetch",
+   * cero avance y ninguna pista de por qué. Cada pasada dura ahora unos
+   * veinticinco segundos, siempre llega, y el botón vuelve a llamar mientras
+   * queden correos por leer, contándote cuántos faltan.
+   */
   async function run() {
     setBusy(true);
     setMessage(null);
-    try {
-      const response = await fetch("/api/refresh", { method: "POST" });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          body.error ?? `El servidor respondió ${response.status}`,
+
+    let total = { created: 0, updated: 0, screened: 0, discarded: 0, read: 0, costUsd: 0 };
+
+    for (let vuelta = 1; vuelta <= MAX_VUELTAS; vuelta++) {
+      let body: Record<string, number | string | null>;
+
+      try {
+        const response = await fetch("/api/refresh", { method: "POST" });
+        body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(
+            (body.error as string) ?? `El servidor respondió ${response.status}`,
+          );
+        }
+      } catch (error) {
+        setMessage(
+          readable(error instanceof Error ? error.message : "Error inesperado"),
         );
+        setBusy(false);
+        startTransition(() => router.refresh());
+        return;
       }
 
+      total = {
+        created: total.created + ((body.created as number) ?? 0),
+        updated: total.updated + ((body.updated as number) ?? 0),
+        screened: total.screened + ((body.screened as number) ?? 0),
+        discarded: total.discarded + ((body.discarded as number) ?? 0),
+        read: total.read + ((body.read as number) ?? 0),
+        costUsd: total.costUsd + ((body.costUsd as number) ?? 0),
+      };
+
       if (body.error) {
-        setMessage(readable(body.error));
-      } else {
-        setMessage(summary(body));
+        setMessage(readable(body.error as string));
+        break;
       }
+
+      const quedan = (body.remaining as number) ?? 0;
+      if (quedan === 0) {
+        setMessage(summary(total));
+        break;
+      }
+
+      setMessage(`Leyendo… quedan ${quedan}`);
       startTransition(() => router.refresh());
-    } catch (error) {
-      setMessage(
-        readable(error instanceof Error ? error.message : "Error inesperado"),
-      );
-    } finally {
-      setBusy(false);
+
+      if (vuelta === MAX_VUELTAS) {
+        setMessage(`Quedan ${quedan} por leer. Vuelve a pulsar.`);
+      }
     }
+
+    setBusy(false);
+    startTransition(() => router.refresh());
   }
 
   return (
@@ -50,7 +90,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
         disabled={busy}
         className="w-full rounded-xl bg-[var(--color-ink)] px-4 py-3.5 text-base font-medium text-white shadow-sm transition active:scale-[0.99] disabled:opacity-60"
       >
-        {busy ? "Buscando y analizando…" : "Actualizar"}
+        {busy ? (message ?? "Buscando y analizando…") : "Actualizar"}
       </button>
       {message ? (
         <p className="mt-1.5 text-center text-xs leading-relaxed text-[var(--color-muted)]">
@@ -60,6 +100,9 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
     </div>
   );
 }
+
+/** Cuántas pasadas encadena un solo toque antes de pedirte otro. */
+const MAX_VUELTAS = 8;
 
 /**
  * Qué contar después de actualizar.

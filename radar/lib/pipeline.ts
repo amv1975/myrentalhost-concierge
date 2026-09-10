@@ -28,6 +28,8 @@ export interface PipelineResult {
   updated: number;
   /** Lo que ha costado esta pasada, en dólares. */
   costUsd: number;
+  /** Cuántos quedan sin leer después de esta pasada. Si es >0, hay que repetir. */
+  remaining: number;
   errors: string[];
 }
 
@@ -59,9 +61,15 @@ export interface PipelineResult {
  */
 export async function runPipeline(
   spaces: Space[],
-  /** Cuánto puede durar esta pasada. Vercel corta a los 60 s en el plan
-   *  gratuito, y una tanda cortada a mitad es la que deja el parte a medias. */
-  totalMs = 55_000,
+  /**
+   * Cuánto puede durar esta pasada.
+   *
+   * No son los 60 s que da Vercel a propósito. Una petición de un minuto desde
+   * un móvil con la pantalla encendida a medias se muere sola —"Failed to
+   * fetch"— y entonces no avanzas nada y encima no sabes por qué. Veinticinco
+   * segundos siempre llegan, y quien llama vuelve a llamar hasta terminar.
+   */
+  totalMs = 25_000,
 ): Promise<PipelineResult> {
   const plazo: Deadline = deadlineIn(totalMs);
   const spend = new Spend();
@@ -75,6 +83,7 @@ export async function runPipeline(
     created: 0,
     updated: 0,
     costUsd: 0,
+    remaining: 0,
     errors: [],
   };
 
@@ -102,9 +111,14 @@ export async function runPipeline(
   // El buzón es uno solo; la ventana, la más amplia de las configuradas.
   const lookbackDays = Math.max(...spaces.map((s) => s.lookback_days || 14));
 
-  const ingested = await ingestInbox(accessToken, spaces, lookbackDays, plazo);
-  result.messagesNew = ingested.messagesNew;
-  if (ingested.error) result.errors.push(ingested.error);
+  // Con la cola llena, bajar más correos es cavar más hondo el agujero: el
+  // tiempo de esta pasada rinde mucho más vaciándola.
+  const backlog = await countBacklog();
+  if (backlog < BACKLOG_LIMIT) {
+    const ingested = await ingestInbox(accessToken, spaces, lookbackDays, plazo);
+    result.messagesNew = ingested.messagesNew;
+    if (ingested.error) result.errors.push(ingested.error);
+  }
 
   let context;
   try {
@@ -153,9 +167,35 @@ export async function runPipeline(
   }
 
   result.costUsd = spend.usd;
+  result.remaining = await countUnread();
   await recordSpend(spend, result);
 
   return result;
+}
+
+/** Con más de esto en cola, esta pasada no baja correos nuevos. */
+const BACKLOG_LIMIT = 60;
+
+/** Lo que falta por clasificar o por leer. */
+async function countBacklog(): Promise<number> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("emails")
+    .select("id", { count: "exact", head: true })
+    .is("triaged_at", null);
+  return count ?? 0;
+}
+
+/** Lo que ya se sabe que es tuyo y todavía no se ha leído entero. */
+async function countUnread(): Promise<number> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("emails")
+    .select("id", { count: "exact", head: true })
+    .not("space_id", "is", null)
+    .is("summary", null)
+    .is("dismissed_at", null);
+  return count ?? 0;
 }
 
 /**

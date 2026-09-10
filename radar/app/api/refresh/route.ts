@@ -4,7 +4,12 @@ import { getVisibleSpaces } from "@/lib/spaces";
 import { runPipeline } from "@/lib/pipeline";
 import { describeError } from "@/lib/errors";
 
-export const maxDuration = 300;
+/**
+ * Sesenta segundos es el techo del plan gratuito de Vercel. Pedir 300 no daba
+ * 300: daba 60 y un corte seco a mitad de trabajo. Ahora el pipeline lleva su
+ * propio reloj y para antes de que lo paren.
+ */
+export const maxDuration = 60;
 
 /**
  * Todo el ciclo de una vez: traer del buzón, clasificar, extraer, sincronizar.

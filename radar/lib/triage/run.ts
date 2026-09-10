@@ -11,6 +11,7 @@ import {
   buildTriageUserPrompt,
   type TriageContext,
 } from "@/lib/triage/prompt";
+import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
 import type { Email, Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
@@ -118,6 +119,7 @@ export async function triagePending(
   spaces: Space[],
   context: TriageContext,
   spend: Spend,
+  plazo: Deadline = SIN_PLAZO,
   limit = MAX_PER_RUN,
 ): Promise<TriageRunResult> {
   const admin = createAdminClient();
@@ -144,6 +146,11 @@ export async function triagePending(
     const emails = (data ?? []) as Email[];
 
     for (let i = 0; i < emails.length; i += CONCURRENCY) {
+      if (!plazo.ok()) {
+        result.error =
+          "Se acabó el tiempo leyendo correos; los que falten se leen en la siguiente actualización.";
+        break;
+      }
       const batch = emails.slice(i, i + CONCURRENCY);
 
       // El cuerpo se pide aquí, no en la ingesta: son estos pocos y no los

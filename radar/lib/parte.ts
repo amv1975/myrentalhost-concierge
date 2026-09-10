@@ -125,7 +125,10 @@ async function buildParte(): Promise<Parte> {
       .from("emails")
       .select("*")
       .gte("received_at", since)
-      .eq("triage_status", "done")
+      // No se filtra por triage_status a propósito: un correo que está en cola
+      // para volver a resumirse sigue teniendo su resumen anterior, y enseñar
+      // el viejo un rato es infinitamente mejor que vaciar el parte entero
+      // mientras se rehace.
       .not("summary", "is", null)
       .is("dismissed_at", null)
       .order("received_at", { ascending: false }),

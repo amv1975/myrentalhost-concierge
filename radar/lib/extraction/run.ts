@@ -7,6 +7,7 @@ import {
   getDismissedExamples,
 } from "@/lib/extraction/learned";
 import type { Spend } from "@/lib/usage";
+import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
 import type { Email, Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
@@ -51,6 +52,7 @@ const MAX_PER_RUN = 15;
 export async function extractPending(
   space: Space,
   spend?: Spend,
+  plazo: Deadline = SIN_PLAZO,
   limit = MAX_PER_RUN,
 ): Promise<ExtractRunResult> {
   const admin = createAdminClient();
@@ -86,6 +88,11 @@ export async function extractPending(
     const emails = (data ?? []) as Email[];
 
     for (let i = 0; i < emails.length; i += CONCURRENCY) {
+      if (!plazo.ok()) {
+        result.error =
+          "Se acabó el tiempo extrayendo compromisos; el resto entra en la siguiente actualización.";
+        break;
+      }
       const batch = emails.slice(i, i + CONCURRENCY);
 
       // Lo lento es preguntarle a Claude, y eso va en paralelo.

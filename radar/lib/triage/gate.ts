@@ -17,6 +17,7 @@ import {
   getStarredExamples,
 } from "@/lib/triage/learned";
 import { readUsage, type Spend } from "@/lib/usage";
+import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
 import type { Email, Space, TriageCategory } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
@@ -73,6 +74,7 @@ export async function gatePending(
   spaces: Space[],
   context: GateContext,
   spend: Spend,
+  plazo: Deadline = SIN_PLAZO,
   limit = 300,
 ): Promise<GateRunResult> {
   const admin = createAdminClient();
@@ -120,6 +122,10 @@ export async function gatePending(
     }
 
     for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      if (!plazo.ok()) {
+        result.error = `Se acabó el tiempo mirando asuntos; el resto entra en la siguiente actualización.`;
+        break;
+      }
       await Promise.all(
         batches
           .slice(i, i + CONCURRENCY)

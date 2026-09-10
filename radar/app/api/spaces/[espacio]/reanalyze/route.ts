@@ -9,7 +9,7 @@ import { getVisibleSpaces } from "@/lib/spaces";
 import { Spend } from "@/lib/usage";
 import { slugToSpaceKey, type Item } from "@/lib/types";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 /**
  * Vuelve a analizar los correos del espacio.
@@ -17,10 +17,11 @@ export const maxDuration = 300;
  * Sirve para cuando cambian las reglas: sin esto, los correos viejos se quedan
  * como los dejó el prompt anterior, porque uno ya analizado nunca se reprocesa.
  *
- * Rehace las dos cosas: el resumen y el detalle de cada correo, y los
- * compromisos que salgan de ellos. No vuelve a pedirle nada a Gmail —el cuerpo
- * ya está guardado— ni vuelve a pasar por el filtro por asunto, porque de qué
- * vida es cada uno ya se sabe.
+ * Lo único que hace es poner la cola: marca los correos para que se vuelvan a
+ * resumir y borra los compromisos que puedan rehacerse. El trabajo de verdad
+ * lo hace Actualizar después, en tandas. No vuelve a pedirle nada a Gmail —el
+ * cuerpo ya está guardado— ni vuelve a pasar por el filtro por asunto, porque
+ * de qué vida es cada uno ya se sabe.
  *
  * Deja en paz lo que ya has decidido. Solo se reanaliza un correo si NINGUNO
  * de sus ítems está confirmado o hecho: si un compromiso ya está en tu
@@ -118,26 +119,13 @@ export async function POST(
     if (error) throw error;
   }
 
-  const spend = new Spend();
-  const spaces = await getVisibleSpaces();
-  const triaged = await triagePending(
-    null,
-    spaces,
-    await buildTriageContext(spaces),
-    spend,
-  );
-
-  const result = await extractPending(space, spend, toReprocess.length || 1);
-
-  return NextResponse.json(
-    {
-      reanalyzed: triaged.read,
-      kept: locked.size,
-      created: result.created,
-      failed: result.failed,
-      costUsd: spend.usd,
-      error: triaged.error ?? result.error,
-    },
-    { status: triaged.error || result.error ? 500 : 200 },
-  );
+  // Aquí NO se llama al modelo. Releer veinte correos enteros tarda más de lo
+  // que una función de Vercel puede vivir, y cuando se cortaba a mitad dejaba
+  // los correos en cola y los compromisos ya borrados: el parte se quedaba
+  // vacío. Ahora esto solo pone la cola, que es instantáneo, y el trabajo lo
+  // hace Actualizar en tandas que sí caben en su tiempo.
+  return NextResponse.json({
+    queued: toReprocess.length,
+    kept: locked.size,
+  });
 }

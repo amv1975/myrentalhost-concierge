@@ -25,7 +25,7 @@ export function ParteRedo({ espacios }: { espacios: string[] }) {
   async function run() {
     setBusy(true);
     setAsking(false);
-    setMessage("Releyendo los correos guardados…");
+    setMessage("Poniéndolos en cola…");
 
     let done = 0;
     const problems: string[] = [];
@@ -39,7 +39,7 @@ export function ParteRedo({ espacios }: { espacios: string[] }) {
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body.error ?? `Error ${response.status}`);
-        done += body.reanalyzed ?? 0;
+        done += body.queued ?? 0;
       } catch (error) {
         problems.push(error instanceof Error ? error.message : String(error));
       }
@@ -48,7 +48,7 @@ export function ParteRedo({ espacios }: { espacios: string[] }) {
     setMessage(
       problems.length > 0
         ? problems[0]
-        : `${done} correos vueltos a leer.`,
+        : `${done} correos en cola. Pulsa Actualizar para releerlos.`,
     );
     setBusy(false);
     startTransition(() => router.refresh());
@@ -59,8 +59,9 @@ export function ParteRedo({ espacios }: { espacios: string[] }) {
   if (asking) {
     return (
       <span className="parte-redo">
-        Vuelve a leer los correos guardados y rehace resúmenes y compromisos.
-        Lo que ya confirmaste no se toca.{" "}
+        Pone los correos guardados en cola para volver a resumirlos. Después
+        hay que pulsar Actualizar, quizá dos veces. Lo que ya confirmaste no se
+        toca.{" "}
         <button type="button" onClick={run}>
           Hacerlo
         </button>{" "}

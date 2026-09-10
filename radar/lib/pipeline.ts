@@ -9,6 +9,7 @@ import { buildTriageContext } from "@/lib/triage/context";
 import { extractPending } from "@/lib/extraction/run";
 import { syncSpace } from "@/lib/calendar/sync";
 import { Spend } from "@/lib/usage";
+import { deadlineIn, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
@@ -56,7 +57,13 @@ export interface PipelineResult {
  * Cada etapa captura su propio error y devuelve lo que llevaba hecho: que
  * Gmail corte por cuota no puede impedir que se clasifique lo ya descargado.
  */
-export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
+export async function runPipeline(
+  spaces: Space[],
+  /** Cuánto puede durar esta pasada. Vercel corta a los 60 s en el plan
+   *  gratuito, y una tanda cortada a mitad es la que deja el parte a medias. */
+  totalMs = 55_000,
+): Promise<PipelineResult> {
+  const plazo: Deadline = deadlineIn(totalMs);
   const spend = new Spend();
   const result: PipelineResult = {
     messagesNew: 0,
@@ -95,7 +102,7 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
   // El buzón es uno solo; la ventana, la más amplia de las configuradas.
   const lookbackDays = Math.max(...spaces.map((s) => s.lookback_days || 14));
 
-  const ingested = await ingestInbox(accessToken, spaces, lookbackDays);
+  const ingested = await ingestInbox(accessToken, spaces, lookbackDays, plazo);
   result.messagesNew = ingested.messagesNew;
   if (ingested.error) result.errors.push(ingested.error);
 
@@ -111,12 +118,12 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
     return result;
   }
 
-  const gated = await gatePending(spaces, context, spend);
+  const gated = await gatePending(spaces, context, spend, plazo);
   result.screened = gated.screened;
   result.discarded = gated.discarded;
   if (gated.error) result.errors.push(gated.error);
 
-  const triaged = await triagePending(accessToken, spaces, context, spend);
+  const triaged = await triagePending(accessToken, spaces, context, spend, plazo);
   result.read = triaged.read;
   result.family = triaged.family;
   result.work = triaged.work;
@@ -124,17 +131,25 @@ export async function runPipeline(spaces: Space[]): Promise<PipelineResult> {
 
   // Va después de resumir porque cruza los resúmenes, no los correos en crudo,
   // y antes de extraer porque no depende de los compromisos.
-  const linked = await connectRecent(spend);
-  if (linked.error) result.errors.push(linked.error);
+  // El cruce solo tiene sentido con los resúmenes ya hechos, así que si no dio
+  // tiempo a resumir, tampoco se cruza: se hace en la siguiente pasada.
+  if (plazo.ok()) {
+    const linked = await connectRecent(spend);
+    if (linked.error) result.errors.push(linked.error);
+  }
 
   for (const space of spaces) {
-    const extracted = await extractPending(space, spend);
+    const extracted = await extractPending(space, spend, plazo);
     result.created += extracted.created;
     result.updated += extracted.updated;
     if (extracted.error) result.errors.push(extracted.error);
 
-    const synced = await syncSpace(space);
-    if (synced.error) result.errors.push(synced.error);
+    // Sincronizar toca el calendario de verdad: si no hay tiempo para hacerlo
+    // entero, mejor no empezarlo.
+    if (plazo.ok()) {
+      const synced = await syncSpace(space);
+      if (synced.error) result.errors.push(synced.error);
+    }
   }
 
   result.costUsd = spend.usd;

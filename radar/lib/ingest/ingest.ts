@@ -6,6 +6,7 @@ import {
   GmailRateLimitError,
 } from "@/lib/google/gmail";
 import { buildInboxQuery, knownSpaceFor } from "@/lib/ingest/query";
+import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
 import type { Source, Space, SpaceKey } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
@@ -37,6 +38,7 @@ export async function ingestInbox(
   accessToken: string,
   spaces: Space[],
   lookbackDays: number,
+  plazo: Deadline = SIN_PLAZO,
   maxMessages = 400,
 ): Promise<IngestResult> {
   const admin = createAdminClient();
@@ -73,6 +75,11 @@ export async function ingestInbox(
     const fresh = messageIds.filter((id) => !known.has(id));
 
     for (const messageId of fresh) {
+      if (!plazo.ok()) {
+        result.error =
+          "Se acabó el tiempo bajando correos; los que falten entran en la siguiente actualización.";
+        break;
+      }
       let message;
       try {
         message = await getMessageHeaders(accessToken, messageId);

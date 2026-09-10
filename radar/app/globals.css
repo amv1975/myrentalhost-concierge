@@ -748,3 +748,25 @@ body:has(.parte) {
   text-underline-offset: 3px;
   cursor: pointer;
 }
+
+/* Lo que se sabe que es tuyo pero aún no se ha leído entero. Se enseña con su
+   asunto en vez de esconderlo: una pantalla que dice "0 para ti" mientras la
+   cola avanza parece rota, y es justo cuando está trabajando. */
+.parte-reading {
+  color: var(--p-work);
+  font-style: italic;
+}
+
+.parte-tally .leyendo b {
+  color: var(--p-work);
+}
+
+.parte-cola {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--p-muted);
+  border-left: 2px solid var(--p-work);
+  padding-left: 11px;
+  margin: 0;
+  max-width: 58ch;
+}

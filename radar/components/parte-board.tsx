@@ -30,7 +30,14 @@ export function ParteBoard({
           <span>
             <b>{total}</b> para ti
           </span>
-          {parte.updatedAt ? (
+          {parte.reading > 0 ? (
+            <>
+              <span className="sep">/</span>
+              <span className="leyendo">
+                <b>{parte.reading}</b> sin leer todavía
+              </span>
+            </>
+          ) : parte.updatedAt ? (
             <>
               <span className="sep">/</span>
               <span>
@@ -57,6 +64,14 @@ export function ParteBoard({
       ) : null}
 
       <ParteAgenda agenda={agenda} />
+
+      {parte.reading > 0 ? (
+        <p className="parte-cola">
+          Quedan {parte.reading} correos por leer entera. Aparecen con su
+          asunto y se van completando; vuelve a pulsar Actualizar hasta que no
+          quede ninguno.
+        </p>
+      ) : null}
 
       {total === 0 ? (
         <p className="parte-empty">

@@ -46,6 +46,8 @@ export interface ParteEntry {
   actionable: boolean;
   /** Qué tiene que ver con otro correo del día, si tiene que ver con alguno. */
   link: string | null;
+  /** Aún sin resumir: se sabe que es tuyo, pero todavía no se ha leído. */
+  reading: boolean;
   gmailMessageId: string;
   needsReview: boolean;
   /** Marcado a mano como importante. Sube arriba y no se cae con el tiempo. */
@@ -61,6 +63,8 @@ export interface Parte {
   rest: ParteEntry[];
   /** Pasó, está bien que lo sepas, y no hay nada que hacer. */
   fyi: ParteEntry[];
+  /** Cuántos se sabe que son tuyos pero todavía no se han leído. */
+  reading: number;
   /** Qué se tiró. Vacío si este usuario no es el dueño del buzón. */
   noise: { who: string; subject: string }[];
   /** Qué ha fallado al construir el parte, si ha fallado algo. */
@@ -68,6 +72,7 @@ export interface Parte {
 }
 
 const VACIO: Parte = {
+  reading: 0,
   scanned: 0,
   discarded: 0,
   updatedAt: null,
@@ -125,11 +130,13 @@ async function buildParte(): Promise<Parte> {
       .from("emails")
       .select("*")
       .gte("received_at", since)
-      // No se filtra por triage_status a propósito: un correo que está en cola
-      // para volver a resumirse sigue teniendo su resumen anterior, y enseñar
-      // el viejo un rato es infinitamente mejor que vaciar el parte entero
-      // mientras se rehace.
-      .not("summary", "is", null)
+      // Ni por triage_status ni por summary, a propósito. Un correo que ya ha
+      // pasado el filtro por asunto YA se sabe que es tuyo, aunque todavía no
+      // se haya leído entero: enseñarlo con su asunto y un "leyéndolo" es
+      // infinitamente mejor que decir "0 para ti" mientras la cola avanza.
+      // Esconderlo hasta tenerlo perfecto hacía que la app pareciera vacía y
+      // rota justo cuando estaba trabajando.
+      .not("space_id", "is", null)
       .is("dismissed_at", null)
       .order("received_at", { ascending: false }),
     // Lo marcado a mano no se cae de la lista porque pasen dos días: si lo
@@ -185,7 +192,10 @@ async function buildParte(): Promise<Parte> {
 
   const noise = user ? await getNoise(user.id, since) : { list: [], count: 0 };
 
+  const reading = entries.filter((e) => e.reading).length;
+
   return {
+    reading,
     scanned: await countScanned(since),
     discarded: noise.count,
     updatedAt: emails[0]?.triaged_at ?? null,
@@ -226,6 +236,7 @@ function itemEntry(
       item.status === "needs_review" ||
       item.pinned ||
       (days !== null && days <= URGENT_DAYS),
+    reading: false,
     at: item.emails?.received_at ?? item.created_at,
     who: sourceLabel(item.emails?.from_email, item.emails?.from_name) ?? "",
     headline: item.title,
@@ -257,12 +268,13 @@ function emailEntry(
     who: sourceLabel(email.from_email, email.from_name) ?? "",
     headline: email.summary ?? email.subject ?? "(sin asunto)",
     // El snippet de Gmail solo se usa si el correo es viejo y se resumió antes
-    // de que existiera el detalle.
+    // de que existiera el detalle, o si aún no se ha leído.
     detail: email.detail ?? email.snippet,
+    reading: email.summary === null,
     when: null,
     fromEmail: email.from_email,
     subject: email.subject,
-    actionable: email.actionable,
+    actionable: email.actionable || email.summary === null,
     link: email.link_note,
     gmailMessageId: email.gmail_message_id,
     needsReview: false,

@@ -25,8 +25,14 @@ import { describeError } from "@/lib/errors";
  */
 export const TRIAGE_MODEL = "claude-haiku-4-5";
 
-/** Se leen pocos, pero en paralelo para que Actualizar no se haga eterno. */
-const CONCURRENCY = 6;
+/**
+ * Cuántos se leen a la vez.
+ *
+ * Cada uno son doce mil caracteres, así que lo que limita una pasada es el
+ * reloj de Vercel y no el límite de la API. Diez a la vez es lo que hace que
+ * una cola de sesenta correos se despache en dos pulsaciones y no en seis.
+ */
+const CONCURRENCY = 10;
 
 /**
  * Tope de correos a los que se les baja el cuerpo y se les paga un resumen por

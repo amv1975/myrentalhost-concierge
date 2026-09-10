@@ -814,6 +814,12 @@ body:has(.parte) {
   text-align: right;
 }
 
+/* A medias no es un fallo: se apunta en gris, no en rojo. */
+.estado-tabla .medias {
+  color: var(--p-muted);
+  text-align: right;
+}
+
 .estado-tabla .mal,
 .estado-bloque p.mal {
   color: var(--p-alert);
@@ -852,5 +858,9 @@ body:has(.parte) {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;
   line-height: 1.45;
+  color: var(--p-faint);
+}
+
+.estado-bloque .errores li[data-mal="true"] {
   color: var(--p-alert);
 }

@@ -13,6 +13,9 @@ import { describeError } from "@/lib/errors";
 export interface IngestResult {
   messagesSeen: number;
   messagesNew: number;
+  /** Se quedó a medias por falta de tiempo. No es un fallo: lo que falte
+   *  entra en la siguiente pasada. */
+  parcial?: string;
   error?: string;
 }
 
@@ -72,7 +75,7 @@ export async function ingestInbox(
 
     for (const messageId of fresh) {
       if (!plazo.ok()) {
-        result.error =
+        result.parcial =
           "Se acabó el tiempo bajando correos; los que falten entran en la siguiente actualización.";
         break;
       }
@@ -153,7 +156,8 @@ async function finishRun(
       finished_at: new Date().toISOString(),
       messages_seen: result.messagesSeen,
       messages_new: result.messagesNew,
-      error: result.error ?? null,
+      // Quedarse sin plazo se apunta, pero no pinta la pasada de rojo.
+      error: result.error ?? result.parcial ?? null,
     })
     .eq("id", runId);
 }

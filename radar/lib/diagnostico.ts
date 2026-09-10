@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { describeError } from "@/lib/errors";
+import { tocaFiltro, tocaLeer } from "@/lib/triage/estados";
 
 /**
  * Qué está haciendo la app por dentro.
@@ -40,15 +41,6 @@ export interface Diagnostico {
   error?: string;
 }
 
-const ESTADOS = `
-  case
-    when triaged_at is null       then '1 · sin mirar'
-    when triage_category = 'none' then '2 · ruido'
-    when dismissed_at is not null then '3 · descartado por ti'
-    when summary is null          then '4 · sin leer'
-    else                               '5 · leido'
-  end
-`;
 
 export async function getDiagnostico(): Promise<Diagnostico> {
   const vacio: Diagnostico = { reparto: [], pasadas: [], colegio: [] };
@@ -59,7 +51,7 @@ export async function getDiagnostico(): Promise<Diagnostico> {
     const [correos, runs] = await Promise.all([
       admin
         .from("emails")
-        .select("triaged_at, triage_category, dismissed_at, summary, subject, received_at, triage_model, from_email")
+        .select("triaged_at, triage_status, triage_category, dismissed_at, summary, subject, received_at, triage_model, from_email")
         .order("received_at", { ascending: false })
         .limit(2000),
       admin
@@ -74,6 +66,7 @@ export async function getDiagnostico(): Promise<Diagnostico> {
 
     type Fila = {
       triaged_at: string | null;
+      triage_status: string;
       triage_category: string | null;
       dismissed_at: string | null;
       summary: string | null;
@@ -138,16 +131,20 @@ export async function getDiagnostico(): Promise<Diagnostico> {
 
 function estadoDe(fila: {
   triaged_at: string | null;
+  triage_status: string;
   triage_category: string | null;
   dismissed_at: string | null;
   summary: string | null;
+  triage_model: string | null;
 }): string {
-  if (fila.triaged_at === null) return "1 · sin mirar";
+  // Pregunta a la máquina de estados en vez de repetir sus reglas. Cuando esta
+  // pantalla tenía su propia copia, enseñaba quinientos correos como ruido
+  // definitivo justo cuando estaban en cola para volver a mirarse.
+  if (tocaFiltro(fila)) {
+    return fila.triaged_at === null ? "1 · sin mirar" : "1 · a revisar de nuevo";
+  }
   if (fila.triage_category === "none") return "2 · ruido";
   if (fila.dismissed_at !== null) return "3 · descartado por ti";
-  if (fila.summary === null) return "4 · sin leer";
+  if (tocaLeer(fila)) return "4 · sin leer";
   return "5 · leído";
 }
-
-/** El SQL equivalente, por si algún día hace falta mirarlo desde Supabase. */
-export const SQL_REPARTO = `select ${ESTADOS} as estado, count(*) from emails group by 1 order by 1;`;

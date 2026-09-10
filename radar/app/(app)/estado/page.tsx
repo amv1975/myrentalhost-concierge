@@ -66,8 +66,8 @@ export default async function EstadoPage() {
                     ? `${pasada.nuevos}/${pasada.vistos}`
                     : ""}
                 </td>
-                <td className={pasada.status === "ok" ? "ok" : "mal"}>
-                  {pasada.status}
+                <td className={etiqueta(pasada).clase}>
+                  {etiqueta(pasada).texto}
                 </td>
               </tr>
             ))}
@@ -79,7 +79,7 @@ export default async function EstadoPage() {
               .filter((p) => p.error)
               .slice(0, 4)
               .map((p, index) => (
-                <li key={index}>
+                <li key={index} data-mal={p.status !== "ok"}>
                   <b>{hhmm(p.startedAt)}</b> {p.error}
                 </li>
               ))}
@@ -130,4 +130,21 @@ function hhmm(iso: string): string {
     minute: "2-digit",
     hour12: false,
   }).format(new Date(iso));
+}
+
+/**
+ * Cómo se llama lo que pasó en una pasada.
+ *
+ * Tres desenlaces, no dos: salió bien, se quedó a medias por tiempo —que es
+ * normal y se termina en la siguiente— o falló. Cuando "a medias" se pintaba
+ * de rojo, las doce pasadas salían en rojo y los fallos de verdad no se
+ * distinguían de la rutina.
+ */
+function etiqueta(pasada: { status: string; error: string | null }): {
+  texto: string;
+  clase: string;
+} {
+  if (pasada.status !== "ok") return { texto: "error", clase: "mal" };
+  if (pasada.error) return { texto: "a medias", clase: "medias" };
+  return { texto: "ok", clase: "ok" };
 }

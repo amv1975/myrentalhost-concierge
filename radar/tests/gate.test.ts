@@ -67,11 +67,14 @@ describe("filtro por asunto", () => {
     expect(prompt.match(/<contenido_no_confiable>/g)).toHaveLength(1);
   });
 
-  it("ante la duda, ruido", () => {
-    // La regla que sostiene el coste y también la utilidad: colar publicidad
-    // llena la app de basura; dejar algo fuera solo lo deja donde ya estaba.
+  it("el desempate depende de quién escribe, no de la duda", () => {
+    // La versión anterior decía "ante la duda, none" para todo el mundo, y con
+    // eso el filtro marcó ruido 525 de 525 correos: la bandeja quedó vacía. Un
+    // canal automático y un colegio no merecen la misma desconfianza.
     const prompt = buildGateSystemPrompt(context);
-    expect(prompt).toContain("elige **none**");
+    expect(prompt).toContain("depende de quién escribe");
+    expect(prompt).toContain("canal automático de alto volumen");
+    expect(prompt).toContain("ante la duda: **quédatelo**");
     expect(prompt).toContain("Alquiler turístico en Barcelona.");
   });
 
@@ -119,9 +122,39 @@ describe("el caudal de los canales de reservas", () => {
     expect(prompt).toContain("Una **petición que caduca**");
   });
 
-  it("dice en voz alta cuánto tiene que salir", () => {
-    // Sin una cifra, "la mayoría es none" se interpreta como el 60%.
+  it("no fija una cuota de descarte", () => {
+    // Una cifra —"entre el noventa y el noventa y cinco por ciento es none"—
+    // el modelo la lee como objetivo y la cumple: marcó ruido el 100% de la
+    // bandeja para llegar a ella. Lo que decide es el asunto, no el reparto.
     const prompt = buildGateSystemPrompt(context);
-    expect(prompt).toContain("entre noventa y noventa y cinco son none");
+    expect(prompt).not.toContain("noventa y cinco son none");
+    expect(prompt).toContain("No hay una cuota que cumplir");
+  });
+});
+
+describe("el colegio no es un canal de reservas", () => {
+  it("la riada es solo de trabajo", () => {
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("Familia: aquí NO hay riada");
+    expect(prompt).toContain("No le apliques la desconfianza del apartado anterior");
+  });
+
+  it("enumera lo que un colegio manda y no se puede perder", () => {
+    // Los ocho correos del Lestonnac que acabaron en la basura eran justo
+    // estos: recibos, subvenciones con plazo y una excursión a Montserrat.
+    const prompt = buildGateSystemPrompt(context);
+    for (const caso of ["Recibos", "subvenciones", "Autorizaciones", "excursiones"]) {
+      expect(prompt).toContain(caso);
+    }
+    expect(prompt).toContain("nombre de una de sus hijas");
+  });
+
+  it('"masivo" dice cómo se envió, no qué dice', () => {
+    // El mecanismo exacto del fallo: el colegio manda por plataforma de
+    // envíos, así que sus circulares traen List-Unsubscribe, Radar las marcaba
+    // "(masivo)" y el prompt trataba esa marca como señal de ruido.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("solo dice **cómo se envió**, no qué dice");
+    expect(prompt).toContain("ignora la marca por completo");
   });
 });

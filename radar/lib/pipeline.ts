@@ -12,7 +12,12 @@ import { Spend } from "@/lib/usage";
 import { deadlineIn, porcion, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
-import { CATEGORIAS_PROPIAS, ESTADOS_LEIBLES } from "@/lib/triage/estados";
+import {
+  CATEGORIAS_PROPIAS,
+  CRITERIO_ACTUAL,
+  ESTADOS_LEIBLES,
+  MARCA_USUARIO,
+} from "@/lib/triage/estados";
 
 export interface PipelineResult {
   /** Correos nuevos vistos en el buzón (solo cabeceras). */
@@ -33,6 +38,15 @@ export interface PipelineResult {
   remaining: number;
   /** Cuántos quedan sin mirar siquiera. Los dos juntos son el trabajo que falta. */
   pendingScreen: number;
+  /**
+   * Etapas que pararon por falta de tiempo.
+   *
+   * No son fallos. El pipeline está pensado para varias pasadas cortas, así
+   * que una etapa que dice "hasta aquí" y deja el resto para luego está
+   * haciendo exactamente su trabajo. Mezclarlas con los errores pintaba de
+   * rojo todas las pasadas y escondía los fallos de verdad.
+   */
+  parciales: string[];
   errors: string[];
 }
 
@@ -88,6 +102,7 @@ export async function runPipeline(
     costUsd: 0,
     remaining: 0,
     pendingScreen: 0,
+    parciales: [],
     errors: [],
   };
 
@@ -125,6 +140,7 @@ export async function runPipeline(
       porcion(plazo, REPARTO.bajar),
     );
     result.messagesNew = ingested.messagesNew;
+    if (ingested.parcial) result.parciales.push(ingested.parcial);
     if (ingested.error) result.errors.push(ingested.error);
   }
 
@@ -148,6 +164,7 @@ export async function runPipeline(
   );
   result.screened = gated.screened;
   result.discarded = gated.discarded;
+  if (gated.parcial) result.parciales.push(gated.parcial);
   if (gated.error) result.errors.push(gated.error);
 
   // La lectura va con el plazo entero, no con una porción: es la etapa que
@@ -156,6 +173,7 @@ export async function runPipeline(
   result.read = triaged.read;
   result.family = triaged.family;
   result.work = triaged.work;
+  if (triaged.parcial) result.parciales.push(triaged.parcial);
   if (triaged.error) result.errors.push(triaged.error);
 
   // Va después de resumir porque cruza los resúmenes, no los correos en crudo,
@@ -174,6 +192,7 @@ export async function runPipeline(
     const extracted = await extractPending(space, spend, plazo);
     result.created += extracted.created;
     result.updated += extracted.updated;
+    if (extracted.parcial) result.parciales.push(extracted.parcial);
     if (extracted.error) result.errors.push(extracted.error);
 
     // Sincronizar toca el calendario de verdad: si no hay tiempo para hacerlo
@@ -256,14 +275,37 @@ async function desdeCuandoMirar(): Promise<Date> {
   return new Date(Math.max(Date.parse(ultima) - SOLAPE_MS, tope));
 }
 
-/** Lo que falta por clasificar o por leer. */
+/**
+ * Lo que le falta por mirar al filtro por asunto.
+ *
+ * Tiene que contar lo mismo que selecciona gatePending, y eso ya no es solo
+ * "nunca lo ha mirado nadie": también vuelve lo que un criterio retirado tiró
+ * a la basura. Si contara de menos, el botón diría que no queda trabajo con
+ * quinientos correos esperando, y además el pipeline seguiría bajando correos
+ * nuevos en vez de vaciar la cola.
+ */
 async function countBacklog(): Promise<number> {
   const admin = createAdminClient();
-  const { count } = await admin
-    .from("emails")
-    .select("id", { count: "exact", head: true })
-    .is("triaged_at", null);
-  return count ?? 0;
+
+  const base = () =>
+    admin
+      .from("emails")
+      .select("id", { count: "exact", head: true })
+      .eq("triage_category", "none")
+      .is("dismissed_at", null);
+
+  const [nuevos, caducados, sinSello] = await Promise.all([
+    admin
+      .from("emails")
+      .select("id", { count: "exact", head: true })
+      .is("triaged_at", null),
+    base()
+      .neq("triage_model", CRITERIO_ACTUAL)
+      .neq("triage_model", MARCA_USUARIO),
+    base().is("triage_model", null),
+  ]);
+
+  return (nuevos.count ?? 0) + (caducados.count ?? 0) + (sinSello.count ?? 0);
 }
 
 /**
@@ -299,6 +341,10 @@ async function recordSpend(
   const admin = createAdminClient();
   // Apuntar lo gastado es contabilidad, no trabajo: si falla, se pierde una
   // línea del histórico, no la actualización que el usuario acaba de pedir.
+  // El estado solo se pone en rojo por un fallo de verdad. Una etapa que se
+  // quedó a medias por tiempo se apunta igual —hay que poder verla— pero la
+  // pasada cuenta como buena, que es lo que fue.
+  const nota = result.errors[0] ?? result.parciales[0] ?? null;
   const { error } = await admin.from("sync_runs").insert({
     kind: "triage",
     status: result.errors.length > 0 ? "error" : "ok",
@@ -310,7 +356,7 @@ async function recordSpend(
     input_tokens: spend.inputTokens,
     output_tokens: spend.outputTokens,
     cost_usd: spend.usd,
-    error: result.errors[0] ?? null,
+    error: nota,
   });
 
   if (error) {

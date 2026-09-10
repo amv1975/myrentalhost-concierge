@@ -17,6 +17,9 @@ export interface ExtractRunResult {
   created: number;
   updated: number;
   failed: number;
+  /** Se quedó a medias por falta de tiempo. No es un fallo: lo que falte
+   *  entra en la siguiente pasada. */
+  parcial?: string;
   error?: string;
 }
 
@@ -89,7 +92,7 @@ export async function extractPending(
 
     for (let i = 0; i < emails.length; i += CONCURRENCY) {
       if (!plazo.ok()) {
-        result.error =
+        result.parcial =
           "Se acabó el tiempo extrayendo compromisos; el resto entra en la siguiente actualización.";
         break;
       }

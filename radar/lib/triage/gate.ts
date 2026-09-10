@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { GateResultSchema } from "@/lib/triage/gate-schema";
 import { knownSpaceFor } from "@/lib/ingest/query";
-import { CRITERIO_ACTUAL } from "@/lib/triage/estados";
+import { CRITERIO_ACTUAL, MARCA_USUARIO, tocaFiltro } from "@/lib/triage/estados";
 import {
   buildGateSystemPrompt,
   buildGateUserPrompt,
@@ -53,6 +53,19 @@ type ScreenedEmail = Pick<
   "id" | "from_email" | "from_name" | "subject" | "snippet" | "bulk"
 >;
 
+/** Lo que hace falta para saber si a un correo le toca este filtro. */
+const CAMPOS =
+  "id, from_email, from_name, subject, snippet, bulk, triaged_at, triage_status, triage_category, summary, dismissed_at, triage_model";
+
+type Candidato = ScreenedEmail & {
+  triaged_at: string | null;
+  triage_status: string;
+  triage_category: string | null;
+  summary: string | null;
+  dismissed_at: string | null;
+  triage_model: string | null;
+};
+
 export interface GateRunResult {
   /** Correos mirados por encima. */
   screened: number;
@@ -61,6 +74,9 @@ export interface GateRunResult {
   /** Ruido: ni se les baja el cuerpo. */
   discarded: number;
   failed: number;
+  /** Se quedó a medias por falta de tiempo. No es un fallo: lo que falte
+   *  entra en la siguiente pasada. */
+  parcial?: string;
   error?: string;
 }
 
@@ -90,23 +106,7 @@ export async function gatePending(
   const spaceIdByKey = new Map(spaces.map((s) => [s.key, s.id]));
 
   try {
-    // "Nunca lo ha mirado un modelo" es exactamente triaged_at nulo, y esa es
-    // la única condición. Mirar además triage_status dejaba fuera los correos
-    // que una versión vieja de la ingesta marcaba como 'done' al entrar: ni
-    // los veía este filtro ni los leía la etapa siguiente, así que se
-    // quedaban en "leyéndolo" para siempre y el contador de pendientes no
-    // bajaba nunca de ahí.
-    const { data, error } = await admin
-      .from("emails")
-      .select(
-        "id, from_email, from_name, subject, snippet, bulk, triage_status",
-      )
-      .is("triaged_at", null)
-      .order("received_at", { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-
-    const pending = (data ?? []) as ScreenedEmail[];
+    const pending = await seleccionarParaFiltrar(limit);
 
     // La lista de remitentes del usuario ya no decide qué entra, pero sigue
     // sirviendo para no dudar entre familia y trabajo.
@@ -138,7 +138,7 @@ export async function gatePending(
 
     for (let i = 0; i < batches.length; i += CONCURRENCY) {
       if (!plazo.ok()) {
-        result.error = `Se acabó el tiempo mirando asuntos; el resto entra en la siguiente actualización.`;
+        result.parcial = `Se acabó el tiempo mirando asuntos; el resto entra en la siguiente actualización.`;
         break;
       }
       await Promise.all(
@@ -293,4 +293,67 @@ async function classify(
   return new Map(
     response.parsed_output.results.map((r) => [r.i, r.category as TriageCategory]),
   );
+}
+
+
+/**
+ * A quién le toca pasar por el filtro, en orden de urgencia.
+ *
+ * Dos grupos: lo que nunca ha mirado nadie, y lo que un criterio ya retirado
+ * mandó a la basura. Lo primero va antes, porque un correo de esta mañana
+ * importa más que revisar uno de anteayer.
+ *
+ * El SQL de aquí es solo un prefiltro: quien decide de verdad es tocaFiltro,
+ * que se aplica a todo lo que vuelve. Esa es la lección de la tarde en que el
+ * SQL y la máquina de estados decían cosas distintas y los correos se
+ * quedaban en tierra de nadie. Ahora hay una sola autoridad y la consulta solo
+ * tiene que traer de más, nunca de menos.
+ */
+async function seleccionarParaFiltrar(limit: number): Promise<ScreenedEmail[]> {
+  const admin = createAdminClient();
+
+  const sinMirar = admin
+    .from("emails")
+    .select(CAMPOS)
+    .is("triaged_at", null)
+    .order("received_at", { ascending: false })
+    .limit(limit);
+
+  // El sello nulo va aparte a propósito: en SQL, "distinto de v3" no incluye
+  // las filas sin sello, y esas son justo las más viejas. Dos consultas
+  // simples se entienden; una con negaciones y nulos anidados, no.
+  const base = () =>
+    admin
+      .from("emails")
+      .select(CAMPOS)
+      .eq("triage_category", "none")
+      .is("dismissed_at", null)
+      .order("received_at", { ascending: false })
+      .limit(limit);
+
+  const [nuevos, caducados, sinSello] = await Promise.all([
+    sinMirar,
+    base().neq("triage_model", CRITERIO_ACTUAL),
+    base().is("triage_model", null),
+  ]);
+
+  for (const r of [nuevos, caducados, sinSello]) {
+    if (r.error) throw r.error;
+  }
+
+  const vistos = new Set<string>();
+  const salida: ScreenedEmail[] = [];
+
+  for (const grupo of [nuevos.data, caducados.data, sinSello.data]) {
+    for (const fila of (grupo ?? []) as unknown as Candidato[]) {
+      if (salida.length >= limit) return salida;
+      if (vistos.has(fila.id)) continue;
+      vistos.add(fila.id);
+      if (fila.triage_model === MARCA_USUARIO) continue;
+      if (!tocaFiltro(fila)) continue;
+      salida.push(fila);
+    }
+  }
+
+  return salida;
 }

@@ -55,6 +55,9 @@ export interface TriageRunResult {
   work: number;
   ignored: number;
   failed: number;
+  /** Se quedó a medias por falta de tiempo. No es un fallo: lo que falte
+   *  entra en la siguiente pasada. */
+  parcial?: string;
   error?: string;
 }
 
@@ -163,7 +166,7 @@ export async function triagePending(
 
     for (let i = 0; i < emails.length; i += CONCURRENCY) {
       if (!plazo.ok()) {
-        result.error =
+        result.parcial =
           "Se acabó el tiempo leyendo correos; los que falten se leen en la siguiente actualización.";
         break;
       }

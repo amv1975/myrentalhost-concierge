@@ -19,7 +19,7 @@ import {
   getStarredExamples,
 } from "@/lib/triage/learned";
 import { readUsage, type Spend } from "@/lib/usage";
-import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
+import { SIN_PLAZO, limites, type Deadline } from "@/lib/deadline";
 import type { Email, Source, Space, TriageCategory } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 
@@ -153,6 +153,7 @@ export async function gatePending(
               spend,
               spaceIdByKey,
               result,
+              plazo,
             ),
           ),
       );
@@ -173,12 +174,13 @@ async function runBatch(
   spend: Spend,
   spaceIdByKey: Map<string, string>,
   result: GateRunResult,
+  plazo: Deadline,
 ): Promise<void> {
   const admin = createAdminClient();
 
   let decisions: Map<number, TriageCategory>;
   try {
-    decisions = await classify(batch, context, learned, sources, spend);
+    decisions = await classify(batch, context, learned, sources, spend, plazo);
   } catch {
     // Una tanda que falla se reintenta en la siguiente pasada. Cuesta décimas
     // de céntimo, así que no hace falta contador de intentos: lo que no puede
@@ -258,6 +260,7 @@ async function classify(
   learned: string,
   sources: (Source & { space_key?: string })[],
   spend: Spend,
+  plazo: Deadline,
 ): Promise<Map<number, TriageCategory>> {
   const emails: GateEmail[] = batch.map((email) => ({
     fromEmail: email.from_email,
@@ -282,7 +285,7 @@ async function classify(
       },
     ],
     messages: [{ role: "user", content: buildGateUserPrompt(emails) }],
-  });
+  }, limites(plazo));
 
   spend.add(GATE_MODEL, readUsage(response.usage));
 

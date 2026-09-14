@@ -100,7 +100,7 @@ export async function extractPending(
 
       // Lo lento es preguntarle a Claude, y eso va en paralelo.
       const extracted = await Promise.all(
-        batch.map((email) => extractOne(email, space, learned, spend)),
+        batch.map((email) => extractOne(email, space, learned, spend, plazo)),
       );
 
       // Guardar va en serie a propósito: el emparejamiento de un ítem mira los
@@ -131,7 +131,8 @@ async function extractOne(
   email: Email,
   space: Space,
   learned: string,
-  spend?: Spend,
+  spend: Spend | undefined,
+  plazo: Deadline,
 ): Promise<ExtractOutcome> {
   const admin = createAdminClient();
 
@@ -146,7 +147,7 @@ async function extractOne(
   try {
     return {
       email,
-      items: await extractItems(email, space, learned, spend),
+      items: await extractItems(email, space, learned, spend, plazo),
       error: null,
     };
   } catch (error) {

@@ -51,3 +51,29 @@ describe("el reloj de una pasada", () => {
     expect(SIN_PLAZO.ok()).toBe(true);
   });
 });
+
+describe("el timeout de cada llamada al modelo", () => {
+  it("nunca sobrevive al plazo de su etapa", async () => {
+    // El fallo que lo motiva: el plazo se mira ENTRE llamadas, así que la
+    // etapa veía tiempo de sobra, arrancaba una petición de cuarenta segundos
+    // y volvía cuando Vercel ya había cortado la función. Al móvil llegaba un
+    // "Gateway Timeout" sin una línea en ningún sitio que dijera por qué.
+    const { deadlineIn, limites } = await import("@/lib/deadline");
+    const plazo = deadlineIn(20_000);
+    const { timeout, maxRetries } = limites(plazo);
+
+    expect(timeout).toBeLessThanOrEqual(plazo.endsAt - Date.now() + 50);
+    // Sin esto el reloj real sería el triple: el SDK reintenta dos veces.
+    expect(maxRetries).toBe(0);
+  });
+
+  it("con el plazo casi agotado pide lo mínimo, no un número absurdo", async () => {
+    const { limites, SIN_PLAZO } = await import("@/lib/deadline");
+
+    const agotado = { ok: () => false, left: () => 0, endsAt: Date.now() - 5_000 };
+    expect(limites(agotado).timeout).toBeGreaterThan(0);
+
+    // Y sin plazo no se pide un timeout de trescientos mil años.
+    expect(limites(SIN_PLAZO).timeout).toBeLessThanOrEqual(10 * 60_000);
+  });
+});

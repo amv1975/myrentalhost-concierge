@@ -57,6 +57,35 @@ export function porcion(plazo: Deadline, ms: number): Deadline {
   return hasta(Math.min(Date.now() + ms, plazo.endsAt));
 }
 
+/**
+ * Lo que hay que pasarle a una llamada al modelo para que no se pase del plazo.
+ *
+ * El plazo se comprueba ENTRE llamadas, así que una sola llamada lenta se lo
+ * salta entero: la etapa mira el reloj, ve que le queda tiempo, empieza una
+ * petición que tarda cuarenta segundos y para cuando vuelve hace rato que
+ * Vercel cortó la función. Eso es lo que llegaba al móvil como "Gateway
+ * Timeout", sin una línea en ningún sitio que dijera por qué.
+ *
+ * `maxRetries: 0` no es tacañería: el SDK reintenta dos veces por defecto, así
+ * que el reloj real de una llamada puede ser el triple del timeout que se le
+ * pide. Aquí los reintentos ya existen a otro nivel —la tanda que falla vuelve
+ * a la cola y la siguiente pasada la recoge—, y esos sí caben en el plazo.
+ *
+ * El suelo existe para no pedir una petición de doscientos milisegundos que
+ * nace muerta: si no cabe ni eso, la etapa no debería haber empezado.
+ */
+export function limites(plazo: Deadline): { timeout: number; maxRetries: 0 } {
+  const queda = plazo.endsAt - Date.now();
+  const timeout = Math.min(MAX_LLAMADA_MS, Math.max(MIN_LLAMADA_MS, queda));
+  return { timeout, maxRetries: 0 };
+}
+
+/** Por debajo de esto una llamada no llega ni a empezar. */
+const MIN_LLAMADA_MS = 3_000;
+
+/** Techo para SIN_PLAZO, que no tiene fin y pediría un timeout absurdo. */
+const MAX_LLAMADA_MS = 10 * 60_000;
+
 /** Un plazo que nunca vence, para lo que no corre contra reloj (los tests). */
 export const SIN_PLAZO: Deadline = {
   ok: () => true,

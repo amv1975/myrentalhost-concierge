@@ -1,4 +1,5 @@
 import "server-only";
+import { SIN_PLAZO, limites, type Deadline } from "@/lib/deadline";
 import { CATEGORIAS_PROPIAS } from "@/lib/triage/estados";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -58,7 +59,7 @@ export interface ConnectResult {
   error?: string;
 }
 
-export async function connectRecent(spend: Spend): Promise<ConnectResult> {
+export async function connectRecent(spend: Spend, plazo: Deadline = SIN_PLAZO): Promise<ConnectResult> {
   const admin = createAdminClient();
   const result: ConnectResult = { linked: 0 };
 
@@ -92,7 +93,7 @@ export async function connectRecent(spend: Spend): Promise<ConnectResult> {
         { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
       ],
       messages: [{ role: "user", content: buildUserPrompt(emails) }],
-    });
+    }, limites(plazo));
 
     spend.add(MODEL, readUsage(response.usage));
 

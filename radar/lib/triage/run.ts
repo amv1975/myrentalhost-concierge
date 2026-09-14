@@ -11,7 +11,7 @@ import {
   buildTriageUserPrompt,
   type TriageContext,
 } from "@/lib/triage/prompt";
-import { SIN_PLAZO, type Deadline } from "@/lib/deadline";
+import { SIN_PLAZO, limites, type Deadline } from "@/lib/deadline";
 import type { Email, Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 import { CATEGORIAS_PROPIAS, ESTADOS_LEIBLES } from "@/lib/triage/estados";
@@ -74,6 +74,7 @@ export async function triageOne(
   >,
   context: TriageContext,
   spend?: Spend,
+  plazo: Deadline = SIN_PLAZO,
 ): Promise<TriageResult> {
   const response = await getClient().messages.parse({
     model: TRIAGE_MODEL,
@@ -100,7 +101,7 @@ export async function triageOne(
         }),
       },
     ],
-  });
+  }, limites(plazo));
 
   spend?.add(TRIAGE_MODEL, readUsage(response.usage));
 
@@ -213,7 +214,7 @@ export async function triagePending(
           try {
             return {
               email,
-              triage: await triageOne(email, context, spend),
+              triage: await triageOne(email, context, spend, plazo),
               error: null,
             };
           } catch (caught) {

@@ -1,4 +1,5 @@
 import "server-only";
+import { SIN_PLAZO, limites, type Deadline } from "@/lib/deadline";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { env } from "@/lib/env";
@@ -42,6 +43,7 @@ export async function extractItems(
   /** Lo que esta persona ya ha descartado, para no volver a traérselo. */
   learned = "",
   spend?: Spend,
+  plazo: Deadline = SIN_PLAZO,
 ): Promise<ExtractedItem[]> {
   const body = (email.body_text ?? "").trim();
   if (body.length === 0) return [];
@@ -76,7 +78,7 @@ export async function extractItems(
         }),
       },
     ],
-  });
+  }, limites(plazo));
 
   spend?.add(EXTRACTION_MODEL, readUsage(response.usage));
 

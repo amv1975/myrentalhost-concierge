@@ -185,7 +185,7 @@ export async function runPipeline(
   result.remaining = await countUnread();
 
   if (plazo.ok() && result.remaining === 0) {
-    const linked = await connectRecent(spend);
+    const linked = await connectRecent(spend, plazo);
     if (linked.error) result.errors.push(linked.error);
   }
 

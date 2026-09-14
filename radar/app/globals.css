@@ -560,6 +560,29 @@ body {
   outline: 2px solid var(--p-work);
   outline-offset: 3px;
 }
+/* El buscador manda, así que ocupa el ancho entero y va antes que la lista. */
+.parte-buscar {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  color: var(--p-ink);
+  background: var(--p-surface);
+  border: 1px solid var(--p-rule);
+  border-radius: 2px;
+  padding: 10px 11px;
+}
+
+.parte-buscar::placeholder {
+  color: var(--p-faint);
+}
+
+.parte-buscar:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 1px;
+}
+
 .parte-noise ul {
   list-style: none;
   margin: 12px 0 0;
@@ -631,6 +654,29 @@ body {
 }
 
 /* Con la lista ya accionable, el alto de antes dejaba ver tres correos. */
+/* El buscador manda, así que ocupa el ancho entero y va antes que la lista. */
+.parte-buscar {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  color: var(--p-ink);
+  background: var(--p-surface);
+  border: 1px solid var(--p-rule);
+  border-radius: 2px;
+  padding: 10px 11px;
+}
+
+.parte-buscar::placeholder {
+  color: var(--p-faint);
+}
+
+.parte-buscar:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 1px;
+}
+
 .parte-noise ul {
   max-height: 26rem;
 }

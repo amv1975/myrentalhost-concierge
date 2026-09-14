@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { NoiseEntry } from "@/lib/parte";
 import { SLUG_BY_SPACE, spaceLabel, type SpaceKey } from "@/lib/types";
@@ -32,8 +32,50 @@ export function ParteNoise({
   const [, startTransition] = useTransition();
   /** Cuál está preguntando a qué vida pertenece. */
   const [eligiendo, setEligiendo] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [encontrados, setEncontrados] = useState<NoiseEntry[] | null>(null);
+  const [buscando, setBuscando] = useState(false);
   const [hecho, setHecho] = useState<Record<string, string>>({});
   const [fallo, setFallo] = useState<string | null>(null);
+
+  /**
+   * Buscar entre todos los descartados, no solo entre los que caben en la
+   * pantalla.
+   *
+   * Se espera medio segundo desde la última tecla en vez de consultar en cada
+   * pulsación: escribir "vecinos" son siete consultas de las que solo importa
+   * la última.
+   */
+  useEffect(() => {
+    const q = busqueda.trim();
+    if (q.length < 2) {
+      setEncontrados(null);
+      setBuscando(false);
+      return;
+    }
+
+    setBuscando(true);
+    const cortar = new AbortController();
+    const temporizador = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/emails/descartados?q=${encodeURIComponent(q)}`,
+          { signal: cortar.signal },
+        );
+        const body = (await response.json()) as { results?: NoiseEntry[] };
+        setEncontrados(body.results ?? []);
+      } catch {
+        // Abortada por una tecla nueva, o sin red: la siguiente lo resuelve.
+      } finally {
+        setBuscando(false);
+      }
+    }, 450);
+
+    return () => {
+      clearTimeout(temporizador);
+      cortar.abort();
+    };
+  }, [busqueda]);
 
   async function rescatar(id: string, espacio: SpaceKey) {
     setEligiendo(null);
@@ -65,13 +107,34 @@ export function ParteNoise({
     }
   }
 
+  // Buscando manda lo encontrado; si no, los últimos que caben.
+  const lista = encontrados ?? entries;
+
   return (
     <details className="parte-noise">
-      <summary>{total} correos descartados por ruido</summary>
+      <summary>
+        {total} correos descartados por ruido
+        {buscando ? " · buscando…" : null}
+      </summary>
 
-      {entries.length > 0 ? (
+      {/*
+        El buscador es el gesto de verdad. La lista sirve para comprobar que no
+        se tiró nada gordo; encontrar UN correo entre seiscientos setenta y
+        siete no se hace desplazándose, se hace buscándolo por lo poco que uno
+        recuerda de él.
+      */}
+      <input
+        type="search"
+        value={busqueda}
+        onChange={(event) => setBusqueda(event.target.value)}
+        placeholder="Buscar entre los descartados: remitente o asunto"
+        className="parte-buscar"
+        aria-label="Buscar entre los correos descartados"
+      />
+
+      {lista.length > 0 ? (
         <ul>
-          {entries.map((entry) => {
+          {lista.map((entry) => {
             const rescatado = hecho[entry.id];
 
             return (
@@ -110,6 +173,13 @@ export function ParteNoise({
             );
           })}
         </ul>
+      ) : null}
+
+      {encontrados !== null && encontrados.length === 0 && !buscando ? (
+        <p className="note">
+          Nada con «{busqueda.trim()}». Radar solo guarda lo que ha llegado en
+          los últimos días: si el correo es más viejo, no está aquí.
+        </p>
       ) : null}
 
       {fallo ? <p className="parte-error">{fallo}</p> : null}

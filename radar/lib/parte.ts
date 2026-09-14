@@ -53,6 +53,18 @@ export interface ParteEntry {
   needsReview: boolean;
   /** Marcado a mano como importante. Sube arriba y no se cae con el tiempo. */
   starred: boolean;
+  /**
+   * Su relación con el calendario.
+   *
+   * - `null` — no es una cita con hora, así que no hay nada que poner.
+   * - `"puede"` — tiene fecha y hora y todavía no está puesta.
+   * - `"puesto"` — ya está en tu Google Calendar.
+   *
+   * Se calcula aquí y no en la pantalla porque depende de dos condiciones que
+   * vive el servidor: que el compromiso sea de tipo evento —lo único que
+   * sincroniza el calendario— y que no tenga ya su google_event_id.
+   */
+  agenda: "puede" | "puesto" | null;
 }
 
 export interface NoiseEntry {
@@ -284,7 +296,22 @@ function itemEntry(
     gmailMessageId: item.gmail_message_id,
     needsReview: item.status === "needs_review",
     starred: item.pinned,
+    agenda: agendaDe(item),
   };
+}
+
+/**
+ * Qué se puede hacer con este compromiso y el calendario.
+ *
+ * Solo los de tipo evento llegan al calendario: una acción con fecha límite
+ * —"pagar antes del 30"— no es una cita y ponerla como tal llenaría la agenda
+ * de bloques falsos. Es justo la distinción con la que nació la aplicación.
+ */
+function agendaDe(item: Item): "puede" | "puesto" | null {
+  if (item.type !== "event") return null;
+  if (item.google_event_id) return "puesto";
+  if (!item.starts_at) return null;
+  return "puede";
 }
 
 function emailEntry(
@@ -311,6 +338,7 @@ function emailEntry(
     subject: email.subject,
     actionable: email.actionable || email.summary === null,
     link: email.link_note,
+    agenda: null,
     gmailMessageId: email.gmail_message_id,
     needsReview: false,
     starred: email.triage_model === MARCA_USUARIO && email.importance === "alta",

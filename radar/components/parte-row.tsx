@@ -26,6 +26,9 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
   const [open, setOpen] = useState(false);
   const [gone, setGone] = useState<null | "listo" | "descartado">(null);
   const [starred, setStarred] = useState(entry.starred);
+  /** Null hasta que se toca; luego dice cómo fue. */
+  const [enAgenda, setEnAgenda] = useState(entry.agenda === "puesto");
+  const [poniendo, setPoniendo] = useState(false);
   const [failed, setFailed] = useState(false);
   const [offset, setOffset] = useState(0);
   const startX = useRef<number | null>(null);
@@ -64,6 +67,27 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
       setStarred(!next);
       setFailed(true);
     }
+  }
+
+  /**
+   * Poner la cita en el calendario, desde el parte.
+   *
+   * El camino ya existía entero —confirmar un compromiso lo escribe en Google
+   * Calendar— pero el botón vivía solo en la vista de fichas, que es otra
+   * pantalla. Un compromiso con fecha se quedaba en el parte para siempre sin
+   * llegar nunca al calendario, que es justo lo que la aplicación venía a
+   * resolver.
+   */
+  async function ponerEnAgenda() {
+    setPoniendo(true);
+    setFailed(false);
+    // Aquí no se es optimista: escribir en el calendario es un efecto de
+    // verdad y fuera de la app. Decir que está puesto antes de que lo esté
+    // sería la clase de mentira que hace desconfiar de todo lo demás.
+    const ok = await send("confirmar");
+    setPoniendo(false);
+    if (ok) setEnAgenda(true);
+    else setFailed(true);
   }
 
   async function undo() {
@@ -187,6 +211,20 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
               <p className="parte-error">No se pudo guardar. Inténtalo otra vez.</p>
             ) : null}
             <div className="parte-actions">
+              {entry.agenda !== null ? (
+                enAgenda ? (
+                  <span className="parte-btn hecho">En tu calendario</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="parte-btn primary"
+                    onClick={ponerEnAgenda}
+                    disabled={poniendo}
+                  >
+                    {poniendo ? "Poniendo…" : "Poner en el calendario"}
+                  </button>
+                )
+              ) : null}
               <a
                 className="parte-btn"
                 href={gmailSearchUrl({
@@ -201,7 +239,7 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
               </a>
               <button
                 type="button"
-                className="parte-btn primary"
+                className={entry.agenda === "puede" ? "parte-btn" : "parte-btn primary"}
                 onClick={() => act("listo")}
               >
                 Listo

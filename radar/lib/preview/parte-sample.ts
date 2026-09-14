@@ -24,6 +24,7 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
     link: null,
     reading: false,
     gmailMessageId: "demo",
+    agenda: null,
     needsReview: false,
     starred: false,
     ...over,
@@ -63,10 +64,12 @@ export const SAMPLE_PARTE: Parte = {
   rest: [
     entrada({
       id: "r1",
-      who: "Col·legi Lestonnac",
-      headline: "Hay que devolver la autorización de la Pujada a Montserrat",
-      detail: "Firmada antes del martes. Salen a las 7:30 del colegio.",
-      when: "mar 15 sept",
+      who: "Hilari Garcia",
+      headline: "La reunión de vecinos del 15 se aplaza al 30",
+      detail:
+        "Se espera a la reunión con el administrador de FINPER. Se tratará el tema de obras y permisos.",
+      when: "mar 30 sept, 19:00",
+      agenda: "puede",
       link: "El recibo del primer trimestre incluye esta salida.",
     }),
     entrada({

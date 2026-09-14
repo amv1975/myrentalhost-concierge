@@ -482,6 +482,13 @@ body {
   background: var(--p-solid);
   color: var(--p-solid-ink);
 }
+/* Ya está hecho: se dice, no se ofrece. */
+.parte-btn.hecho {
+  border-color: transparent;
+  color: var(--p-work);
+  cursor: default;
+}
+
 .parte-btn[disabled] {
   opacity: 0.55;
   cursor: default;

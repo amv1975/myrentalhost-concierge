@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import { SpaceBoard } from "@/components/space-board";
 import { SpaceTabs } from "@/components/space-tabs";
 import { SAMPLE_FAMILY, SAMPLE_WORK } from "@/lib/preview/sample";
+import { SPACE_SLUGS } from "@/lib/types";
 import { SAMPLE_AGENDA, SAMPLE_PARTE } from "@/lib/preview/parte-sample";
 import { ParteBoard } from "@/components/parte-board";
 import type { Space } from "@/lib/types";
 
 /** Los dos espacios como los devolvería la base de datos. */
-const PREVIEW_SPACES: Space[] = (["family", "work"] as const).map((key) => ({
+const PREVIEW_SPACES: Space[] = (["work", "personal", "family"] as const).map((key) => ({
   id: key,
   key,
   name: key,
@@ -45,7 +46,7 @@ export default async function PreviewPage({
         <ParteBoard
           parte={SAMPLE_PARTE}
           agenda={SAMPLE_AGENDA}
-          espacios={["family", "work"]}
+          espacios={["work", "personal", "family"]}
         />
       </main>
     );
@@ -64,7 +65,7 @@ export default async function PreviewPage({
 
       <main
         className="flex-1 px-4 pb-24 pt-4 sm:px-6"
-        data-space={slug === "trabajo" ? "work" : "family"}
+        data-space={SPACE_SLUGS[slug] ?? "family"}
       >
         <SpaceBoard espacio={slug} view={view} demo />
 

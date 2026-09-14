@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { gmailSearchUrl } from "@/lib/gmail-link";
 import type { ParteEntry } from "@/lib/parte";
+import { spaceLabel } from "@/lib/types";
 
 /**
  * Una línea del parte.
@@ -135,7 +136,7 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
     );
   }
 
-  const life = entry.life === "family" ? "family" : "work";
+  const life = entry.life;
   const pulling = Math.abs(offset) > 12;
 
   return (
@@ -171,7 +172,7 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
           <span className="parte-headline">{entry.headline}</span>
           <span className="parte-meta">
             <span className="parte-chip" data-life={life}>
-              {life === "family" ? "Personal" : "Trabajo"}
+              {spaceLabel(life)}
             </span>
             {entry.who ? <span className="parte-who">{entry.who}</span> : null}
             {entry.when ? (

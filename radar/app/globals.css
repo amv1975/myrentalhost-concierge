@@ -41,6 +41,8 @@
   /* Un color por espacio: saber en cuál estás sin leer la pestaña. */
   --color-family: #0d7a70;
   --color-family-soft: #e6f4f2;
+  --color-personal: #9a5518;
+  --color-personal-soft: #fbeee1;
   --color-work: #4640c4;
   --color-work-soft: #ecebfb;
 
@@ -95,6 +97,11 @@ body {
   --accent-soft: var(--color-work-soft);
 }
 
+[data-space="personal"] {
+  --accent: var(--color-personal);
+  --accent-soft: var(--color-personal-soft);
+}
+
 /* Al instalarla, un toque sostenido no debe seleccionar texto como en una web:
    se espera que la tarjeta se deslice. El texto de los ítems sí se selecciona. */
 @media (display-mode: standalone) {
@@ -146,6 +153,8 @@ body {
   --p-work-soft: #dbe7e4;
   --p-family: #6b2d4e;
   --p-family-soft: #eddfe5;
+  --p-personal: #7a4a12;
+  --p-personal-soft: #f0e6d8;
   --p-alert: #a3301a;
   --p-alert-soft: #f3ded8;
 
@@ -180,6 +189,8 @@ body {
 
     --color-family: #4fb8ab;
     --color-family-soft: #10302d;
+    --color-personal: #d99b63;
+    --color-personal-soft: #33220f;
     --color-work: #9a95f0;
     --color-work-soft: #1f1d3d;
 
@@ -209,6 +220,8 @@ body {
     --p-work-soft: #12302c;
     --p-family: #d69db6;
     --p-family-soft: #33202a;
+    --p-personal: #d8a763;
+    --p-personal-soft: #33260f;
     --p-alert: #e8846a;
     --p-alert-soft: #381d15;
 
@@ -424,6 +437,10 @@ body {
 .parte-chip[data-life="family"] {
   color: var(--p-family);
   background: var(--p-family-soft);
+}
+.parte-chip[data-life="personal"] {
+  color: var(--p-personal);
+  background: var(--p-personal-soft);
 }
 
 .parte-when {

@@ -13,7 +13,7 @@ export const GateResultSchema = z.object({
       z.object({
         i: z.number().int().describe("El número del correo en la lista."),
         category: z
-          .enum(["family", "work", "none"])
+          .enum(["family", "personal", "work", "none"])
           .describe("La vida a la que pertenece, o none."),
       }),
     )

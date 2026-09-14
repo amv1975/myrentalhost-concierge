@@ -7,6 +7,10 @@ import { ParteNoise } from "@/components/parte-noise";
 import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
 import type { Agenda } from "@/lib/agenda";
+import { SLUG_BY_SPACE, spaceLabel, type SpaceKey } from "@/lib/types";
+
+/** Las tres vidas, en el mismo orden que los filtros de arriba. */
+const ESPACIOS: readonly SpaceKey[] = ["work", "personal", "family"];
 
 export function ParteBoard({
   parte,
@@ -108,9 +112,21 @@ export function ParteBoard({
           chips, y sin moverse. Del pie solo cuelga lo que de verdad es otra
           pantalla.
         */}
+        {/* Cada vida tiene sus propios ajustes, y sobre todo su propia
+            descripción de qué entra en ella, que es lo que lee el filtro. Con
+            tres, un enlace único a "Ajustes" escondía dos de las tres. */}
         <span>
-          <Link href="/familia/ajustes">Ajustes</Link>
-          {" · "}
+          Ajustes:{" "}
+          {ESPACIOS.map((key, i) => (
+            <span key={key}>
+              {i > 0 ? " · " : null}
+              <Link href={`/${SLUG_BY_SPACE[key]}/ajustes`}>
+                {spaceLabel(key)}
+              </Link>
+            </span>
+          ))}
+        </span>
+        <span>
           <Link href="/estado">Cómo va la app</Link>
         </span>
       </p>

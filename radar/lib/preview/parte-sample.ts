@@ -45,6 +45,7 @@ export const SAMPLE_PARTE: Parte = {
       id: "u1",
       urgent: true,
       starred: true,
+      life: "personal",
       who: "Ajuntament de Barcelona",
       headline: "La subvención de deporte cierra el viernes 18",
       detail:
@@ -64,6 +65,7 @@ export const SAMPLE_PARTE: Parte = {
   rest: [
     entrada({
       id: "r1",
+      life: "personal",
       who: "Hilari Garcia",
       headline: "La reunión de vecinos del 15 se aplaza al 30",
       detail:

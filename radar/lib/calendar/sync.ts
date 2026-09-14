@@ -168,9 +168,13 @@ function buildDescription(item: Item): string {
 }
 
 /**
- * A quién invitar. En Familia siempre va Victoria, que es la regla del
- * enunciado; se resuelve desde allowed_members para no escribir su correo en el
- * código, y se excluye al propio organizador.
+ * A quién invitar: los miembros del espacio, menos el organizador.
+ *
+ * Sale de allowed_members y no de una regla escrita en el código, y esa
+ * decisión se paga sola. En Familia hay dos personas, así que Victoria recibe
+ * la invitación de la reunión del colegio. En Personal hay una, así que una
+ * cita del médico o del banco no se le manda a nadie — sin que haya hecho
+ * falta añadir ninguna excepción al crear ese espacio.
  */
 async function getAttendees(
   space: Space,

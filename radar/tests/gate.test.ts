@@ -6,6 +6,8 @@ import {
 } from "@/lib/triage/gate-prompt";
 
 const context = {
+  personalDescription:
+    "Mi administración privada: banco, seguros, impuestos, salud, coche y la comunidad de vecinos.",
   familyDescription: "El colegio de las hijas y la casa.",
   workDescription: "Alquiler turístico en Barcelona.",
   ownAddresses: ["agus@ejemplo.com"],
@@ -135,7 +137,7 @@ describe("el caudal de los canales de reservas", () => {
 describe("el colegio no es un canal de reservas", () => {
   it("la riada es solo de trabajo", () => {
     const prompt = buildGateSystemPrompt(context);
-    expect(prompt).toContain("Personal: aquí NO hay riada");
+    expect(prompt).toContain("Personal y Familia: aquí NO hay riada");
     expect(prompt).toContain("No le apliques la desconfianza del apartado anterior");
   });
 
@@ -146,6 +148,9 @@ describe("el colegio no es un canal de reservas", () => {
     // el filtro lo tiró con toda lógica a partir de una premisa incompleta.
     const prompt = buildGateSystemPrompt(context);
     expect(prompt).toContain("todo lo que no es el negocio");
+    // Y las tres vidas, cada una con su descripción.
+    expect(prompt).toContain("## Las tres vidas");
+    expect(prompt).toContain("Mi administración privada");
     for (const caso of ["comunidad de vecinos", "administrador de fincas", "Banco, seguros"]) {
       expect(prompt).toContain(caso);
     }

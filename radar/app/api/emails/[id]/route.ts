@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember, getSpaceByKey } from "@/lib/spaces";
 import { MARCA_USUARIO } from "@/lib/triage/estados";
+import { SPACE_LABELS, type SpaceKey } from "@/lib/types";
 
 /**
  * Quitar del parte un correo que solo se resume.
@@ -144,10 +145,10 @@ async function rescatar(
   espacio: string | undefined,
   userId: string,
 ) {
-  const key = espacio === "family" || espacio === "work" ? espacio : null;
+  const key = espacio && espacio in SPACE_LABELS ? (espacio as SpaceKey) : null;
   if (!key) {
     return NextResponse.json(
-      { error: "Hay que decir si es de Personal o de Trabajo" },
+      { error: "Hay que decir a qué vida pertenece" },
       { status: 400 },
     );
   }

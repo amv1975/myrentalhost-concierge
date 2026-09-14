@@ -5,6 +5,8 @@ import {
 } from "@/lib/triage/prompt";
 
 const context = {
+  personalDescription:
+    "Mi administración privada: banco, seguros, impuestos, coche y vecinos.",
   familyDescription: "El colegio de las hijas y la casa.",
   workDescription: "Alquiler turístico en Barcelona.",
   ownAddresses: ["agus@ejemplo.com"],

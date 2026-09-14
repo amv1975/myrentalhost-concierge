@@ -1,4 +1,4 @@
-export type SpaceKey = "family" | "work";
+export type SpaceKey = "family" | "work" | "personal";
 export type ItemType = "event" | "action";
 export type ItemStatus =
   | "pending"
@@ -20,7 +20,7 @@ export type ExtractionStatus =
  * escriben.
  */
 export type SourceKind = "domain" | "email" | "to_domain" | "to_email";
-export type TriageCategory = "family" | "work" | "none";
+export type TriageCategory = SpaceKey | "none";
 export type TriageStatus = "pending" | "processing" | "done" | "failed";
 export type Importance = "alta" | "normal" | "baja";
 
@@ -130,11 +130,13 @@ export type ChangedFields = Record<
 export const SPACE_SLUGS: Record<string, SpaceKey> = {
   familia: "family",
   trabajo: "work",
+  personal: "personal",
 };
 
 export const SLUG_BY_SPACE: Record<SpaceKey, string> = {
   family: "familia",
   work: "trabajo",
+  personal: "personal",
 };
 
 export function slugToSpaceKey(slug: string): SpaceKey | null {
@@ -150,14 +152,12 @@ export function slugToSpaceKey(slug: string): SpaceKey | null {
  * para el seed y para los mensajes del backend.
  */
 export const SPACE_LABELS: Record<SpaceKey, string> = {
-  // "Familia" se quedaba corto y eso clasificaba mal: la comunidad de vecinos,
-  // el banco o el seguro no son "familia" en ningún sentido normal de la
-  // palabra, así que un correo suyo no encajaba en ninguna de las dos vidas y
-  // el filtro lo tiraba. "Personal" es lo que de verdad engloba: todo lo que
-  // no es el negocio. La clave en la base de datos sigue siendo "family":
-  // cambiarla arrastraría migraciones, RLS y los datos que ya hay, a cambio de
-  // nada que se vea.
-  family: "Personal",
+  // Tres, y la tercera no es un capricho de etiquetas: los espacios son el
+  // control de acceso. Victoria es miembro de Familia, así que el banco y los
+  // impuestos no pueden vivir ahí. Por eso Personal existe y por eso family se
+  // queda con lo que siempre tuvo —el colegio y las niñas— sin mover un dato.
+  family: "Familia",
+  personal: "Personal",
   work: "Trabajo",
 };
 

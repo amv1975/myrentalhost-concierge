@@ -69,10 +69,7 @@ export function SpaceTabs({
           {spaces.map((space) => {
             const slug = SLUG_BY_SPACE[space.key];
             const active = activeSlug === slug;
-            const color =
-              space.key === "family"
-                ? "var(--color-family)"
-                : "var(--color-work)";
+            const color = `var(--color-${space.key})`;
 
             return (
               <Link

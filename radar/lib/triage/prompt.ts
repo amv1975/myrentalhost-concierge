@@ -17,6 +17,8 @@ export interface TriageContext {
   workDescription: string;
   /** Y de su vida familiar, para que sepa qué es "familia". */
   familyDescription: string;
+  /** Y de su administración privada, que no es lo mismo que la familiar. */
+  personalDescription: string;
   /** Sus propias direcciones: distingue lo suyo de lo que va a otros. */
   ownAddresses: string[];
 }

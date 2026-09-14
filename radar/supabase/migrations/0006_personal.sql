@@ -1,0 +1,31 @@
+-- Tres vidas, no dos.
+--
+-- "Familia" se estaba usando para dos cosas que no son la misma, y eso se veía
+-- en la clasificación: el colegio de las niñas y el banco no se parecen en
+-- nada, así que una descripción que sirviera para los dos no servía para
+-- ninguno, y lo que no encajaba —la comunidad de vecinos, el seguro, Hacienda—
+-- acababa en la basura por no ser de ninguna de las dos vidas.
+--
+-- Pero la razón de fondo no es clasificar mejor: es quién ve qué. Los espacios
+-- son el control de acceso, no una etiqueta de color. Victoria es miembro de
+-- Familia, así que meter ahí los recibos del banco y los impuestos habría sido
+-- dárselos a leer sin que nadie lo decidiera. Personal nace justo para eso:
+--
+--   work      el negocio                            solo Agustín
+--   personal  su administración: banco, seguros,
+--             impuestos, salud, coche, vecinos      solo Agustín
+--   family    la casa compartida: colegio, niñas    Agustín y Victoria
+--
+-- family no cambia de significado ni de contenido, así que no hay datos que
+-- mover: lo que ya estaba clasificado ahí sigue estando bien.
+
+-- IMPORTANTE: este bloque va SOLO, y hay que ejecutarlo antes del siguiente.
+-- Postgres no deja usar un valor nuevo de un enum en la misma transacción en
+-- la que se añade, así que si se pega todo junto, la inserción de abajo falla
+-- con "unsafe use of new value of enum type".
+-- Son dos enums distintos y hacen falta los dos: space_key nombra los
+-- espacios, y triage_category es lo que el filtro escribe en cada correo.
+-- Olvidar el segundo deja la aplicación clasificando contra un valor que la
+-- base de datos rechaza, y el fallo no aparece hasta la primera pasada.
+alter type space_key add value if not exists 'personal';
+alter type triage_category add value if not exists 'personal';

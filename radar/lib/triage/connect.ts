@@ -1,4 +1,5 @@
 import "server-only";
+import { CATEGORIAS_PROPIAS } from "@/lib/triage/estados";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
@@ -68,7 +69,7 @@ export async function connectRecent(spend: Spend): Promise<ConnectResult> {
       .from("emails")
       .select("id, from_email, from_name, subject, summary, detail, received_at")
       .gte("received_at", since)
-      .in("triage_category", ["family", "work"])
+      .in("triage_category", [...CATEGORIAS_PROPIAS])
       .is("dismissed_at", null)
       .not("summary", "is", null)
       .order("received_at", { ascending: false })

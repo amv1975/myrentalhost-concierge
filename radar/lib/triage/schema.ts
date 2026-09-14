@@ -10,9 +10,9 @@ import { z } from "zod";
  */
 export const TriageResultSchema = z.object({
   category: z
-    .enum(["family", "work", "none"])
+    .enum(["family", "personal", "work", "none"])
     .describe(
-      "family si es de la vida familiar o el colegio; work si es del negocio de alquiler turístico; none si al leerlo entero resulta no ser ni una cosa ni otra.",
+      "family si es de la casa y las niñas (colegio, actividades, salud de ellas); personal si es su administración privada (banco, seguros, impuestos, salud propia, coche, suministros, comunidad de vecinos); work si es del negocio de alquiler turístico; none si al leerlo entero resulta no ser nada de eso.",
     ),
   summary: z
     .string()

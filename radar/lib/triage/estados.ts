@@ -16,7 +16,7 @@
 export const ESTADOS_LEIBLES = ["pending", "failed"] as const;
 
 /** Las categorías que llevan a leer el correo entero. "none" es ruido. */
-export const CATEGORIAS_PROPIAS = ["family", "work"] as const;
+export const CATEGORIAS_PROPIAS = ["family", "personal", "work"] as const;
 
 export interface EstadoCorreo {
   /** Cuándo lo juzgó un modelo por primera vez. Null = nunca lo ha mirado. */

@@ -30,10 +30,13 @@ export async function buildTriageContext(
   return {
     familyDescription:
       byKey.get("family")?.description ??
-      "La vida familiar: colegio, salud, casa y administración doméstica.",
+      "La casa y las niñas: colegio, actividades, salud de ellas y planes de familia.",
     workDescription:
       byKey.get("work")?.description ??
       "El negocio: clientes, proveedores, facturación y normativa.",
+    personalDescription:
+      byKey.get("personal")?.description ??
+      "Mi administración privada: banco, seguros, impuestos, salud, coche, suministros y la comunidad de vecinos.",
     ownAddresses: [...own],
   };
 }

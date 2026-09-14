@@ -210,7 +210,11 @@ describe("coherencia de los ítems", () => {
 });
 
 describe("separación de espacios", () => {
-  it("Victoria ve Familia y no ve Trabajo", async () => {
+  it("Victoria ve Familia y no ve ni Trabajo ni Personal", async () => {
+    // Esta es la razón de que Personal exista como espacio aparte y no como
+    // una etiqueta más dentro de Familia. Victoria comparte el colegio de las
+    // niñas; no comparte la cuenta del banco ni los impuestos. Si Personal
+    // viviera dentro de family, esta consulta lo devolvería.
     const victoria = await signUp(db, "victoria.williams1@gmail.com");
 
     const visible = await asUser(db, victoria, async () => {
@@ -221,7 +225,7 @@ describe("separación de espacios", () => {
     expect(visible).toEqual(["family"]);
   });
 
-  it("Agustín ve los dos espacios", async () => {
+  it("Agustín ve las tres vidas", async () => {
     const agustin = await signUp(db, "agustinvillafanie@gmail.com");
 
     const visible = await asUser(db, agustin, async () => {
@@ -229,7 +233,44 @@ describe("separación de espacios", () => {
       return rows.map((r) => r.key);
     });
 
-    expect(visible).toEqual(["family", "work"]);
+    // El orden es el del enum, no el alfabético: "personal" se añadió después.
+    expect(visible).toEqual(["family", "work", "personal"]);
+  });
+
+  it("un correo de Personal no se le devuelve a Victoria", async () => {
+    // La prueba con datos de verdad, no solo con la lista de espacios: un
+    // recibo del banco guardado en Personal no puede aparecer en ninguna
+    // consulta suya.
+    const victoria = await signUp(db, "victoria-personal@example.com");
+    await db.query(
+      "insert into allowed_members (email, space_key) values ($1, 'family')",
+      ["victoria-personal@example.com"],
+    );
+    await db.query(
+      `insert into space_members (space_id, user_id, role)
+       select id, $1, 'member' from spaces where key = 'family'
+       on conflict do nothing`,
+      [victoria],
+    );
+    const personal = await spaceId(db, "personal");
+
+    await db.query(
+      `insert into emails (space_id, gmail_message_id, gmail_thread_id,
+         from_email, subject, received_at, triage_category, triage_status)
+       values ($1, 'privado-1', 'privado-1', 'banco@ejemplo.com',
+               'Tu recibo domiciliado', now(), 'personal', 'done')`,
+      [personal],
+    );
+
+    // Ve los de Familia, que son suyos; el de Personal no existe para ella.
+    const vistos = await asUser(db, victoria, async () => {
+      const { rows } = await db.query(
+        "select gmail_message_id from emails where gmail_message_id = 'privado-1'",
+      );
+      return rows.length;
+    });
+
+    expect(vistos).toBe(0);
   });
 
   it("Victoria no puede leer ni un correo ni un ítem de Trabajo", async () => {

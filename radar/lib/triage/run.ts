@@ -52,6 +52,7 @@ function getClient(): Anthropic {
 export interface TriageRunResult {
   read: number;
   family: number;
+  personal: number;
   work: number;
   ignored: number;
   failed: number;
@@ -136,6 +137,7 @@ export async function triagePending(
   const result: TriageRunResult = {
     read: 0,
     family: 0,
+    personal: 0,
     work: 0,
     ignored: 0,
     failed: 0,
@@ -281,6 +283,7 @@ async function save(
 
   result.read += 1;
   if (category === "family") result.family += 1;
+  else if (category === "personal") result.personal += 1;
   else if (category === "work") result.work += 1;
   else result.ignored += 1;
 }

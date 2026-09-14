@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { ParteRow } from "@/components/parte-row";
 import type { ParteEntry } from "@/lib/parte";
+import { SPACE_LABELS, type SpaceKey } from "@/lib/types";
 
-type Filter = "todo" | "work" | "family";
+type Filter = "todo" | SpaceKey;
 
 /**
  * El parte, con el filtro por vida encima.
@@ -31,7 +32,9 @@ export function ParteList({
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORE);
-      if (saved === "work" || saved === "family") setFilter(saved);
+      if (saved && saved !== "todo" && saved in SPACE_LABELS) {
+        setFilter(saved as SpaceKey);
+      }
     } catch {
       /* Navegación privada: se queda en "todo", que es el valor razonable. */
     }
@@ -47,9 +50,10 @@ export function ParteList({
   }
 
   const all = [...urgent, ...rest, ...fyi];
-  const counts = {
+  const counts: Record<Filter, number> = {
     todo: all.length,
     work: all.filter((e) => e.life === "work").length,
+    personal: all.filter((e) => e.life === "personal").length,
     family: all.filter((e) => e.life === "family").length,
   };
 
@@ -63,7 +67,7 @@ export function ParteList({
   return (
     <>
       <div className="parte-filter" role="group" aria-label="Filtrar por vida">
-        {(["todo", "work", "family"] as const).map((value) => (
+        {FILTROS.map((value) => (
           <button
             key={value}
             type="button"
@@ -99,10 +103,18 @@ export function ParteList({
 
 const STORE = "radar:parte-filtro";
 
+/**
+ * El orden de los filtros, y es deliberado.
+ *
+ * Trabajo primero porque es de donde llega el volumen, y Familia al final
+ * porque es la vida más pequeña y la que menos se filtra. Sale de los nombres
+ * de los espacios para que añadir una cuarta vida no obligue a tocar esto.
+ */
+const FILTROS: readonly Filter[] = ["todo", "work", "personal", "family"];
+
 const LABELS: Record<Filter, string> = {
   todo: "Todo",
-  work: "Trabajo",
-  family: "Personal",
+  ...SPACE_LABELS,
 };
 
 function Section({

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { NoiseEntry } from "@/lib/parte";
+import { SLUG_BY_SPACE, spaceLabel, type SpaceKey } from "@/lib/types";
 
 /**
  * Lo que el filtro tiró, y la forma de decirle que se equivocó.
@@ -17,6 +18,9 @@ import type { NoiseEntry } from "@/lib/parte";
  * precisamente por no saber de qué vida era. Esa es la información que falta, y
  * es la que hay que pedir.
  */
+/** A qué vidas se puede mandar un correo rescatado, en el orden del filtro. */
+const DESTINOS: readonly SpaceKey[] = ["work", "personal", "family"];
+
 export function ParteNoise({
   total,
   entries,
@@ -31,7 +35,7 @@ export function ParteNoise({
   const [hecho, setHecho] = useState<Record<string, string>>({});
   const [fallo, setFallo] = useState<string | null>(null);
 
-  async function rescatar(id: string, espacio: "family" | "work") {
+  async function rescatar(id: string, espacio: SpaceKey) {
     setEligiendo(null);
     setFallo(null);
     // Optimista: el correo ya no es ruido en cuanto lo dices. Si el servidor
@@ -82,12 +86,15 @@ export function ParteNoise({
                 ) : eligiendo === entry.id ? (
                   <span className="nacciones">
                     <span className="nlabel">¿De qué es?</span>
-                    <button type="button" onClick={() => rescatar(entry.id, "family")}>
-                      Personal
-                    </button>
-                    <button type="button" onClick={() => rescatar(entry.id, "work")}>
-                      Trabajo
-                    </button>
+                    {DESTINOS.map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => rescatar(entry.id, key)}
+                      >
+                        {spaceLabel(key)}
+                      </button>
+                    ))}
                     <button type="button" onClick={() => setEligiendo(null)}>
                       Cancelar
                     </button>

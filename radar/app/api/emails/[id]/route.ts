@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { assertSpaceMember } from "@/lib/spaces";
+import { assertSpaceMember, getSpaceByKey } from "@/lib/spaces";
 import { MARCA_USUARIO } from "@/lib/triage/estados";
 
 /**
@@ -17,6 +17,15 @@ import { MARCA_USUARIO } from "@/lib/triage/estados";
  *   ventana de dos días, y le enseña al filtro qué no puede volver a dejarse
  *   fuera. Es la mitad que más pesa: un correo que no subió y tenía que subir
  *   no deja rastro en ninguna parte salvo aquí.
+ * - **rescatar** — el filtro lo tiró y no debía. Es el único gesto que se hace
+ *   sobre un correo que nunca llegó a enseñarse, y por eso no se parece a los
+ *   demás: hay que decirle a qué vida pertenece, porque el filtro decidió que
+ *   a ninguna. Vuelve a la cola de lectura y queda marcado como tuyo y como
+ *   importante, que es lo que lee el filtro la próxima vez.
+ *
+ * Sin rescatar, la lista de descartados era un escaparate: enseñaba el error
+ * sin dejar corregirlo, y lo único que el filtro podía aprender era de los
+ * aciertos.
  *
  * Descartar es una corrección al modelo, no una papelera. El correo sigue
  * intacto en Gmail: aquí no se borra, ni se archiva, ni se toca el buzón.
@@ -26,7 +35,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const body = (await request.json()) as { action?: string };
+  const body = (await request.json()) as { action?: string; espacio?: string };
 
   const ACCIONES = [
     "visto",
@@ -34,6 +43,7 @@ export async function PATCH(
     "reabrir",
     "destacar",
     "quitar-destacado",
+    "rescatar",
   ];
 
   if (!ACCIONES.includes(body.action ?? "")) {
@@ -49,6 +59,13 @@ export async function PATCH(
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  // Rescatar va por su camino: el correo que se rescata es ruido, no tiene
+  // espacio, y comprobar la pertenencia al espacio que no tiene sería
+  // imposible. Lo que se comprueba es el espacio de destino.
+  if (body.action === "rescatar") {
+    return rescatar(id, body.espacio, user.id);
   }
 
   const admin = createAdminClient();
@@ -106,6 +123,59 @@ export async function PATCH(
     .update(change)
     .eq("id", id);
   if (updateError) throw updateError;
+
+  return NextResponse.json({ ok: true });
+}
+
+/**
+ * Devolver a la cola un correo que el filtro tiró por error.
+ *
+ * Deja tres marcas, y las tres hacen falta:
+ *
+ * - La categoría y el espacio, que es lo que el filtro no supo decidir.
+ * - `summary` a null, que es lo que lo vuelve a poner en la cola de lectura:
+ *   rescatarlo sin eso lo enseñaría en el parte como una línea sin contenido.
+ * - `triage_model = usuario` e `importance = alta`, que es de donde salen los
+ *   ejemplos que lee el filtro la próxima vez. Sin ellas, corregirlo hoy no
+ *   evitaría que mañana volviera a tirar el mismo correo.
+ */
+async function rescatar(
+  id: string,
+  espacio: string | undefined,
+  userId: string,
+) {
+  const key = espacio === "family" || espacio === "work" ? espacio : null;
+  if (!key) {
+    return NextResponse.json(
+      { error: "Hay que decir si es de Familia o de Trabajo" },
+      { status: 400 },
+    );
+  }
+
+  const space = await getSpaceByKey(key);
+  if (!space) {
+    return NextResponse.json({ error: "Espacio desconocido" }, { status: 404 });
+  }
+  await assertSpaceMember(userId, space.id);
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("emails")
+    .update({
+      triage_category: key,
+      space_id: space.id,
+      triage_status: "pending",
+      triage_model: MARCA_USUARIO,
+      importance: "alta",
+      triaged_at: new Date().toISOString(),
+      dismissed_at: null,
+      // Vuelve a la cola de lectura: todavía nadie le ha bajado el cuerpo.
+      summary: null,
+      detail: null,
+      extraction_status: "pending",
+    })
+    .eq("id", id);
+  if (error) throw error;
 
   return NextResponse.json({ ok: true });
 }

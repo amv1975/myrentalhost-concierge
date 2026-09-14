@@ -36,8 +36,8 @@ export const SAMPLE_PARTE: Parte = {
   updatedAt: "2026-09-10T19:08:00Z",
   reading: 3,
   noise: [
-    { who: "Booking.com", subject: "Nueva reserva confirmada" },
-    { who: "Airbnb", subject: "Reservation reminder" },
+    { id: "n1", who: "Booking.com", subject: "Nueva reserva confirmada" },
+    { id: "n2", who: "Hilari Garcia", subject: "Reunión vecinos" },
   ],
   urgent: [
     entrada({

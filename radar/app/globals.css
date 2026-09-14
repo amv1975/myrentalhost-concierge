@@ -531,7 +531,10 @@ body {
   line-height: 1.4;
   color: var(--p-faint);
   display: flex;
+  flex-wrap: wrap;
   gap: 7px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--p-rule-soft);
 }
 .parte-noise .nfrom {
   color: var(--p-muted);
@@ -545,6 +548,48 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Las acciones bajan a su propia línea: en un móvil no caben al lado de un
+   remitente y un asunto, y apretadas contra ellos se pulsa la que no es. */
+.parte-noise .nacciones {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.parte-noise .nlabel {
+  color: var(--p-faint);
+}
+
+.parte-noise .nacciones button {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--p-ink);
+  background: none;
+  border: 1px solid var(--p-rule);
+  border-radius: 2px;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+.parte-noise .nacciones button:focus-visible {
+  outline: 2px solid var(--p-work);
+  outline-offset: 2px;
+}
+
+.parte-noise .nok {
+  flex-basis: 100%;
+  color: var(--p-work);
+  margin-top: 2px;
+}
+
+/* Con la lista ya accionable, el alto de antes dejaba ver tres correos. */
+.parte-noise ul {
+  max-height: 26rem;
+}
+
 .parte-noise .note {
   font-size: 12px;
   color: var(--p-faint);

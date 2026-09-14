@@ -3,6 +3,7 @@ import { ParteList } from "@/components/parte-list";
 import { ParteAgenda } from "@/components/parte-agenda";
 import { ParteRedo } from "@/components/parte-redo";
 import { ParteVaciar } from "@/components/parte-vaciar";
+import { ParteNoise } from "@/components/parte-noise";
 import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
 import type { Agenda } from "@/lib/agenda";
@@ -91,23 +92,7 @@ export function ParteBoard({
       )}
 
       {parte.discarded > 0 ? (
-        <details className="parte-noise">
-          <summary>{parte.discarded} correos descartados por ruido</summary>
-          {parte.noise.length > 0 ? (
-            <ul>
-              {parte.noise.map((entry, index) => (
-                <li key={`${entry.who}-${index}`}>
-                  <span className="nfrom">{entry.who}</span>
-                  <span className="nsubj">{entry.subject}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <p className="note">
-            Está aquí para que puedas comprobar que no se tiró nada que
-            importara. Si ves algo mal descartado, dilo en Ajustes.
-          </p>
-        </details>
+        <ParteNoise total={parte.discarded} entries={parte.noise} />
       ) : null}
 
       <p className="parte-foot">

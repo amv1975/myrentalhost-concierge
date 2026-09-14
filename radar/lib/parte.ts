@@ -55,6 +55,13 @@ export interface ParteEntry {
   starred: boolean;
 }
 
+export interface NoiseEntry {
+  /** Hace falta para poder rescatarlo: sin id, la lista solo se mira. */
+  id: string;
+  who: string;
+  subject: string;
+}
+
 export interface Parte {
   /** Correos mirados en la ventana. */
   scanned: number;
@@ -67,7 +74,7 @@ export interface Parte {
   /** Cuántos se sabe que son tuyos pero todavía no se han leído. */
   reading: number;
   /** Qué se tiró. Vacío si este usuario no es el dueño del buzón. */
-  noise: { who: string; subject: string }[];
+  noise: NoiseEntry[];
   /** Qué ha fallado al construir el parte, si ha fallado algo. */
   error?: string;
 }
@@ -326,7 +333,7 @@ function whenLabel(item: Item): string | null {
 async function getNoise(
   userId: string,
   since: string,
-): Promise<{ list: { who: string; subject: string }[]; count: number }> {
+): Promise<{ list: NoiseEntry[]; count: number }> {
   const admin = createAdminClient();
 
   const { data: account } = await admin
@@ -345,16 +352,20 @@ async function getNoise(
 
   const { data } = await admin
     .from("emails")
-    .select("from_email, from_name, subject")
+    .select("id, from_email, from_name, subject")
     .gte("received_at", since)
     .eq("triage_category", "none")
+    // Lo que descartaste tú no vuelve a ofrecerse para rescatar: ya lo
+    // decidiste, y proponerte deshacerlo cada mañana es discutir contigo.
+    .is("dismissed_at", null)
     .order("received_at", { ascending: false })
     .limit(NOISE_SHOWN);
 
   const list = ((data ?? []) as Pick<
     Email,
-    "from_email" | "from_name" | "subject"
+    "id" | "from_email" | "from_name" | "subject"
   >[]).map((row) => ({
+    id: row.id,
     who: sourceLabel(row.from_email, row.from_name) ?? row.from_email,
     subject: row.subject ?? "(sin asunto)",
   }));

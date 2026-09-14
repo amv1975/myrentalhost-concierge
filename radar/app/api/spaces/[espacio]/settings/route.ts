@@ -4,7 +4,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember, getSpaceByKey } from "@/lib/spaces";
 import { slugToSpaceKey } from "@/lib/types";
 
-/** Ajustes del espacio. Por ahora, la auto-confirmación y su umbral. */
+/**
+ * Ajustes del espacio: la descripción de qué entra en esta vida, la
+ * auto-confirmación y su umbral.
+ *
+ * La descripción no es decorativa: es literalmente lo que lee el filtro para
+ * decidir si un correo es tuyo. Estaba en la base de datos y no en el código
+ * justo para poder cambiarla sin desplegar, pero no había forma de editarla, y
+ * "Familia" seguía queriendo decir solo "el colegio". Un correo de la comunidad
+ * de vecinos no encaja ahí, así que el filtro lo tira con toda lógica.
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ espacio: string }> },
@@ -30,11 +39,25 @@ export async function PATCH(
   await assertSpaceMember(user.id, space.id);
 
   const body = (await request.json()) as {
+    description?: string;
     auto_confirm_enabled?: boolean;
     auto_confirm_threshold?: number;
   };
 
   const update: Record<string, unknown> = {};
+  if (typeof body.description === "string") {
+    const texto = body.description.trim();
+    // Va dentro del prompt del filtro, así que tiene techo: una descripción
+    // larguísima se paga en cada lote y además diluye las reglas que vienen
+    // después.
+    if (texto.length > 1200) {
+      return NextResponse.json(
+        { error: "La descripción no puede pasar de 1200 caracteres" },
+        { status: 400 },
+      );
+    }
+    update.description = texto.length > 0 ? texto : null;
+  }
   if (typeof body.auto_confirm_enabled === "boolean") {
     update.auto_confirm_enabled = body.auto_confirm_enabled;
   }

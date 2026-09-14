@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSpaceByKey } from "@/lib/spaces";
 import { slugToSpaceKey, spaceLabel, type Source } from "@/lib/types";
+import { SpaceDescription } from "@/components/space-description";
 import { SourcesEditor } from "@/components/sources-editor";
 import { AutoConfirmToggle } from "@/components/auto-confirm-toggle";
 import { ReanalyzeButton } from "@/components/reanalyze-button";
@@ -136,12 +137,28 @@ export default async function SettingsPage({
       </section>
 
       <section>
+        <h2 className="text-sm font-semibold">
+          Qué cuenta como {spaceLabel(space.key)}
+        </h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Esto es literalmente lo que lee el filtro para decidir si un correo es
+          tuyo, así que es el mando que más manda. Si algo se descarta y no
+          debería, la causa casi siempre está aquí: describe la vida entera, no
+          solo lo más obvio. Escribe quién escribe, de qué temas, y también qué
+          NO entra.
+        </p>
+        <SpaceDescription espacio={espacio} valor={space.description} />
+      </section>
+
+      <section>
         <h2 className="text-sm font-semibold">Remitentes de confianza</h2>
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Radar lee toda la bandeja y decide por el contenido de qué va cada
-          correo. Estos remitentes se saltan esa decisión: lo que venga de
-          ellos entra siempre en este espacio. Un dominio cubre también sus
-          subdominios.
+          Una pista para el filtro, no un pase: dice a qué vida pertenecería un
+          correo de ese remitente <em>si resulta no ser ruido</em>, y le ahorra
+          dudar entre Familia y Trabajo. No garantiza que entre — ese atajo
+          existía antes y metió doscientos sesenta avisos automáticos de Airbnb
+          en el parte. Para que algo entre, descríbelo arriba. Un dominio cubre
+          también sus subdominios.
         </p>
         <div className="mt-3">
           <SourcesEditor espacio={espacio} sources={(data ?? []) as Source[]} />

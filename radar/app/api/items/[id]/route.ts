@@ -48,7 +48,7 @@ export async function PATCH(
   const admin = createAdminClient();
   const { data: item, error } = await admin
     .from("items")
-    .select("id, space_id, status, supersedes_item_id")
+    .select("id, space_id, status")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -76,17 +76,6 @@ export async function PATCH(
     .update({ status, reviewed_at: new Date().toISOString() })
     .eq("id", id);
   if (updateError) throw updateError;
-
-  // Al aceptar una actualización, el compromiso anterior deja de estar vivo:
-  // ya no debe aparecer en la lista ni volver a emparejarse con nada. No se
-  // sincroniza su baja porque el evento de Google lo hereda el ítem nuevo, que
-  // lo actualiza en su sitio en lugar de borrarlo y crear otro.
-  if (status === "confirmed" && item.supersedes_item_id) {
-    await admin
-      .from("items")
-      .update({ status: "dismissed", google_event_id: null })
-      .eq("id", item.supersedes_item_id);
-  }
 
   // El calendario se actualiza en el momento, no en la siguiente pasada del
   // cron: confirmar algo y no verlo aparecer haría dudar de si funcionó. Si

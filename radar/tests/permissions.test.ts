@@ -127,19 +127,28 @@ describe("superficie de Calendar", () => {
 });
 
 describe("aislamiento del contenido del correo", () => {
-  it("la extracción no declara herramientas", () => {
+  it("ninguna llamada al modelo declara herramientas", () => {
     // Sin tools no hay nada que un correo pueda hacer ejecutar, diga lo que
-    // diga. Es la defensa estructural contra la inyección de prompt.
-    const extract = readFileSync(
-      path.join(ROOT, "lib/extraction/extract.ts"),
-      "utf8",
-    );
-    expect(extract).not.toMatch(/^\s*tools:/m);
+    // diga. Es la defensa estructural contra la inyección de prompt, y por eso
+    // se comprueba sobre TODOS los archivos que llaman al modelo y no sobre
+    // una lista escrita a mano: esa lista se quedó obsoleta el día que se
+    // borró una etapa, y un test que apunta a un archivo que ya no existe deja
+    // de proteger nada sin avisar.
+    const llamantes = sourceFiles().filter((file) => {
+      const source = readFileSync(file, "utf8");
+      return /messages\.(parse|create|stream)\(/.test(source);
+    });
+
+    expect(llamantes.length).toBeGreaterThan(0);
+    for (const file of llamantes) {
+      expect({ file, tools: /^\s*tools:/m.test(readFileSync(file, "utf8")) })
+        .toEqual({ file, tools: false });
+    }
   });
 
   it("el cuerpo del correo va envuelto en su bloque no confiable", () => {
     const prompt = readFileSync(
-      path.join(ROOT, "lib/extraction/prompt.ts"),
+      path.join(ROOT, "lib/triage/prompt.ts"),
       "utf8",
     );
     expect(prompt).toContain("<contenido_no_confiable>");

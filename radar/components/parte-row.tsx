@@ -178,9 +178,6 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
             {entry.when ? (
               <span className="parte-when">· {entry.when}</span>
             ) : null}
-            {entry.needsReview ? (
-              <span className="parte-flag">· cambió</span>
-            ) : null}
             {entry.reading ? (
               <span className="parte-reading">· leyéndolo</span>
             ) : null}

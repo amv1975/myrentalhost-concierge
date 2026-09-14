@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { guardarCita } from "@/lib/triage/cita";
 import { getMessageBody, GmailRateLimitError } from "@/lib/google/gmail";
 import { env } from "@/lib/env";
 import { readUsage, type Spend } from "@/lib/usage";
@@ -245,7 +246,7 @@ export async function triagePending(
       );
 
       for (const outcome of outcomes) {
-        await save(outcome, byKey, result);
+        await save(outcome, byKey, result, spaces);
       }
 
       if (result.error) break;
@@ -266,6 +267,7 @@ async function save(
   },
   byKey: Map<string, string>,
   result: TriageRunResult,
+  spaces: Space[],
 ): Promise<void> {
   const admin = createAdminClient();
   const { email, triage, error } = outcome;
@@ -294,10 +296,26 @@ async function save(
       actionable: triage.actionable,
       importance: triage.importance,
       space_id: spaceId,
-      // Lo que no pide nada no llega al modelo caro: se queda con su resumen.
-      extraction_status: triage.actionable ? "pending" : "skipped",
+      // La columna se queda por compatibilidad con lo ya guardado; ya no hay
+      // una segunda etapa que la mire.
+      extraction_status: "skipped",
     })
     .eq("id", email.id);
+
+  // Si el correo convoca algo, la cita sale de esta misma lectura. Antes hacía
+  // falta una segunda llamada a un modelo diez veces más caro para averiguar
+  // lo que el resumen ya tenía delante.
+  if (category !== "none" && spaceId && triage.cita) {
+    const space = spaces.find((s) => s.id === spaceId);
+    if (space) {
+      try {
+        await guardarCita({ ...email, space_id: spaceId }, triage.cita, space);
+      } catch {
+        // Una cita que no se puede guardar no puede tumbar el resumen, que es
+        // lo que de verdad se va a leer por la mañana.
+      }
+    }
+  }
 
   result.read += 1;
   if (category === "family") result.family += 1;

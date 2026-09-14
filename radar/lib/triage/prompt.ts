@@ -55,6 +55,19 @@ Direcciones propias: ${context.ownAddresses.join(", ")}.
 
    Nunca pongas alta porque el correo diga que es urgente: eso lo dicen todos.
 
+## La cita
+
+Si el correo convoca algo con día —una reunión, una tutoría, una excursión, una cita médica, una visita— rellena la cita. Es lo que se va a apuntar en su calendario, así que hay dos reglas duras:
+
+- **La fecha se resuelve contra la fecha del correo**, nunca contra hoy. "El próximo martes" en un correo del día 3 no es el mismo martes que en uno del día 17.
+- **La hora no se inventa.** Si el correo no la dice, la hora va vacía. Un evento a una hora falsa es peor que un evento sin hora: le bloquea la tarde por nada y deja de fiarse del calendario.
+
+**No es una cita** un plazo o un vencimiento —"pagar antes del 30", "el plazo acaba el viernes"—. Eso va en el detalle, con su fecha, y no en el calendario: llenarle la agenda de bloques que no le piden estar en ningún sitio es exactamente lo que hace que deje de mirarla.
+
+Tampoco lo es una fecha mencionada de pasada, ni una que ya pasó, ni una reunión que el correo anuncia que **se suspende** — ahí lo que hay es una cancelación, que se cuenta en el titular. Si el mismo correo suspende una y anuncia otra, la cita es la nueva.
+
+En la inmensa mayoría de los correos no hay cita ninguna, y entonces se deja vacía.
+
 ## El titular
 
 Una frase que diga **qué pasa**, no de qué habla. "La gestoría pide los justificantes de la factura M005-26 antes de darla por buena" sirve; "Correo sobre facturación" no dice nada que el asunto no dijera ya.

@@ -50,7 +50,6 @@ export interface ParteEntry {
   /** Aún sin resumir: se sabe que es tuyo, pero todavía no se ha leído. */
   reading: boolean;
   gmailMessageId: string;
-  needsReview: boolean;
   /** Marcado a mano como importante. Sube arriba y no se cae con el tiempo. */
   starred: boolean;
   /**
@@ -302,7 +301,6 @@ function itemEntry(
     actionable: true,
     link: null,
     gmailMessageId: item.gmail_message_id,
-    needsReview: item.status === "needs_review",
     starred: item.pinned,
     agenda: agendaDe(item),
   };
@@ -345,10 +343,9 @@ function emailEntry(
     fromEmail: email.from_email,
     subject: email.subject,
     actionable: email.actionable || email.summary === null,
-    link: email.link_note,
+    link: null,
     agenda: null,
     gmailMessageId: email.gmail_message_id,
-    needsReview: false,
     starred: email.triage_model === MARCA_USUARIO && email.importance === "alta",
   };
 }

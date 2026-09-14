@@ -4,9 +4,7 @@ import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
 import { ingestInbox } from "@/lib/ingest/ingest";
 import { gatePending } from "@/lib/triage/gate";
 import { triagePending } from "@/lib/triage/run";
-import { connectRecent } from "@/lib/triage/connect";
 import { buildTriageContext } from "@/lib/triage/context";
-import { extractPending } from "@/lib/extraction/run";
 import { syncSpace } from "@/lib/calendar/sync";
 import { Spend } from "@/lib/usage";
 import { deadlineIn, porcion, type Deadline } from "@/lib/deadline";
@@ -177,31 +175,15 @@ export async function runPipeline(
   if (triaged.parcial) result.parciales.push(triaged.parcial);
   if (triaged.error) result.errors.push(triaged.error);
 
-  // Va después de resumir porque cruza los resúmenes, no los correos en crudo,
-  // y antes de extraer porque no depende de los compromisos.
-  // El cruce compara resúmenes, así que con media cola sin resumir compararía
-  // textos vacíos, pagaría por ello y además borraría las notas de la pasada
-  // anterior. Solo cuando ya no queda nada por leer.
   result.remaining = await countUnread();
 
-  if (plazo.ok() && result.remaining === 0) {
-    const linked = await connectRecent(spend, plazo);
-    if (linked.error) result.errors.push(linked.error);
-  }
-
+  // Poner algo en el calendario lo decides tú, con el botón de la ficha. Aquí
+  // solo se lleva a Google lo que ya has confirmado, y lo que descartaste
+  // después se retira.
   for (const space of spaces) {
-    const extracted = await extractPending(space, spend, plazo);
-    result.created += extracted.created;
-    result.updated += extracted.updated;
-    if (extracted.parcial) result.parciales.push(extracted.parcial);
-    if (extracted.error) result.errors.push(extracted.error);
-
-    // Sincronizar toca el calendario de verdad: si no hay tiempo para hacerlo
-    // entero, mejor no empezarlo.
-    if (plazo.ok()) {
-      const synced = await syncSpace(space);
-      if (synced.error) result.errors.push(synced.error);
-    }
+    if (!plazo.ok()) break;
+    const synced = await syncSpace(space);
+    if (synced.error) result.errors.push(synced.error);
   }
 
   result.costUsd = spend.usd;

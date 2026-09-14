@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { zonedTimeToUtc } from "@/lib/extraction/dates";
+import { zonedTimeToUtc } from "@/lib/fechas";
 
 const TZ = "Europe/Madrid";
 

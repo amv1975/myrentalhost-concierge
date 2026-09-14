@@ -7,7 +7,7 @@ import {
   updateEvent,
   type CalendarEventInput,
 } from "@/lib/google/calendar";
-import { DEFAULT_EVENT_MINUTES, addMinutes } from "@/lib/extraction/dates";
+import { DEFAULT_EVENT_MINUTES, addMinutes } from "@/lib/fechas";
 import { needsSync } from "@/lib/calendar/needs-sync";
 import type { Item, Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";

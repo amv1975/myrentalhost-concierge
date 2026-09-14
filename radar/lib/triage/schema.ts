@@ -36,6 +36,35 @@ export const TriageResultSchema = z.object({
     .describe(
       "alta si hay dinero, un plazo legal, alguien esperando respuesta que ya insistió, o algo que se rompe si se ignora.",
     ),
+  cita: z
+    .object({
+      titulo: z
+        .string()
+        .max(120)
+        .describe(
+          "Cómo se llamaría en el calendario. Corto y reconocible de un vistazo: 'Reunión de vecinos', 'Tutoría con la profesora de tercero'.",
+        ),
+      fecha: z
+        .string()
+        .describe(
+          "El día, en AAAA-MM-DD. Las fechas relativas se resuelven contra la fecha del correo, no contra hoy.",
+        ),
+      hora: z
+        .string()
+        .nullable()
+        .describe(
+          "La hora de inicio en HH:MM, hora local de Madrid. null si el correo no la dice: no te la inventes.",
+        ),
+      hora_fin: z
+        .string()
+        .nullable()
+        .describe("La hora de fin en HH:MM, si el correo la dice. null si no."),
+      lugar: z.string().max(200).nullable().describe("Dónde, si lo dice."),
+    })
+    .nullable()
+    .describe(
+      "La cita que hay que apuntar en el calendario, si la hay. null en la inmensa mayoría de los correos.",
+    ),
 });
 
 export type TriageResult = z.infer<typeof TriageResultSchema>;

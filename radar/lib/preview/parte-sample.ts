@@ -25,7 +25,6 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
     reading: false,
     gmailMessageId: "demo",
     agenda: null,
-    needsReview: false,
     starred: false,
     ...over,
   };

@@ -135,8 +135,20 @@ describe("el caudal de los canales de reservas", () => {
 describe("el colegio no es un canal de reservas", () => {
   it("la riada es solo de trabajo", () => {
     const prompt = buildGateSystemPrompt(context);
-    expect(prompt).toContain("Familia: aquí NO hay riada");
+    expect(prompt).toContain("Personal: aquí NO hay riada");
     expect(prompt).toContain("No le apliques la desconfianza del apartado anterior");
+  });
+
+  it("Personal es todo lo que no es el negocio, no solo el colegio", () => {
+    // El correo que se perdió: una reunión de vecinos aplazada, con el
+    // administrador de fincas y con fecha. No era "familia" en ningún sentido
+    // normal de la palabra, así que no encajaba en ninguna de las dos vidas y
+    // el filtro lo tiró con toda lógica a partir de una premisa incompleta.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("todo lo que no es el negocio");
+    for (const caso of ["comunidad de vecinos", "administrador de fincas", "Banco, seguros"]) {
+      expect(prompt).toContain(caso);
+    }
   });
 
   it("enumera lo que un colegio manda y no se puede perder", () => {

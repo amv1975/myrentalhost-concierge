@@ -77,9 +77,11 @@ De esos mismos canales, **sí es work**:
 
 La prueba para work: si nadie lo abre nunca, ¿pasa algo? Si la respuesta es no, es none aunque venga de Airbnb y hable de una reserva.
 
-### Familia: aquí NO hay riada
+### Personal: aquí NO hay riada
 
-El colegio escribe dos o tres veces por semana, no doscientas al día. **No le apliques la desconfianza del apartado anterior.** Casi todo lo que manda un colegio a las familias afecta a un niño concreto en una fecha concreta, y perdérselo tiene consecuencias reales: un plazo que vence, un pago que no se hace, una autorización que no se firma, una excursión a la que la niña no va.
+La categoría **family** se llama "Personal" en la aplicación, y ese nombre es el correcto: es **todo lo que no es el negocio**, no solo el colegio de las hijas. El banco, el seguro, el médico, la comunidad de vecinos, el administrador de fincas, el ayuntamiento, Hacienda, el coche, las facturas de casa, los suministros: todo eso es Personal. Leer "family" como "cosas de niños" es el error que más correos buenos ha tirado a la basura.
+
+Quien escribe aquí lo hace dos o tres veces por semana, no doscientas al día. **No le apliques la desconfianza del apartado anterior.** Casi todo lo que manda un colegio, un banco o una administración a una persona concreta tiene fecha y consecuencias, y perdérselo se paga: un plazo que vence, un pago que no se hace, una autorización que no se firma, una reunión a la que no vas.
 
 Es **family** aunque parezca circular y aunque no te pida nada explícitamente:
 
@@ -92,7 +94,15 @@ Es **family** aunque parezca circular y aunque no te pida nada explícitamente:
 - **Notas, informes, boletines de evaluación** de una hija concreta.
 - Cualquier correo donde aparezca el **nombre de una de sus hijas**.
 
-Solo es **none** en familia lo que de verdad no toca a esta casa: publicidad de terceros colada en el boletín, campañas de captación, correos dirigidos a otro curso o a otra etapa que no es la de sus hijas, felicitaciones y saludos sin contenido.
+Y todo lo demás de la vida de una casa, que no es menos importante por no venir del colegio:
+
+- **La comunidad de vecinos y el administrador de fincas**: convocatorias y cambios de reunión, actas, derramas, obras, permisos, cuotas. Una reunión que se aplaza es tan importante como una que se convoca.
+- **Banco, seguros, hipoteca, impuestos y administración**: recibos devueltos, renovaciones, vencimientos, requerimientos, citas previas.
+- **Salud**: citas médicas, resultados, recordatorios de consulta.
+- **Casa y coche**: suministros, averías, revisiones, ITV, multas, mudanzas, obras.
+- Cualquier **persona que le escribe directamente** sobre un asunto concreto, aunque no la conozcas de nada.
+
+Solo es **none** en Personal lo que de verdad no toca a esta casa: publicidad de terceros colada en el boletín, campañas de captación, correos dirigidos a otro curso o a otra etapa que no es la de sus hijas, felicitaciones y saludos sin contenido, y promociones comerciales del banco o de la aseguradora que no hablan de un contrato suyo.
 
 ### La marca "(masivo)" no significa lo mismo en los dos sitios
 
@@ -111,7 +121,7 @@ Es **none**, casi siempre: publicidad, boletines comerciales, novedades de aplic
 **El desempate depende de quién escribe, no de cuánto dudes.**
 
 - Si el remitente es un **canal automático de alto volumen** —Airbnb, Booking, Rentals United, un panel, una tienda, una plataforma—, ante la duda: **none**. Ahí sobra material y colar de más llena la aplicación.
-- Si el remitente es una **persona, un colegio, una administración, un banco, una aseguradora, una gestoría o un profesional**, ante la duda: **quédatelo**. Esos escriben poco y cuando escriben suele haber algo. Perderse uno cuesta mucho más que enseñar uno de más.
+- Si el remitente es una **persona, un colegio, una comunidad de vecinos o su administrador, una administración, un banco, una aseguradora, una gestoría o un profesional**, ante la duda: **quédatelo**. Esos escriben poco y cuando escriben suele haber algo. Perderse uno cuesta mucho más que enseñar uno de más.
 
 No hay una cuota que cumplir. Un día pueden salir tres correos y otro día treinta; lo que decide es el asunto, no el porcentaje.
 

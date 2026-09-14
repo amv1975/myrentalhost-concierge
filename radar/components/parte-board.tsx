@@ -111,7 +111,7 @@ export function ParteBoard({
         <span>
           <Link href="/familia/ajustes">Ajustes</Link>
           {" · "}
-          <Link href="/estado">Por dentro</Link>
+          <Link href="/estado">Cómo va la app</Link>
         </span>
       </p>
 

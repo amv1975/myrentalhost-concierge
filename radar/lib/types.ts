@@ -150,8 +150,15 @@ export function slugToSpaceKey(slug: string): SpaceKey | null {
  * para el seed y para los mensajes del backend.
  */
 export const SPACE_LABELS: Record<SpaceKey, string> = {
-  family: "Family",
-  work: "Work",
+  // "Familia" se quedaba corto y eso clasificaba mal: la comunidad de vecinos,
+  // el banco o el seguro no son "familia" en ningún sentido normal de la
+  // palabra, así que un correo suyo no encajaba en ninguna de las dos vidas y
+  // el filtro lo tiraba. "Personal" es lo que de verdad engloba: todo lo que
+  // no es el negocio. La clave en la base de datos sigue siendo "family":
+  // cambiarla arrastraría migraciones, RLS y los datos que ya hay, a cambio de
+  // nada que se vea.
+  family: "Personal",
+  work: "Trabajo",
 };
 
 export function spaceLabel(key: SpaceKey): string {

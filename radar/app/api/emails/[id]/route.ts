@@ -147,7 +147,7 @@ async function rescatar(
   const key = espacio === "family" || espacio === "work" ? espacio : null;
   if (!key) {
     return NextResponse.json(
-      { error: "Hay que decir si es de Familia o de Trabajo" },
+      { error: "Hay que decir si es de Personal o de Trabajo" },
       { status: 400 },
     );
   }

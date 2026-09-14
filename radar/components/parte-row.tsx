@@ -171,7 +171,7 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
           <span className="parte-headline">{entry.headline}</span>
           <span className="parte-meta">
             <span className="parte-chip" data-life={life}>
-              {life === "family" ? "Familia" : "Trabajo"}
+              {life === "family" ? "Personal" : "Trabajo"}
             </span>
             {entry.who ? <span className="parte-who">{entry.who}</span> : null}
             {entry.when ? (

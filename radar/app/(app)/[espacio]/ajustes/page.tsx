@@ -155,7 +155,7 @@ export default async function SettingsPage({
         <p className="mt-1 text-xs text-[var(--color-muted)]">
           Una pista para el filtro, no un pase: dice a qué vida pertenecería un
           correo de ese remitente <em>si resulta no ser ruido</em>, y le ahorra
-          dudar entre Familia y Trabajo. No garantiza que entre — ese atajo
+          dudar entre Personal y Trabajo. No garantiza que entre — ese atajo
           existía antes y metió doscientos sesenta avisos automáticos de Airbnb
           en el parte. Para que algo entre, descríbelo arriba. Un dominio cubre
           también sus subdominios.

@@ -102,7 +102,7 @@ const STORE = "radar:parte-filtro";
 const LABELS: Record<Filter, string> = {
   todo: "Todo",
   work: "Trabajo",
-  family: "Familia",
+  family: "Personal",
 };
 
 function Section({

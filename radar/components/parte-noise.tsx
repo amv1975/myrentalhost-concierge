@@ -83,7 +83,7 @@ export function ParteNoise({
                   <span className="nacciones">
                     <span className="nlabel">¿De qué es?</span>
                     <button type="button" onClick={() => rescatar(entry.id, "family")}>
-                      Familia
+                      Personal
                     </button>
                     <button type="button" onClick={() => rescatar(entry.id, "work")}>
                       Trabajo

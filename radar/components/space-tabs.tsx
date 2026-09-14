@@ -2,56 +2,40 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SLUG_BY_SPACE, spaceLabel, type Space } from "@/lib/types";
 
-export function SpaceTabs({
-  spaces,
-  userEmail,
-  activeSlug: forcedSlug,
-}: {
-  spaces: Space[];
-  userEmail: string;
-  /** La previsualización vive en /preview y necesita decir qué pestaña marcar. */
-  activeSlug?: string;
-}) {
+/**
+ * La cabecera de las pantallas que no son el parte.
+ *
+ * Aquí había dos pestañas, Familia y Trabajo, que llevaban a una segunda lista
+ * con sus propias fichas y sus propios botones. Esa lista ya no existe: el
+ * parte enseña las tres vidas juntas y se filtran ahí mismo, sin cambiar de
+ * pantalla. Lo único que hacía falta de verdad era volver.
+ */
+export function SpaceTabs({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
 
-  // El parte trae su propia cabecera con la fecha, y encima de ella una barra
-  // de pestañas solo estorbaría: lo primero que se ve por la mañana tiene que
-  // ser qué pasa hoy, no dónde estás.
-  if (forcedSlug === undefined && pathname === "/") return null;
-
-  const activeSlug = forcedSlug ?? pathname.split("/")[1] ?? "";
-  const isPreview = forcedSlug !== undefined;
-  const href = (slug: string) =>
-    isPreview ? `/preview?espacio=${slug}` : `/${slug}`;
+  // El parte trae su propia cabecera con la fecha. Encima de ella, esta barra
+  // solo estorbaría: lo primero que se ve por la mañana tiene que ser qué pasa
+  // hoy, no dónde estás.
+  if (pathname === "/") return null;
 
   return (
-    <header className="sticky top-0 z-10 border-b border-[var(--color-line)] bg-[var(--color-surface)]/95 backdrop-blur">
-      <div className="flex items-center justify-between gap-3 px-4 pt-3 sm:px-6">
-        {/* El nombre lleva al parte, como en cualquier sitio. */}
+    <header className="sticky top-0 z-10 border-b border-[var(--color-line)] bg-[var(--color-surface)]/95 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="flex items-center justify-between gap-3">
         <Link
-          href={isPreview ? "/preview" : "/"}
+          href="/"
           className="flex items-center gap-2 text-[15px] font-semibold tracking-tight"
         >
           <RadarMark />
           Radar
         </Link>
 
-        {/* min-w-0 en los dos: sin él, un correo largo empuja la casita fuera
-            de la pantalla en vez de recortarse. */}
         <span className="flex min-w-0 items-center gap-2">
           <span className="min-w-0 truncate text-xs text-[var(--color-faint)]">
             {userEmail}
           </span>
-          {/*
-            Y una casita explícita, porque el nombre de una aplicación no
-            parece un botón. Desde Ajustes no había forma evidente de volver:
-            el único enlace era una línea pequeña bajo el título, y llevaba a
-            la lista de fichas en vez de al parte.
-          */}
           <Link
-            href={isPreview ? "/preview" : "/"}
+            href="/"
             aria-label="Ir al parte"
             title="Ir al parte"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)]"
@@ -60,37 +44,6 @@ export function SpaceTabs({
           </Link>
         </span>
       </div>
-
-      {/* Con un solo espacio no hay nada que elegir, así que no se pintan tabs. */}
-      {spaces.length > 1 ? (
-        // Cada pestaña ocupa la mitad del ancho: en el móvil son dos dianas
-        // grandes para el pulgar, y se ve de un vistazo en cuál estás.
-        <nav className="mt-2.5 flex px-4 sm:px-6">
-          {spaces.map((space) => {
-            const slug = SLUG_BY_SPACE[space.key];
-            const active = activeSlug === slug;
-            const color = `var(--color-${space.key})`;
-
-            return (
-              <Link
-                key={space.id}
-                href={href(slug)}
-                aria-current={active ? "page" : undefined}
-                className={`-mb-px flex-1 border-b-2 px-3 pb-2.5 text-center text-[15px] font-semibold transition ${
-                  active
-                    ? "border-current"
-                    : "border-transparent text-[var(--color-faint)]"
-                }`}
-                style={active ? { color } : undefined}
-              >
-                {spaceLabel(space.key)}
-              </Link>
-            );
-          })}
-        </nav>
-      ) : (
-        <div className="h-3" />
-      )}
     </header>
   );
 }

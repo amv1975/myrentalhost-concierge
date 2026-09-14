@@ -31,7 +31,7 @@ export default async function AppLayout({
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
       {/* Una sola barra de espacios, y nunca una vista que los mezcle. */}
-      <SpaceTabs spaces={spaces} userEmail={user.email ?? ""} />
+      <SpaceTabs userEmail={user.email ?? ""} />
       <main className="flex-1 px-4 pb-24 pt-4 sm:px-6">{children}</main>
     </div>
   );

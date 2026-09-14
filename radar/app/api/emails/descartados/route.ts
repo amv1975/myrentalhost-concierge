@@ -8,14 +8,16 @@ import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
 import { getMessageHeaders, listMessageIds } from "@/lib/google/gmail";
 
 /**
- * Buscar entre lo que el filtro tiró.
+ * Buscar un correo que Radar no te ha subido.
  *
- * La lista de descartados enseñaba los sesenta más recientes de seiscientos
- * setenta y siete, que para comprobar que no se perdió nada sirve, y para
- * encontrar un correo concreto no sirve de nada. El gesto real es el otro: veo
- * algo en Gmail que Radar no me subió, y quiero decirle que eso sí me importa.
- * Para eso hay que poder buscarlo por lo poco que uno recuerda — quién lo
- * manda o dos palabras del asunto.
+ * El gesto real: veo algo en Gmail que no está en el parte y quiero decirle
+ * que eso sí me importa. Para eso hay que poder encontrarlo por lo poco que
+ * uno recuerda — quién lo manda o dos palabras del asunto.
+ *
+ * Busca en todo lo que Radar tiene guardado, y si ahí no está, en el buzón.
+ * Las dos cosas, porque las dos razones por las que un correo no está en el
+ * parte se ven igual desde fuera: que el filtro lo tirara, que aún no lo haya
+ * mirado, o que ni siquiera se descargara.
  *
  * Va contra service role y no contra RLS porque un correo clasificado como
  * ruido no pertenece a ningún espacio, así que RLS —con razón— no lo devuelve.
@@ -53,8 +55,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await admin
       .from("emails")
       .select("id, from_email, from_name, subject, received_at")
-      .eq("triage_category", "none")
-      // Lo que descartaste tú no vuelve a ofrecerse: ya lo decidiste.
+      // Todo lo que Radar tenga, no solo lo que dio por ruido. Buscaba solo
+      // entre los descartados y eso dejaba fuera los que aún estaban en la
+      // cola sin juzgar: para quien busca, un correo que el filtro no ha
+      // mirado todavía es igual de invisible que uno que tiró. La distinción
+      // era de la máquina, no suya.
+      //
+      // Lo que descartaste tú sí se queda fuera: ya lo decidiste.
       .is("dismissed_at", null)
       .or(
         `subject.ilike.${patron},from_email.ilike.${patron},from_name.ilike.${patron}`,

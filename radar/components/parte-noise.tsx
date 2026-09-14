@@ -137,9 +137,9 @@ export function ParteNoise({
         type="search"
         value={busqueda}
         onChange={(event) => setBusqueda(event.target.value)}
-        placeholder="Buscar entre los descartados: remitente o asunto"
+        placeholder="Buscar un correo: remitente o asunto"
         className="parte-buscar"
-        aria-label="Buscar entre los correos descartados"
+        aria-label="Buscar un correo que no esté en el parte"
       />
 
       {lista.length > 0 ? (
@@ -152,7 +152,7 @@ export function ParteNoise({
                 <span className="nfrom">{entry.who}</span>
                 <span className="nsubj">{entry.subject}</span>
                 {entry.deGmail ? (
-                  <span className="nsrc">de tu Gmail · Radar no lo tenía</span>
+                  <span className="nsrc">encontrado en tu Gmail</span>
                 ) : null}
 
                 {rescatado ? (

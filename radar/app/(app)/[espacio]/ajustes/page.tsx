@@ -1,20 +1,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getSpaceByKey } from "@/lib/spaces";
-import { slugToSpaceKey, spaceLabel, type Source } from "@/lib/types";
-import { SpaceDescription } from "@/components/space-description";
-import { SourcesEditor } from "@/components/sources-editor";
-import { AutoConfirmToggle } from "@/components/auto-confirm-toggle";
-import { ReanalyzeButton } from "@/components/reanalyze-button";
-import { LearnedList, type LearnedEntry } from "@/components/learned-list";
-import { getMonthSpend } from "@/lib/spend";
-import { formatUsd } from "@/lib/usage";
-import { PantallaRota } from "@/components/pantalla-rota";
-import { describeError } from "@/lib/errors";
 import { checkSchema } from "@/lib/schema-check";
+import { getMonthSpend } from "@/lib/spend";
+import { slugToSpaceKey, spaceLabel } from "@/lib/types";
+import { SpaceDescription } from "@/components/space-description";
+import { formatUsd } from "@/lib/usage";
 
-export default async function SettingsPage({
+/**
+ * Los ajustes de una vida.
+ *
+ * Aquí había siete secciones: remitentes de confianza, confirmación
+ * automática, lo que había aprendido a ignorar, reanalizar, calendario
+ * destino... Ninguna se usaba nunca, dos mentían sobre lo que hacían y todas
+ * había que mantenerlas con cada cambio de tipografía o de tema.
+ *
+ * Quedan tres cosas, y cada una responde a una pregunta real: qué cuenta como
+ * esta vida —que es lo que lee el filtro y el único mando que de verdad
+ * cambia algo—, cuánto llevo gastado, y si la base de datos tiene lo que el
+ * código espera.
+ */
+export default async function AjustesPage({
   params,
 }: {
   params: Promise<{ espacio: string }>;
@@ -23,59 +29,17 @@ export default async function SettingsPage({
   const key = slugToSpaceKey(espacio);
   if (!key) notFound();
 
-  // El gasto del mes es un extra: si su consulta falla, Ajustes tiene que
-  // seguir abriéndose, porque es desde donde se arreglan las cosas.
-  let spend = { usd: 0, runs: 0, screened: 0 };
-  let spendError: string | null = null;
-  try {
-    spend = await getMonthSpend();
-  } catch (error) {
-    spendError = describeError(error);
-  }
-
-  const schema = await checkSchema();
-
   const space = await getSpaceByKey(key);
   if (!space) notFound();
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("sources")
-    .select("*")
-    .eq("space_id", space.id)
-    .order("kind")
-    .order("value");
-
-  // Lo que la app ha aprendido a ignorar sale de lo que has descartado: no hay
-  // una lista aparte que mantener, la señal está en el propio uso.
-  const { data: dismissed } = await supabase
-    .from("items")
-    .select("title, normalized_title")
-    .eq("space_id", space.id)
-    .eq("status", "dismissed")
-    .order("updated_at", { ascending: false })
-    .limit(200);
-
-  const learned = Object.values(
-    ((dismissed ?? []) as { title: string; normalized_title: string }[]).reduce<
-      Record<string, LearnedEntry>
-    >((acc, row) => {
-      const existing = acc[row.normalized_title];
-      if (existing) existing.count += 1;
-      else
-        acc[row.normalized_title] = {
-          title: row.title,
-          normalizedTitle: row.normalized_title,
-          count: 1,
-        };
-      return acc;
-    }, {}),
-  ).sort((a, b) => b.count - a.count);
+  const [schema, spend] = await Promise.all([checkSchema(), getMonthSpend()]);
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-lg font-semibold">Ajustes de {spaceLabel(space.key)}</h1>
+        <h1 className="text-lg font-semibold">
+          Ajustes de {spaceLabel(space.key)}
+        </h1>
         <Link
           href="/"
           className="text-sm text-[var(--color-muted)] underline underline-offset-4"
@@ -83,58 +47,6 @@ export default async function SettingsPage({
           ← Volver al parte
         </Link>
       </div>
-
-      <section>
-        <h2 className="text-sm font-semibold">Estado de la base de datos</h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Si el código espera una columna que la base de datos no tiene, la app
-          falla a mitad de una actualización y el motivo no se ve hasta que
-          revientas algo. Aquí se comprueban todas de golpe.
-        </p>
-        {schema.ok ? (
-          <p className="mt-3 text-sm font-medium text-[var(--color-ok)]">
-            Al día. No falta nada.
-          </p>
-        ) : (
-          <div className="mt-3 rounded-xl bg-[var(--color-danger-soft)] px-4 py-3">
-            <p className="text-sm font-semibold text-[var(--color-danger)]">
-              {schema.error
-                ? "No se pudo comprobar"
-                : `Faltan ${schema.missing.length} columnas`}
-            </p>
-            <p className="mt-1 font-mono text-xs text-[var(--color-danger)]">
-              {schema.error ?? schema.missing.join(", ")}
-            </p>
-            <p className="mt-2 text-xs text-[var(--color-muted)]">
-              Pásale esta lista a Claude y te da el SQL para ponerla al día.
-            </p>
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-sm font-semibold">Gasto de este mes</h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Lo que llevan costando las llamadas al modelo. Radar mira el asunto de
-          todo lo que entra con el modelo más barato y solo lee entero lo que
-          parece tuyo, que es de donde sale que esto valga céntimos y no euros.
-        </p>
-        {spendError ? (
-          <p className="mt-3 text-xs text-[var(--color-danger)]">
-            No se pudo calcular: {spendError}
-          </p>
-        ) : (
-          <>
-            <p className="mt-3 text-2xl font-semibold tabular-nums">
-              {formatUsd(spend.usd)}
-            </p>
-            <p className="text-xs text-[var(--color-muted)]">
-              {spend.screened} correos mirados en {spend.runs}{" "}
-              {spend.runs === 1 ? "actualización" : "actualizaciones"}
-            </p>
-          </>
-        )}
-      </section>
 
       <section>
         <h2 className="text-sm font-semibold">
@@ -151,70 +63,34 @@ export default async function SettingsPage({
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold">Remitentes de confianza</h2>
+        <h2 className="text-sm font-semibold">Gasto de este mes</h2>
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Una pista para el filtro, no un pase: dice a qué vida pertenecería un
-          correo de ese remitente <em>si resulta no ser ruido</em>, y le ahorra
-          dudar entre Personal y Trabajo. No garantiza que entre — ese atajo
-          existía antes y metió doscientos sesenta avisos automáticos de Airbnb
-          en el parte. Para que algo entre, descríbelo arriba. Un dominio cubre
-          también sus subdominios.
+          Leer la bandeja entera cuesta dinero. Se enseña siempre, aunque sean
+          céntimos, para que el día que suba se vea aquí y no en la factura.
         </p>
-        <div className="mt-3">
-          <SourcesEditor espacio={espacio} sources={(data ?? []) as Source[]} />
-        </div>
+        <p className="mt-3 text-sm font-medium">
+          {formatUsd(spend.usd)}
+          <span className="ml-2 text-xs font-normal text-[var(--color-muted)]">
+            {spend.screened} correos mirados en {spend.runs}{" "}
+            {spend.runs === 1 ? "actualización" : "actualizaciones"}
+          </span>
+        </p>
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold">Confirmación automática</h2>
+        <h2 className="text-sm font-semibold">Base de datos</h2>
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Con esto activado, los compromisos que Claude extraiga con mucha
-          seguridad se confirman solos y van al calendario sin que los revises.
-          Déjalo apagado hasta que confíes en la extracción.
+          Si el código espera una columna que no existe, la app falla a mitad de
+          una actualización y el motivo no se ve hasta que revientas algo.
         </p>
-        <div className="mt-3">
-          <AutoConfirmToggle
-            espacio={espacio}
-            enabled={space.auto_confirm_enabled}
-            threshold={space.auto_confirm_threshold}
-          />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-sm font-semibold">Lo que ha aprendido a ignorar</h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Cada cosa que descartas se convierte en un ejemplo de lo que no te
-          interesa, y deja de traerte también las que se le parezcan. Si alguna
-          resulta importante después, quítala de aquí.
-        </p>
-        <div className="mt-3">
-          <LearnedList espacio={espacio} entries={learned} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-sm font-semibold">Reanalizar</h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Los correos se analizan una sola vez, que es lo que impide que los
-          compromisos se dupliquen. Si cambian las reglas de extracción, esto
-          rehace los que aún no has confirmado.
-        </p>
-        <div className="mt-3">
-          <ReanalyzeButton espacio={espacio} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-sm font-semibold">Calendario destino</h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          Los eventos confirmados van a{" "}
-          <code className="rounded bg-[var(--color-ground)] px-1">
-            {space.google_calendar_id}
-          </code>
-          {space.google_calendar_id === "primary"
-            ? " (tu calendario principal)."
-            : "."}
+        <p
+          className={`mt-3 text-sm font-medium ${
+            schema.ok ? "text-[var(--color-ok)]" : "text-[var(--color-danger)]"
+          }`}
+        >
+          {schema.ok
+            ? "Al día. No falta nada."
+            : (schema.error ?? `Faltan: ${schema.missing.join(", ")}`)}
         </p>
       </section>
     </div>

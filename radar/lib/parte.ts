@@ -4,6 +4,7 @@ import { sourceLabel } from "@/lib/source-label";
 import { formatDate, formatDateTime, daysBetween } from "@/lib/format";
 import type { Email, Item, SpaceKey } from "@/lib/types";
 import { describeError } from "@/lib/errors";
+import { VENTANA_MS } from "@/lib/ventana";
 import { MARCA_USUARIO } from "@/lib/triage/estados";
 
 /**
@@ -20,8 +21,7 @@ import { MARCA_USUARIO } from "@/lib/triage/estados";
  * se fía de un filtro que decide por él.
  */
 
-/** Ventana del parte. Dos días cubren el fin de semana sin llenar la pantalla. */
-const WINDOW_HOURS = 48;
+/** Ventana del parte. La misma que la de la ingesta, y por eso vive fuera. */
 
 /** Un compromiso que vence dentro de esto sube arriba aunque nadie lo marque. */
 const URGENT_DAYS = 3;
@@ -127,7 +127,7 @@ async function buildParte(): Promise<Parte> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const since = new Date(Date.now() - WINDOW_HOURS * 3_600_000).toISOString();
+  const since = new Date(Date.now() - VENTANA_MS).toISOString();
   const now = new Date();
 
   // Los espacios visibles ya vienen filtrados por RLS: Victoria no ve Trabajo

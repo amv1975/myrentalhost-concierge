@@ -12,6 +12,7 @@ import { Spend } from "@/lib/usage";
 import { deadlineIn, porcion, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
+import { VENTANA_MS } from "@/lib/ventana";
 import {
   CATEGORIAS_PROPIAS,
   CRITERIO_ACTUAL,
@@ -241,7 +242,7 @@ const REPARTO = {
 const SOLAPE_MS = 30 * 60_000;
 
 /** Lo máximo que se mira hacia atrás la primera vez, o tras un parón largo. */
-const VENTANA_MAX_MS = 2 * 86_400_000;
+const VENTANA_MAX_MS = VENTANA_MS;
 
 /**
  * Desde cuándo hay que mirar el buzón.
@@ -251,9 +252,9 @@ const VENTANA_MAX_MS = 2 * 86_400_000;
  * volvía a recorrer miles de mensajes ya guardados para descubrir que ya
  * estaban guardados: media hora de trabajo para no traer nada.
  *
- * El tope existe para el primer día y para cuando la app lleva tiempo parada:
- * el parte enseña dos días, así que traer más sería bajar correos que no se
- * van a mirar.
+ * El tope existe para el primer día y para cuando la app lleva tiempo parada, y
+ * es exactamente el del parte: bajar menos deja correos que no se descargan
+ * nunca, y bajar más es pagar por correos que no se van a enseñar.
  */
 async function desdeCuandoMirar(): Promise<Date> {
   const admin = createAdminClient();

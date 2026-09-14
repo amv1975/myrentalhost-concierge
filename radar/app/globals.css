@@ -11,15 +11,15 @@
    * una pantalla de ordenador a medio metro; esto se mira en un móvil, con una
    * mano, normalmente de pie.
    */
-  --text-xs: 0.9375rem;
+  --text-xs: 0.84375rem;
   --text-xs--line-height: 1.5;
-  --text-sm: 1.0625rem;
+  --text-sm: 0.9375rem;
   --text-sm--line-height: 1.5;
-  --text-base: 1.1875rem;
+  --text-base: 1.0625rem;
   --text-base--line-height: 1.55;
-  --text-lg: 1.3125rem;
+  --text-lg: 1.1875rem;
   --text-lg--line-height: 1.4;
-  --text-xl: 1.5rem;
+  --text-xl: 1.375rem;
   --text-xl--line-height: 1.35;
 
   /* Texto */
@@ -244,7 +244,7 @@ body {
 
 .parte-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -255,7 +255,7 @@ body {
   font-family: var(--font-serif), Georgia, serif;
   /* Ajustada para que "Jueves, 10 de septiembre" quepa en una sola línea en un
      móvil estrecho: dos líneas para una fecha es mucho papel para poco dato. */
-  font-size: clamp(25px, 6.6vw, 34px);
+  font-size: clamp(22px, 5.9vw, 30px);
   white-space: nowrap;
   font-weight: 400;
   line-height: 1.1;
@@ -270,7 +270,7 @@ body {
 
 .parte-tally {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-muted);
   display: flex;
   flex-wrap: wrap;
@@ -290,7 +290,7 @@ body {
 
 .parte h2 {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -322,7 +322,7 @@ body {
   align-items: center;
   padding: 0 14px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   pointer-events: none;
@@ -391,7 +391,7 @@ body {
 
 .parte-at {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-faint);
   font-variant-numeric: tabular-nums;
   padding-top: 2px;
@@ -400,7 +400,7 @@ body {
 
 
 .parte-headline {
-  font-size: 18.9px;
+  font-size: 16.6px;
   line-height: 1.42;
   text-wrap: pretty;
 }
@@ -411,7 +411,7 @@ body {
   align-items: center;
   gap: 4px 7px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-faint);
 }
 .parte-who {
@@ -423,7 +423,7 @@ body {
 
 .parte-chip {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 500;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -457,12 +457,12 @@ body {
 }
 .parte-urgent .parte-headline {
   font-weight: 500;
-  font-size: 20.2px;
+  font-size: 17.8px;
 }
 
 .parte-flag {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   letter-spacing: 0.06em;
   color: var(--p-alert);
   text-transform: uppercase;
@@ -482,14 +482,14 @@ body {
 }
 .parte-detail p {
   margin: 0;
-  font-size: 18.2px;
+  font-size: 16px;
   line-height: 1.55;
   color: var(--p-muted);
   max-width: 62ch;
 }
 .parte-subject {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-faint);
   word-break: break-word;
 }
@@ -500,7 +500,7 @@ body {
   gap: 8px;
 }
 .parte-btn {
-  font-size: 16.9px;
+  font-size: 14.9px;
   font-weight: 500;
   padding: 8px 13px;
   border-radius: 2px;
@@ -538,7 +538,7 @@ body {
 }
 .parte-noise summary {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-muted);
   cursor: pointer;
   list-style: none;
@@ -572,7 +572,7 @@ body {
 }
 .parte-noise li {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   line-height: 1.4;
   color: var(--p-faint);
   display: flex;
@@ -610,7 +610,7 @@ body {
 
 .parte-noise .nacciones button {
   font-family: inherit;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-ink);
   background: none;
   border: 1px solid var(--p-rule);
@@ -636,7 +636,7 @@ body {
 }
 
 .parte-noise .note {
-  font-size: 15.6px;
+  font-size: 13.7px;
   color: var(--p-faint);
   margin: 12px 0 0;
   max-width: 58ch;
@@ -644,21 +644,21 @@ body {
 
 .parte-empty {
   font-family: var(--font-serif), Georgia, serif;
-  font-size: 24.7px;
+  font-size: 21.7px;
   color: var(--p-muted);
   margin: 0;
 }
 .parte-empty span {
   display: block;
   font-family: inherit;
-  font-size: 16.9px;
+  font-size: 14.9px;
   color: var(--p-faint);
   margin-top: 6px;
 }
 
 .parte-foot {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-faint);
   border-top: 1px solid var(--p-rule);
   padding-top: 14px;
@@ -702,7 +702,7 @@ body {
   color: var(--p-solid-ink);
   border: 1px solid var(--p-solid-line);
   border-radius: 2px;
-  font-size: 19.5px;
+  font-size: 17.2px;
   /* Sitio para la barra de progreso sin que el botón cambie de alto al
      empezar a trabajar: la lista no puede saltar bajo el pulgar. */
   position: relative;
@@ -752,7 +752,7 @@ body {
   gap: 12px;
   border-top: 1px solid var(--p-rule-soft);
   padding: 14px 0;
-  font-size: 16.9px;
+  font-size: 14.9px;
   color: var(--p-faint);
 }
 
@@ -769,14 +769,14 @@ body {
 }
 
 .parte-hint {
-  font-size: 15px;
+  font-size: 13.5px;
   line-height: 1.5;
   color: var(--p-faint);
   margin: 0;
 }
 
 .parte-error {
-  font-size: 16.9px;
+  font-size: 14.9px;
   color: var(--p-alert);
   background: var(--p-alert-soft);
   padding: 8px 10px;
@@ -786,21 +786,27 @@ body {
 
 /* Filtrar por vida. Los recuentos van dentro del propio botón: así se ve qué
    hay en cada lado antes de tocarlo, y no hay que entrar para descubrirlo. */
+/* Cuatro filtros y un móvil estrecho: reparten el ancho a partes iguales en
+   vez de saltar a una segunda fila. Con dos vidas cabían holgados; con tres
+   más "Todo", envolverse comía media pantalla antes de la primera línea. */
 .parte-filter {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 5px;
+  flex-wrap: nowrap;
 }
 
 .parte-filter button {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 5px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
-  letter-spacing: 0.06em;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
-  padding: 7px 11px;
+  padding: 8px 4px;
   border: 1px solid var(--p-rule);
   border-radius: 2px;
   background: none;
@@ -841,7 +847,7 @@ body {
 
 .parte-agenda .libre {
   font-family: var(--font-serif), Georgia, serif;
-  font-size: 22.1px;
+  font-size: 19.4px;
   line-height: 1.4;
   color: var(--p-ink);
   margin: 0;
@@ -849,7 +855,7 @@ body {
 
 .parte-agenda .libre span {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   color: var(--p-faint);
 }
 
@@ -861,7 +867,7 @@ body {
 
 .parte-agenda .cuando {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--p-faint);
@@ -869,7 +875,7 @@ body {
 }
 
 .parte-agenda .nada {
-  font-size: 18.2px;
+  font-size: 16px;
   color: var(--p-faint);
 }
 
@@ -886,13 +892,13 @@ body {
 .parte-agenda li {
   display: flex;
   gap: 9px;
-  font-size: 18.2px;
+  font-size: 16px;
   line-height: 1.4;
 }
 
 .parte-agenda .hora {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15.6px;
+  font-size: 13.7px;
   font-variant-numeric: tabular-nums;
   color: var(--p-muted);
   padding-top: 1px;
@@ -908,7 +914,7 @@ body {
    se ve al mirar el día entero, y conviene que se note que es otra voz. */
 .parte-link {
   display: block;
-  font-size: 16.9px;
+  font-size: 14.9px;
   line-height: 1.45;
   color: var(--p-muted);
   border-left: 2px solid var(--p-alert);
@@ -929,13 +935,13 @@ body {
 
 .parte-broken .que {
   font-family: var(--font-serif), Georgia, serif;
-  font-size: 22.1px;
+  font-size: 19.4px;
   margin: 0;
 }
 
 .parte-broken .detalle {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   line-height: 1.5;
   color: var(--p-alert);
   margin: 0;
@@ -943,7 +949,7 @@ body {
 }
 
 .parte-broken .que-hacer {
-  font-size: 16.2px;
+  font-size: 14.3px;
   color: var(--p-faint);
   margin: 0;
 }
@@ -972,7 +978,7 @@ body {
 }
 
 .parte-cola {
-  font-size: 16.2px;
+  font-size: 14.3px;
   line-height: 1.5;
   color: var(--p-muted);
   border-left: 2px solid var(--p-work);
@@ -997,7 +1003,7 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15.6px;
+  font-size: 13.7px;
 }
 
 .estado-tabla td {
@@ -1038,20 +1044,20 @@ body {
 
 .estado-bloque p.ok {
   color: var(--p-work);
-  font-size: 16.9px;
+  font-size: 14.9px;
   margin: 0;
 }
 
 .estado-bloque p.mal {
   text-align: left;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   margin: 0;
   word-break: break-word;
 }
 
 .estado-bloque .nota {
-  font-size: 15.6px;
+  font-size: 13.7px;
   line-height: 1.5;
   color: var(--p-faint);
   margin: 0;
@@ -1066,7 +1072,7 @@ body {
   flex-direction: column;
   gap: 6px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 15px;
+  font-size: 13.5px;
   line-height: 1.45;
   color: var(--p-faint);
 }

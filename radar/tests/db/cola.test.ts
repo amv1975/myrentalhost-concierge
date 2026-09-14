@@ -215,6 +215,33 @@ describe("la cola que ve la base de datos", () => {
     expect(huerfanos).toBeGreaterThan(0);
   });
 
+  it("pedir un correo por su id no salta el criterio de lectura", async () => {
+    // Lo que hace el rescate: pide leer UN correo concreto. Estrechar no puede
+    // convertirse en saltarse las condiciones — si un correo no toca leerlo,
+    // no se lee aunque lo pidas por su nombre. De lo contrario, el rescate
+    // sería una puerta trasera para releer cualquier fila de la tabla.
+    const enLectura = await seleccionados(SQL_LECTURA, [
+      [...ESTADOS_LEIBLES],
+      [...CATEGORIAS_PROPIAS],
+    ]);
+
+    let comprobados = 0;
+    for (const { id, estado } of casos) {
+      const { rows } = await db.query(
+        `select gmail_message_id from emails
+          where gmail_message_id = $3 and (${SQL_LECTURA})`,
+        [[...ESTADOS_LEIBLES], [...CATEGORIAS_PROPIAS], id],
+      );
+      // Pedirlo por id devuelve exactamente lo que devolvería sin pedirlo.
+      expect({ id, uno: rows.length === 1 }).toEqual({
+        id,
+        uno: enLectura.has(id),
+      });
+      comprobados += 1;
+    }
+    expect(comprobados).toBeGreaterThan(0);
+  });
+
   it("tus descartes no los devuelve ninguna consulta", async () => {
     // La promesa, comprobada contra el SQL real y no solo contra la regla.
     const traidos = await traidosPorElPrefiltro();

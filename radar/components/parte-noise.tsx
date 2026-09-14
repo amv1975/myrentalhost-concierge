@@ -36,6 +36,9 @@ export function ParteNoise({
   const [encontrados, setEncontrados] = useState<NoiseEntry[] | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [hecho, setHecho] = useState<Record<string, string>>({});
+  /** Lo que el correo resultó ser, en cuanto se lee. */
+  const [resumen, setResumen] = useState<Record<string, string>>({});
+  const [leyendo, setLeyendo] = useState<string | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
 
   /**
@@ -80,9 +83,10 @@ export function ParteNoise({
   async function rescatar(id: string, espacio: SpaceKey) {
     setEligiendo(null);
     setFallo(null);
-    // Optimista: el correo ya no es ruido en cuanto lo dices. Si el servidor
-    // dice que no, se deshace y se cuenta.
+    // Optimista para el rescate, que es tu decisión y no puede fallar por
+    // lentitud. El resumen sí espera: lo trae el servidor después de leerlo.
     setHecho((prev) => ({ ...prev, [id]: espacio }));
+    setLeyendo(id);
 
     try {
       const response = await fetch(`/api/emails/${id}`, {
@@ -90,11 +94,15 @@ export function ParteNoise({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "rescatar", espacio }),
       });
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        summary?: string | null;
+      };
       if (!response.ok) {
-        const body = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
         throw new Error(body.error ?? `El servidor respondió ${response.status}`);
+      }
+      if (body.summary) {
+        setResumen((prev) => ({ ...prev, [id]: body.summary as string }));
       }
       startTransition(() => router.refresh());
     } catch (error) {
@@ -104,6 +112,8 @@ export function ParteNoise({
         return copia;
       });
       setFallo(error instanceof Error ? error.message : "No se pudo guardar.");
+    } finally {
+      setLeyendo(null);
     }
   }
 
@@ -144,7 +154,10 @@ export function ParteNoise({
 
                 {rescatado ? (
                   <span className="nok">
-                    Rescatado · sube al parte en la próxima actualización
+                    {leyendo === entry.id
+                      ? "Leyéndolo entero…"
+                      : (resumen[entry.id] ??
+                        "Rescatado · sube al parte en la próxima actualización")}
                   </span>
                 ) : eligiendo === entry.id ? (
                   <span className="nacciones">

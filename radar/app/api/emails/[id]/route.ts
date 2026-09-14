@@ -3,7 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSpaceMember, getSpaceByKey } from "@/lib/spaces";
 import { MARCA_USUARIO } from "@/lib/triage/estados";
-import { SPACE_LABELS, type SpaceKey } from "@/lib/types";
+import { SPACE_LABELS, type Space, type SpaceKey } from "@/lib/types";
+import { getAllSpaces } from "@/lib/spaces";
+import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
+import { buildTriageContext } from "@/lib/triage/context";
+import { triagePending } from "@/lib/triage/run";
+import { Spend } from "@/lib/usage";
+import { deadlineIn } from "@/lib/deadline";
 
 /**
  * Quitar del parte un correo que solo se resume.
@@ -21,8 +27,11 @@ import { SPACE_LABELS, type SpaceKey } from "@/lib/types";
  * - **rescatar** — el filtro lo tiró y no debía. Es el único gesto que se hace
  *   sobre un correo que nunca llegó a enseñarse, y por eso no se parece a los
  *   demás: hay que decirle a qué vida pertenece, porque el filtro decidió que
- *   a ninguna. Vuelve a la cola de lectura y queda marcado como tuyo y como
- *   importante, que es lo que lee el filtro la próxima vez.
+ *   a ninguna. Queda marcado como tuyo y como importante —que es lo que lee el
+ *   filtro la próxima vez— y se lee entero ahí mismo, sin esperar a la
+ *   siguiente actualización: quien dice "esto sí me importa" quiere verlo, no
+ *   enterarse de que ha entrado en una cola. Es un correo y una llamada al
+ *   modelo más barato: dos milésimas de euro.
  *
  * Sin rescatar, la lista de descartados era un escaparate: enseñaba el error
  * sin dejar corregirlo, y lo único que el filtro podía aprender era de los
@@ -178,5 +187,52 @@ async function rescatar(
     .eq("id", id);
   if (error) throw error;
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(await leerAhora(id, space)) });
 }
+
+/**
+ * Leerlo ya, y que un fallo aquí no deshaga el rescate.
+ *
+ * El rescate en sí es lo que no se puede perder: ya está guardado cuando se
+ * llega aquí. Que Gmail no conteste o que el modelo tarde solo significa que
+ * el resumen llega en la siguiente actualización, que es exactamente lo que
+ * pasaba antes. Devolver un error por eso sería decirte que no se guardó nada
+ * cuando sí se guardó.
+ */
+async function leerAhora(
+  id: string,
+  space: Space,
+): Promise<{ summary?: string | null }> {
+  try {
+    const userId = await getIngestUserId(space.id);
+    if (!userId) return {};
+    const accessToken = await getAccessToken(userId);
+
+    const spaces = await getAllSpaces();
+    const context = await buildTriageContext(spaces);
+
+    await triagePending(
+      accessToken,
+      spaces,
+      context,
+      new Spend(),
+      deadlineIn(LEER_MS),
+      1,
+      [id],
+    );
+
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("emails")
+      .select("summary")
+      .eq("id", id)
+      .maybeSingle();
+
+    return { summary: (data as { summary: string | null } | null)?.summary ?? null };
+  } catch {
+    return {};
+  }
+}
+
+/** Lo que puede tardar leer un correo sin que el móvil dé la petición por muerta. */
+const LEER_MS = 22_000;

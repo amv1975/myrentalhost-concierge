@@ -133,6 +133,16 @@ export async function triagePending(
   spend: Spend,
   plazo: Deadline = SIN_PLAZO,
   limit = MAX_PER_RUN,
+  /**
+   * Leer estos correos y ninguno más.
+   *
+   * Existe para el rescate: cuando dices "esto sí me importa", lo que quieres
+   * es verlo resumido, no enterarte de que entra en una cola. Pasa por aquí y
+   * no por una función aparte a propósito — bajar el cuerpo, resumirlo,
+   * guardarlo y contarlo ya está resuelto, y una segunda copia de todo eso se
+   * habría quedado desincronizada a la primera de cambio.
+   */
+  ids?: string[],
 ): Promise<TriageRunResult> {
   const admin = createAdminClient();
   const result: TriageRunResult = {
@@ -147,7 +157,7 @@ export async function triagePending(
   const byKey = new Map(spaces.map((s) => [s.key, s.id]));
 
   try {
-    const { data, error } = await admin
+    let consulta = admin
       .from("emails")
       .select("*")
       .in("triage_status", [...ESTADOS_LEIBLES])
@@ -163,6 +173,13 @@ export async function triagePending(
       .order("bulk", { ascending: true })
       .order("received_at", { ascending: false })
       .limit(Math.min(limit, MAX_PER_RUN));
+
+    // Las condiciones de arriba siguen aplicando: pedir un correo concreto no
+    // salta el criterio, solo lo estrecha. Un correo que no toca leer no se
+    // lee aunque lo pidas por su id.
+    if (ids && ids.length > 0) consulta = consulta.in("id", ids);
+
+    const { data, error } = await consulta;
     if (error) throw error;
 
     const emails = (data ?? []) as Email[];

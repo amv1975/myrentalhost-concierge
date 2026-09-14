@@ -1,5 +1,10 @@
 import "server-only";
-import { listEvents, type CalendarEntry } from "@/lib/google/calendar";
+import { listEvents } from "@/lib/google/calendar";
+import {
+  IGNORED_KINDS,
+  isRealAppointment,
+  type CalendarEntry,
+} from "@/lib/google/calendar-parse";
 import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
 import type { Space } from "@/lib/types";
 
@@ -72,7 +77,10 @@ async function load(spaces: Space[]): Promise<Agenda> {
 
     return {
       slots: real.map(toSlot).filter(isSlot),
-      blocks: events.filter((e) => e.allDay).length,
+      // Solo lo que Google puso solo. Antes contaba también los cumpleaños y
+      // cualquier cosa de día completo, así que "3 bloques de estancias" podía
+      // no tener ninguna estancia dentro.
+      blocks: events.filter((e) => e.allDay && IGNORED_KINDS.has(e.kind)).length,
       ok: true,
     };
   } catch {
@@ -82,30 +90,7 @@ async function load(spaces: Space[]): Promise<Agenda> {
   }
 }
 
-/**
- * Qué es una cita de verdad.
- *
- * Google mete en el calendario cosas que nadie ha puesto ahí: eventos que se
- * inventa leyendo tu correo (un webinar al que te apuntaste hace meses, la
- * entrega de un paquete), cumpleaños y marcadores de dónde trabajas. En una
- * agenda que dice "esto es tu día" eso no son citas, son ruido — y ver a las
- * once de la mañana un webinar de las dos de la madrugada como si fuera lo
- * primero del día quita toda la credibilidad.
- *
- * Lo pasado también se va: una cita que ya terminó no organiza nada.
- */
-function isRealAppointment(event: CalendarEntry): boolean {
-  if (event.allDay) return false;
-  if (IGNORED_KINDS.has(event.kind)) return false;
-  if (event.end && event.end.getTime() < Date.now()) return false;
-  return true;
-}
 
-const IGNORED_KINDS = new Set([
-  "fromGmail",
-  "birthday",
-  "workingLocation",
-]);
 
 function toSlot(event: CalendarEntry): AgendaSlot | null {
   if (!event.start) return null;
@@ -121,12 +106,14 @@ function toSlot(event: CalendarEntry): AgendaSlot | null {
 
   return {
     when,
-    time: new Intl.DateTimeFormat("es-ES", {
-      timeZone: TZ,
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(event.start),
+    time: event.allDay
+      ? "todo el día"
+      : new Intl.DateTimeFormat("es-ES", {
+        timeZone: TZ,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(event.start),
     title: event.summary,
     location: event.location,
   };
@@ -145,6 +132,35 @@ function ymd(date: Date): string {
   }).format(date);
 }
 
+/**
+ * Medianoche de hoy en Madrid, no en UTC.
+ *
+ * El día se calcula en Madrid pero se montaba con una Z al final, así que la
+ * ventana empezaba a las 00:00 UTC: en verano, las dos de la madrugada de
+ * aquí. Lo que cayera entre medias no existía para el parte.
+ */
 function startOfToday(): Date {
-  return new Date(`${ymd(new Date())}T00:00:00Z`);
+  const hoy = ymd(new Date());
+  // Se prueban los desfases posibles y se queda el que, formateado en Madrid,
+  // vuelve a dar el mismo día a las 00:00. Más aburrido que una librería de
+  // zonas horarias, y no se equivoca el fin de semana que cambia la hora.
+  for (let desfase = -14; desfase <= 14; desfase += 1) {
+    const candidato = new Date(
+      Date.parse(`${hoy}T00:00:00Z`) - desfase * 3_600_000,
+    );
+    if (ymd(candidato) === hoy && horaEnMadrid(candidato) === 0) {
+      return candidato;
+    }
+  }
+  return new Date(`${hoy}T00:00:00Z`);
+}
+
+function horaEnMadrid(date: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: TZ,
+      hour: "2-digit",
+      hour12: false,
+    }).format(date),
+  );
 }

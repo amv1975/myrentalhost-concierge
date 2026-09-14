@@ -1,4 +1,7 @@
 import "server-only";
+import { parseEvents, type CalendarEntry } from "@/lib/google/calendar-parse";
+
+export { parseEvents, type CalendarEntry };
 
 /**
  * Cliente de Google Calendar. Cuatro operaciones: insertar, actualizar por id,
@@ -147,19 +150,7 @@ export async function cancelEvent(
 }
 
 
-export interface CalendarEntry {
-  id: string;
-  summary: string;
-  /** Null en los eventos de día completo. */
-  start: Date | null;
-  end: Date | null;
-  /** Los bloqueos de estancias son de día completo; las citas, no. */
-  allDay: boolean;
-  location: string | null;
-  /** Cómo nació el evento. "fromGmail" es un evento que Google se inventó
-   *  leyendo un correo, no algo que nadie haya puesto en la agenda. */
-  kind: string;
-}
+
 
 /**
  * Lo que hay en el calendario entre dos instantes.
@@ -195,15 +186,5 @@ export async function listEvents(
     },
   });
 
-  return (data.items ?? [])
-    .filter((event) => event.status !== "cancelled")
-    .map((event) => ({
-      id: event.id,
-      summary: event.summary?.trim() || "(sin título)",
-      start: event.start?.dateTime ? new Date(event.start.dateTime) : null,
-      end: event.end?.dateTime ? new Date(event.end.dateTime) : null,
-      allDay: !event.start?.dateTime,
-      location: event.location ?? null,
-      kind: event.eventType ?? "default",
-    }));
+  return parseEvents(data.items ?? []);
 }

@@ -647,6 +647,11 @@ body {
   outline-offset: 2px;
 }
 
+.parte-noise .nsrc {
+  flex-basis: 100%;
+  color: var(--p-work);
+}
+
 .parte-noise .nok {
   flex-basis: 100%;
   color: var(--p-work);

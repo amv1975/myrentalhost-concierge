@@ -72,6 +72,14 @@ export interface NoiseEntry {
   id: string;
   who: string;
   subject: string;
+  /**
+   * Apareció buscando en Gmail, no en lo que Radar había descartado.
+   *
+   * Importa decirlo: significa que Radar ni lo había mirado, no que lo mirara
+   * y lo tirase. Enseñarlo como "descartado" sería acusar al filtro de algo
+   * que no hizo.
+   */
+  deGmail?: boolean;
 }
 
 export interface Parte {

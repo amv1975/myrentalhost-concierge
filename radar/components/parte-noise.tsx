@@ -151,6 +151,9 @@ export function ParteNoise({
               <li key={entry.id}>
                 <span className="nfrom">{entry.who}</span>
                 <span className="nsubj">{entry.subject}</span>
+                {entry.deGmail ? (
+                  <span className="nsrc">de tu Gmail · Radar no lo tenía</span>
+                ) : null}
 
                 {rescatado ? (
                   <span className="nok">
@@ -190,8 +193,8 @@ export function ParteNoise({
 
       {encontrados !== null && encontrados.length === 0 && !buscando ? (
         <p className="note">
-          Nada con «{busqueda.trim()}». Radar solo guarda lo que ha llegado en
-          los últimos días: si el correo es más viejo, no está aquí.
+          Nada con «{busqueda.trim()}», ni en lo descartado ni en tu Gmail.
+          Prueba con el remitente, o con una palabra exacta del asunto.
         </p>
       ) : null}
 

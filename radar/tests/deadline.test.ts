@@ -77,3 +77,30 @@ describe("el timeout de cada llamada al modelo", () => {
     expect(limites(SIN_PLAZO).timeout).toBeLessThanOrEqual(10 * 60_000);
   });
 });
+
+describe("cuándo se actualiza sola la app", () => {
+  /** La misma cuenta que hace el botón al abrir la pantalla. */
+  function haceFalta(updatedAt: string | null, frescuraMs = 10 * 60_000) {
+    if (!updatedAt) return true;
+    const cuando = Date.parse(updatedAt);
+    return Number.isNaN(cuando) || Date.now() - cuando > frescuraMs;
+  }
+
+  it("sin parte previo, se actualiza", () => {
+    expect(haceFalta(null)).toBe(true);
+  });
+
+  it("con un parte de hace media hora, se actualiza", () => {
+    expect(haceFalta(new Date(Date.now() - 30 * 60_000).toISOString())).toBe(true);
+  });
+
+  it("con un parte de hace dos minutos, no", () => {
+    // El freno que importa: en un móvil, cambiar de app y volver es constante.
+    // Sin él, cada regreso lanzaría una pasada, y cada pasada cuesta dinero.
+    expect(haceFalta(new Date(Date.now() - 2 * 60_000).toISOString())).toBe(false);
+  });
+
+  it("una fecha corrupta se trata como 'no sé', y se actualiza", () => {
+    expect(haceFalta("no es una fecha")).toBe(true);
+  });
+});

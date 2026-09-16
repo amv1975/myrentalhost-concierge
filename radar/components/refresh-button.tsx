@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatUsd } from "@/lib/usage";
 
@@ -10,7 +10,14 @@ import { formatUsd } from "@/lib/usage";
  * botón más grande de la pantalla y no obliga a repetir la operación por
  * pestaña.
  */
-export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
+export function RefreshButton({
+  espacio: _espacio,
+  /** Cuándo terminó la última pasada. Null si nunca ha corrido ninguna. */
+  updatedAt = null,
+}: {
+  espacio?: string;
+  updatedAt?: string | null;
+}) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
@@ -24,6 +31,10 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
    * sale indeterminada.
    */
   const [progreso, setProgreso] = useState<number | null>(null);
+  /** Que sea automático no puede significar dos pasadas a la vez. */
+  const corriendo = useRef(false);
+  /** Cuándo se intentó por última vez desde esta pantalla. */
+  const ultimoIntento = useRef<number | null>(null);
 
   /**
    * Muchas pasadas cortas en vez de una larga.
@@ -34,7 +45,10 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
    * veinticinco segundos, siempre llega, y el botón vuelve a llamar mientras
    * queden correos por leer, contándote cuántos faltan.
    */
-  async function run() {
+  const run = useCallback(async function run() {
+    if (corriendo.current) return;
+    corriendo.current = true;
+    ultimoIntento.current = Date.now();
     setBusy(true);
     setMessage(null);
     setProgreso(null);
@@ -62,6 +76,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
         );
         setBusy(false);
         setProgreso(null);
+        corriendo.current = false;
         startTransition(() => router.refresh());
         return;
       }
@@ -106,7 +121,7 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
       // hay que decirlo, no seguir dando vueltas.
       if (anterior !== null && quedan >= anterior) {
         setMessage(
-          `Quedan ${quedan} y no avanzan. Pulsa otra vez; si sigue igual, avísame.`,
+          `Quedan ${quedan} y no avanzan. Mira "Cómo va la app".`,
         );
         break;
       }
@@ -116,14 +131,56 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
       startTransition(() => router.refresh());
 
       if (vuelta === MAX_VUELTAS) {
-        setMessage(`Quedan ${quedan} por leer. Vuelve a pulsar.`);
+        setMessage(`Quedan ${quedan} por leer.`);
       }
     }
 
     setBusy(false);
     setProgreso(null);
+    corriendo.current = false;
     startTransition(() => router.refresh());
-  }
+    // router queda fuera porque es estable en el App Router; meterlo volvería a
+    // crear run() en cada render, que es justo lo que dispararía pasadas de más.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Al abrir la app se pone al día sola.
+   *
+   * Abrir Radar y tener que pulsar un botón para que empiece a trabajar es
+   * pedirle al usuario que haga de reloj. El botón sigue ahí para forzarlo,
+   * pero deja de ser obligatorio.
+   *
+   * Con freno: si el parte es de hace un rato, no se vuelve a mirar el buzón.
+   * Sin él, cambiar de aplicación y volver —que en un móvil es constante—
+   * lanzaría una pasada cada vez, y cada una cuesta dinero.
+   */
+  useEffect(() => {
+    const haceFalta = () => {
+      if (corriendo.current) return false;
+      // Un intento reciente no se repite aunque no llegara a actualizar nada:
+      // si falló, reintentarlo cada vez que la app vuelve al frente sería un
+      // bucle silencioso contra un servidor que ya dijo que no.
+      if (
+        ultimoIntento.current !== null &&
+        Date.now() - ultimoIntento.current < FRESCURA_MS
+      ) {
+        return false;
+      }
+      if (!updatedAt) return true;
+      const cuando = Date.parse(updatedAt);
+      return Number.isNaN(cuando) || Date.now() - cuando > FRESCURA_MS;
+    };
+
+    if (haceFalta()) void run();
+
+    const alVolver = () => {
+      if (document.visibilityState === "visible" && haceFalta()) void run();
+    };
+
+    document.addEventListener("visibilitychange", alVolver);
+    return () => document.removeEventListener("visibilitychange", alVolver);
+  }, [updatedAt, run]);
 
   return (
     <div>
@@ -153,6 +210,15 @@ export function RefreshButton({ espacio: _espacio }: { espacio?: string }) {
 
 /** Cuántas pasadas encadena un solo toque antes de pedirte otro. */
 const MAX_VUELTAS = 8;
+
+/**
+ * Cuánto se considera reciente un parte.
+ *
+ * Diez minutos. Por debajo, volver a la app no vuelve a mirar el buzón: lo que
+ * haya entrado en ese rato sigue ahí cuando vuelvas y no justifica una pasada
+ * nueva cada vez que cambias de aplicación.
+ */
+const FRESCURA_MS = 10 * 60_000;
 
 /**
  * Qué contar después de actualizar.

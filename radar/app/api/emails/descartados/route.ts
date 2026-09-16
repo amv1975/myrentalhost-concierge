@@ -63,8 +63,12 @@ export async function GET(request: NextRequest) {
       //
       // Lo que descartaste tú sí se queda fuera: ya lo decidiste.
       .is("dismissed_at", null)
+      // También en la vista previa. Un correo del ayuntamiento llega con un
+      // asunto burocrático que no dice nada y lleva dentro lo único que uno
+      // recuerda —"limpieza", el código de seguimiento—; buscar solo por
+      // asunto y remitente lo dejaba inencontrable aunque estuviera guardado.
       .or(
-        `subject.ilike.${patron},from_email.ilike.${patron},from_name.ilike.${patron}`,
+        `subject.ilike.${patron},from_email.ilike.${patron},from_name.ilike.${patron},snippet.ilike.${patron}`,
       )
       .order("received_at", { ascending: false })
       .limit(LIMITE);

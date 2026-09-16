@@ -21,17 +21,10 @@ export function ParteAgenda({ agenda }: { agenda: Agenda }) {
       <h2>Tu día</h2>
 
       {hoy.length === 0 && manana.length === 0 ? (
-        <p className="libre">
-          Sin citas hoy ni mañana. El día es tuyo.
-          {agenda.blocks > 0 ? (
-            <span>
-              {" "}
-              ({agenda.blocks}{" "}
-              {agenda.blocks === 1 ? "bloque" : "bloques"} de estancias, que no
-              te piden nada)
-            </span>
-          ) : null}
-        </p>
+        // Sin la coletilla de los bloques de estancias. Era una explicación de
+        // por qué no se cuentan, y explicarlo cada mañana durante un año para
+        // que sirviera una vez no sale a cuenta.
+        <p className="libre">Sin citas hoy ni mañana. El día es tuyo.</p>
       ) : (
         <>
           <Day label="Hoy" slots={hoy} />

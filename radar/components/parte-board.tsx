@@ -28,27 +28,30 @@ export function ParteBoard({
       <header>
         <p className="parte-eyebrow">Parte de la mañana</p>
         <h1 className="parte-date">{longDate()}</h1>
+        {/*
+          Una línea, y corta. Decía "702 correos mirados / 10 para ti / al día
+          a las 08:29" y se partía en dos renglones en el móvil: tres frases
+          para tres números que se entienden solos.
+        */}
         <div className="parte-tally">
           <span>
-            <b>{parte.scanned}</b> correos mirados
+            <b>{parte.scanned}</b> mirados
           </span>
-          <span className="sep">/</span>
+          <span className="sep">·</span>
           <span>
             <b>{total}</b> para ti
           </span>
           {parte.reading > 0 ? (
             <>
-              <span className="sep">/</span>
+              <span className="sep">·</span>
               <span className="leyendo">
-                <b>{parte.reading}</b> sin leer todavía
+                <b>{parte.reading}</b> sin leer
               </span>
             </>
           ) : parte.updatedAt ? (
             <>
-              <span className="sep">/</span>
-              <span>
-                al día a las <b>{hhmm(parte.updatedAt)}</b>
-              </span>
+              <span className="sep">·</span>
+              <span>{hhmm(parte.updatedAt)}</span>
             </>
           ) : null}
         </div>
@@ -66,15 +69,6 @@ export function ParteBoard({
       ) : null}
 
       <ParteAgenda agenda={agenda} />
-
-      {parte.reading > 0 ? (
-        <p className="parte-cola">
-          Quedan {parte.reading} correos por leer entera. Aparecen con su
-          asunto y se van completando; vuelve a pulsar Actualizar hasta que no
-          quede ninguno. Si son ruido, puedes descartarlos todos de golpe ahí
-          abajo.
-        </p>
-      ) : null}
 
       {total === 0 ? (
         <p className="parte-empty">
@@ -139,7 +133,7 @@ export function ParteBoard({
         que hay que leer.
       */}
       <div className="parte-refresh">
-        <RefreshButton />
+        <RefreshButton updatedAt={parte.updatedAt} />
       </div>
     </div>
   );

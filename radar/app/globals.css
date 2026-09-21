@@ -726,6 +726,49 @@ body {
 
 /* El botón de actualizar viene de la otra pantalla, con la paleta de la otra
    pantalla. Aquí se viste con la del parte para que no cante en oscuro. */
+/* La barra del equipo, dentro del contenedor fijo de abajo.
+
+   Aparece solo cuando hay algo elegido, así que no compite con nada el 99%
+   del tiempo, y al ir apilada sobre Actualizar no hay que calcular a mano la
+   altura de uno para dejarle hueco al otro. */
+.parte-equipo {
+  margin-bottom: 8px;
+}
+
+.parte-equipo > div {
+  margin: 0 auto;
+  max-width: 42rem;
+  display: flex;
+  gap: 8px;
+}
+
+.parte-equipo button {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  padding: 10px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.parte-equipo .mandar {
+  flex: 1;
+  background: var(--p-solid);
+  color: var(--p-solid-ink);
+  border: 1px solid var(--p-solid-line);
+}
+
+.parte-equipo .quitar {
+  background: none;
+  color: var(--p-muted);
+  border: 1px solid var(--p-rule);
+}
+
+/* El botón marcado, para que se vea de un vistazo cuáles van. */
+.parte-btn[aria-pressed="true"] {
+  border-color: var(--p-work);
+  color: var(--p-work);
+}
+
 /* La barra de actualizar, pegada abajo.
 
    position: fixed y no sticky: el parte es una columna flex y un sticky dentro
@@ -742,8 +785,9 @@ body {
   border-top: 1px solid var(--p-rule-soft);
 }
 
-/* Centrada con el texto cuando la pantalla es ancha. */
-.parte-refresh > div {
+/* Centradas con el texto cuando la pantalla es ancha. */
+.parte-refresh > div,
+.parte-equipo > div {
   margin: 0 auto;
   max-width: 42rem;
 }

@@ -4,7 +4,6 @@ import { ParteAgenda } from "@/components/parte-agenda";
 import { ParteRedo } from "@/components/parte-redo";
 import { ParteVaciar } from "@/components/parte-vaciar";
 import { ParteNoise } from "@/components/parte-noise";
-import { RefreshButton } from "@/components/refresh-button";
 import type { Parte } from "@/lib/parte";
 import type { Agenda } from "@/lib/agenda";
 import { SLUG_BY_SPACE, spaceLabel, type SpaceKey } from "@/lib/types";
@@ -86,6 +85,7 @@ export function ParteBoard({
           urgent={parte.urgent}
           rest={parte.rest}
           fyi={parte.fyi}
+          updatedAt={parte.updatedAt}
         />
       )}
 
@@ -125,16 +125,6 @@ export function ParteBoard({
         </span>
       </p>
 
-      {/*
-        La barra de actualizar va abajo y fija.
-        Arriba ocupaba el mejor sitio de la pantalla —justo debajo de la fecha—
-        para un botón que se pulsa una vez y luego estorba. Abajo cae donde
-        llega el pulgar sin recolocar el móvil, y el contenido empieza en lo
-        que hay que leer.
-      */}
-      <div className="parte-refresh">
-        <RefreshButton updatedAt={parte.updatedAt} />
-      </div>
     </div>
   );
 }

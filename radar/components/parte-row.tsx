@@ -22,7 +22,16 @@ import { spaceLabel } from "@/lib/types";
  * En el móvil las dos primeras son un gesto del pulgar: derecha descarta,
  * izquierda marca hecho. Ninguna toca tu correo — todo sigue en Gmail igual.
  */
-export function ParteRow({ entry }: { entry: ParteEntry }) {
+export function ParteRow({
+  entry,
+  elegido = false,
+  onElegir,
+}: {
+  entry: ParteEntry;
+  /** Elegido para pasárselo al equipo. */
+  elegido?: boolean;
+  onElegir?: () => void;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [gone, setGone] = useState<null | "listo" | "descartado">(null);
@@ -242,6 +251,16 @@ export function ParteRow({ entry }: { entry: ParteEntry }) {
               >
                 Listo
               </button>
+              {onElegir ? (
+                <button
+                  type="button"
+                  className="parte-btn"
+                  aria-pressed={elegido}
+                  onClick={onElegir}
+                >
+                  {elegido ? "✓ Para el equipo" : "Para el equipo"}
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="parte-btn"

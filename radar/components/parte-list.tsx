@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { ParteRow } from "@/components/parte-row";
+import { ParteEquipo } from "@/components/parte-equipo";
+import { RefreshButton } from "@/components/refresh-button";
 import type { ParteEntry } from "@/lib/parte";
 import { SPACE_LABELS, type SpaceKey } from "@/lib/types";
 
@@ -20,12 +22,23 @@ export function ParteList({
   urgent,
   rest,
   fyi,
+  updatedAt,
 }: {
   urgent: ParteEntry[];
   rest: ParteEntry[];
   fyi: ParteEntry[];
+  /** Para el botón de actualizar, que vive en la misma barra de abajo. */
+  updatedAt: string | null;
 }) {
   const [filter, setFilter] = useState<Filter>("todo");
+  /**
+   * Lo elegido para pasarle al equipo.
+   *
+   * Vive aquí y no en cada fila porque la barra de abajo tiene que saber
+   * cuántas hay, y por ids y no por objetos para que una fila que se despacha
+   * y desaparece no deje una selección fantasma.
+   */
+  const [elegidos, setElegidos] = useState<Set<string>>(new Set());
 
   // Se lee después del primer pintado a propósito: así el servidor y el cliente
   // pintan lo mismo y no hay parpadeo de hidratación.
@@ -56,6 +69,15 @@ export function ParteList({
     personal: all.filter((e) => e.life === "personal").length,
     family: all.filter((e) => e.life === "family").length,
   };
+
+  function alternar(id: string) {
+    setElegidos((antes) => {
+      const ahora = new Set(antes);
+      if (ahora.has(id)) ahora.delete(id);
+      else ahora.add(id);
+      return ahora;
+    });
+  }
 
   const keep = (entries: ParteEntry[]) =>
     filter === "todo" ? entries : entries.filter((e) => e.life === filter);
@@ -89,14 +111,44 @@ export function ParteList({
         </p>
       ) : (
         <>
-          <Section title="Hay que mirarlo hoy" entries={shownUrgent} urgent />
-          <Section title="Cuando puedas" entries={shownRest} />
+          <Section
+            title="Hay que mirarlo hoy"
+            entries={shownUrgent}
+            urgent
+            elegidos={elegidos}
+            onElegir={alternar}
+          />
+          <Section
+            title="Cuando puedas"
+            entries={shownRest}
+            elegidos={elegidos}
+            onElegir={alternar}
+          />
           {/* El tercer montón es el que hace que te fíes: dice qué ha pasado
               que NO te toca. Sin él, "todo despejado" no se sabe si es que no
               ha pasado nada o es que la app no se ha enterado. */}
-          <Section title="No hace falta que hagas nada" entries={shownFyi} />
+          <Section
+            title="No hace falta que hagas nada"
+            entries={shownFyi}
+            elegidos={elegidos}
+            onElegir={alternar}
+          />
         </>
       )}
+
+      {/*
+        Las dos barras de abajo van en el mismo contenedor fijo, apiladas.
+        Separadas hacía falta calcular a mano la altura de una para dejarle
+        hueco a la otra, y ese número se queda obsoleto en cuanto cambia una
+        tipografía — que en esta app ha pasado tres veces esta semana.
+      */}
+      <div className="parte-refresh">
+        <ParteEquipo
+          elegidos={all.filter((e) => elegidos.has(e.id))}
+          onLimpiar={() => setElegidos(new Set())}
+        />
+        <RefreshButton updatedAt={updatedAt} />
+      </div>
     </>
   );
 }
@@ -121,10 +173,14 @@ function Section({
   title,
   entries,
   urgent = false,
+  elegidos,
+  onElegir,
 }: {
   title: string;
   entries: ParteEntry[];
   urgent?: boolean;
+  elegidos: Set<string>;
+  onElegir: (id: string) => void;
 }) {
   if (entries.length === 0) return null;
 
@@ -136,7 +192,12 @@ function Section({
       </h2>
       <div>
         {entries.map((entry) => (
-          <ParteRow key={`${entry.kind}-${entry.id}`} entry={entry} />
+          <ParteRow
+            key={`${entry.kind}-${entry.id}`}
+            entry={entry}
+            elegido={elegidos.has(entry.id)}
+            onElegir={() => onElegir(entry.id)}
+          />
         ))}
       </div>
     </section>

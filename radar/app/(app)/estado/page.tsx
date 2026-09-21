@@ -50,6 +50,18 @@ export default async function EstadoPage() {
       </section>
 
       <section className="estado-bloque">
+        <h2>Buzón que lee</h2>
+        <p className={diagnostico.buzon ? "ok" : "mal"}>
+          {diagnostico.buzon ?? "Ninguno. Vuelve a entrar con Google."}
+        </p>
+        <p className="nota">
+          Uno, y solo uno. Si tienes otra cuenta de Google en el móvil, sus
+          correos no llegan aquí: la app de Gmail te enseña las dos bandejas
+          juntas, pero Radar solo ve esta.
+        </p>
+      </section>
+
+      <section className="estado-bloque">
         <h2>Últimas pasadas</h2>
         <table className="estado-tabla">
           <tbody>

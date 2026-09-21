@@ -28,6 +28,16 @@ export interface Pasada {
 }
 
 export interface Diagnostico {
+  /**
+   * Qué buzón está leyendo Radar.
+   *
+   * Uno, y solo uno: el de la cuenta con la que entraste. Parece obvio hasta
+   * que tienes dos cuentas de Google abiertas en el móvil y la app de Gmail te
+   * las enseña juntas: ahí, un correo que no sube parece un fallo del filtro
+   * cuando en realidad Radar no lo ha visto nunca. No estaba escrito en
+   * ninguna pantalla, así que no había forma de descartarlo.
+   */
+  buzon: string | null;
   /** Cuántos correos hay en cada punto del recorrido. */
   reparto: { estado: string; total: number }[];
   pasadas: Pasada[];
@@ -43,12 +53,13 @@ export interface Diagnostico {
 
 
 export async function getDiagnostico(): Promise<Diagnostico> {
-  const vacio: Diagnostico = { reparto: [], pasadas: [], colegio: [] };
+  const vacio: Diagnostico = { buzon: null, reparto: [], pasadas: [], colegio: [] };
 
   try {
     const admin = createAdminClient();
 
-    const [correos, runs] = await Promise.all([
+    const [buzon, correos, runs] = await Promise.all([
+      admin.from("google_accounts").select("email").limit(1).maybeSingle(),
       admin
         .from("emails")
         .select("triaged_at, triage_status, triage_category, dismissed_at, summary, subject, received_at, triage_model, from_email")
@@ -85,6 +96,7 @@ export async function getDiagnostico(): Promise<Diagnostico> {
     }
 
     return {
+      buzon: (buzon.data as { email: string } | null)?.email ?? null,
       reparto: [...cuenta.entries()]
         .map(([estado, total]) => ({ estado, total }))
         .sort((a, b) => a.estado.localeCompare(b.estado)),

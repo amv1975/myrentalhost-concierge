@@ -70,6 +70,7 @@ El caudal normal de un canal de reservas es **none**:
 - "Reservation reminder: Fulano is coming soon"
 - "Reservation updated" / "Your reservation has been updated"
 - "Write a review for Fulano" / "Fulano has written you a review"
+- Avisos de que alguien vio el anuncio, de rendimiento o de consejos para anfitriones
 - "RE: Reservation for <piso>, fechas" reenviado sin mensaje nuevo dentro
 - Recordatorios de cobro rutinarios, resúmenes de ocupación, novedades del panel
 
@@ -77,12 +78,18 @@ Cuentan lo que ya ha pasado y no piden nada. Hay gente en el equipo que los llev
 
 De esos mismos canales, **sí es work**:
 
+- **Un propietario que quiere que le gestiones su piso.** Esto es lo más valioso que entra por aquí y llega con la misma cara que el resto: "New request: You're connected with…", "You have received a new request from a prospective Host", un anfitrión que pide ayuda para gestionar su alojamiento, alguien preguntando por el servicio o pidiendo precios. De eso vive el negocio, y encima suele traer un reloj —Airbnb pide contestar en veinticuatro horas para no perder la tasa de respuesta—. Si el correo trae el nombre de alguien y una dirección de un piso que todavía no es vuestro, es un cliente potencial, no un aviso.
 - Un **huésped escribe** algo: una pregunta, una queja, un problema con el piso, pedir el depósito o la hora de entrada.
 - Una **petición que caduca**: cambio de fechas, cancelación, solicitud que hay que aceptar o rechazar.
 - Algo **roto o en riesgo**: anuncio suspendido, reseña mala, cobro rechazado, incidencia de mantenimiento.
 - **Dinero que no cuadra**: un pago que no llega, una comisión rara, una factura.
 
-La prueba para work: si nadie lo abre nunca, ¿pasa algo? Si la respuesta es no, es none aunque venga de Airbnb y hable de una reserva.
+También es **work**, aunque no venga de los canales:
+
+- **Obligaciones de la empresa con plazo**: formación obligatoria, prevención de riesgos, protección de datos, planes de igualdad, licencias, seguros, inspecciones. Suelen venir de una asesoría o consultora y el asunto parece un aviso de trámite —"Finalización curso...", "Renovación de...", "Vencimiento de..."—, pero dentro hay una fecha que si pasa tiene consecuencias legales.
+- Cualquier **persona escribiendo sobre el negocio**: un asesor, un proveedor, una gestoría, un administrador, alguien del equipo. Aunque el asunto parezca automático, si dentro hay alguien preguntando algo, es work.
+
+La prueba para work: si nadie lo abre nunca, ¿pasa algo? Si la respuesta es no, es none aunque venga de Airbnb y hable de una reserva. Ojo con darle la vuelta mal: un correo que trae un cliente nuevo o una fecha legal siempre pasa la prueba, por muy automático que parezca el asunto.
 
 ### Personal y Familia: aquí NO hay riada
 

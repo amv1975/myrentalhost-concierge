@@ -118,6 +118,26 @@ describe("el caudal de los canales de reservas", () => {
     expect(prompt).toContain("si nadie lo abre nunca, ¿pasa algo?");
   });
 
+  it("un propietario que quiere que le gestiones su piso es lo más valioso que entra", () => {
+    // El correo que se perdió: "New request: You're connected with Felix", un
+    // anfitrión de Platja d'Aro pidiendo ayuda para gestionar su alojamiento.
+    // Llega de automated@airbnb.com y con la misma cara que los cincuenta
+    // avisos automáticos del día, así que la regla del caudal se lo tragaba.
+    // De eso vive el negocio, y Airbnb encima da veinticuatro horas.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("propietario que quiere que le gestiones su piso");
+    expect(prompt).toContain("prospective Host");
+    expect(prompt).toContain("cliente potencial, no un aviso");
+  });
+
+  it("una obligación de la empresa con plazo no es un trámite más", () => {
+    // "Finalización curso Prevención de acoso": el asunto parece un aviso de
+    // trámite y dentro hay una fecha legal a cuatro días.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("Obligaciones de la empresa con plazo");
+    expect(prompt).toContain("consecuencias legales");
+  });
+
   it("distingue el aviso automático del huésped que escribe", () => {
     const prompt = buildGateSystemPrompt(context);
     expect(prompt).toContain("Un **huésped escribe**");

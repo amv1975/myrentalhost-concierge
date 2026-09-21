@@ -61,6 +61,8 @@ export interface Email {
   recipients: string[];
   /** Envío masivo: trae List-Unsubscribe. Casi siempre es ruido. */
   bulk: boolean;
+  /** Gmail lo marcó importante, con años de historial de este buzón. */
+  gmail_important: boolean;
   triage_status: TriageStatus;
   triage_category: TriageCategory | null;
   /** El titular: qué pasa, en una frase. */

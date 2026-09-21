@@ -20,7 +20,7 @@ const ESPERADO: Record<string, string[]> = {
   emails: [
     "space_id", "gmail_message_id", "gmail_thread_id", "from_email",
     "from_name", "subject", "snippet", "body_text", "received_at",
-    "recipients", "bulk", "triage_status", "triage_category", "summary",
+    "recipients", "bulk", "gmail_important", "triage_status", "triage_category", "summary",
     "detail", "link_note", "actionable", "importance", "triage_model",
     "triaged_at", "dismissed_at", "extraction_status", "extraction_attempts",
   ],

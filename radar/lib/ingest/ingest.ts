@@ -101,6 +101,7 @@ export async function ingestInbox(
         subject: message.subject,
         snippet: message.snippet,
         bulk: message.bulk,
+        gmail_important: message.important,
         // Se rellena más tarde, y solo si el correo pasa el filtro por asunto.
         body_text: null,
         received_at: message.receivedAt.toISOString(),

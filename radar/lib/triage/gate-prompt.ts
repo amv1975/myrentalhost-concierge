@@ -24,6 +24,8 @@ export interface GateEmail {
   snippet: string | null;
   /** Envío masivo (trae List-Unsubscribe). Dice cómo se envió, no qué dice. */
   bulk: boolean;
+  /** Gmail lo marcó importante, con años de historial de este buzón. */
+  important?: boolean;
   /** De qué vida suele ser este remitente, si está en la lista del usuario. */
   hint?: string | null;
 }
@@ -139,6 +141,16 @@ Es **none**, casi siempre: publicidad, boletines comerciales, novedades de aplic
 
 No hay una cuota que cumplir. Un día pueden salir tres correos y otro día treinta; lo que decide es el asunto, no el porcentaje.
 
+## La marca de Gmail
+
+Algunos correos llegan marcados "(Gmail: importante)". Eso no lo ha puesto nadie a mano: Gmail lo calcula con años de historial de este buzón concreto —qué abre, qué contesta, qué archiva sin leer—, así que es una pista mucho mejor que cualquier cosa que puedas deducir de un asunto de siete palabras.
+
+Pésala fuerte, sobre todo cuando el asunto parece de trámite: es justo ahí donde tú te equivocas y Gmail acierta, porque él ha visto qué pasó las otras cincuenta veces que llegó un correo parecido.
+
+No es un pase. Gmail también marca importante algún boletín que se abre por costumbre, y la prueba de "si nadie lo abre nunca, ¿pasa algo?" sigue mandando. Pero un correo marcado que además venga de una persona, o traiga una fecha, o hable de dinero, no se descarta.
+
+Y al revés no vale: que NO esté marcado no dice nada. Un correo nuevo, de alguien que escribe por primera vez, no tiene historial del que Gmail pueda aprender — y esos son justo los que traen clientes nuevos.
+
 ## La pista del remitente
 
 Algunos correos llevan "(remitente habitual de work)" o "de family". Eso dice a qué vida pertenecería el correo **si resulta no ser ruido**. No dice que sea importante ni que haya que quedárselo.
@@ -166,7 +178,11 @@ export function buildGateUserPrompt(emails: GateEmail[]): string {
 
     const pista = email.hint ? ` (remitente habitual de ${email.hint})` : "";
 
-    return `[${index + 1}]${email.bulk ? " (masivo)" : ""} De: ${sanitize(from)}${pista} | Asunto: ${sanitize(subject)}${preview ? ` | Vista previa: ${sanitize(preview)}` : ""}`;
+    const marcas =
+      (email.important ? " (Gmail: importante)" : "") +
+      (email.bulk ? " (masivo)" : "");
+
+    return `[${index + 1}]${marcas} De: ${sanitize(from)}${pista} | Asunto: ${sanitize(subject)}${preview ? ` | Vista previa: ${sanitize(preview)}` : ""}`;
   });
 
   return `<contenido_no_confiable>

@@ -32,6 +32,15 @@ export interface GmailHeaders {
   receivedAt: Date;
   /** Trae List-Unsubscribe, es decir: es un envío masivo, no un correo a ti. */
   bulk: boolean;
+  /**
+   * Gmail lo ha marcado como importante.
+   *
+   * No es una etiqueta que ponga nadie a mano: sale de años mirando qué abre,
+   * qué contesta y qué archiva sin leer, en este buzón concreto. Es la mejor
+   * señal disponible y no cuesta una llamada extra — viene en la misma
+   * respuesta que las cabeceras.
+   */
+  important: boolean;
 }
 
 export interface GmailMessage extends GmailHeaders {
@@ -51,6 +60,7 @@ interface RawMessage {
   threadId: string;
   snippet?: string;
   internalDate?: string;
+  labelIds?: string[];
   payload?: GmailPart;
 }
 
@@ -227,6 +237,7 @@ function toHeaders(raw: RawMessage): GmailHeaders {
     snippet: raw.snippet ? decodeEntities(raw.snippet) : null,
     receivedAt: receivedAt(raw, headers),
     bulk: headerValue(headers, "List-Unsubscribe") !== null,
+    important: (raw.labelIds ?? []).includes("IMPORTANT"),
   };
 }
 

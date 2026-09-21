@@ -50,12 +50,18 @@ function getClient(): Anthropic {
 /** Lo que basta para decidir: nunca se carga el cuerpo en esta etapa. */
 type ScreenedEmail = Pick<
   Email,
-  "id" | "from_email" | "from_name" | "subject" | "snippet" | "bulk"
+  | "id"
+  | "from_email"
+  | "from_name"
+  | "subject"
+  | "snippet"
+  | "bulk"
+  | "gmail_important"
 >;
 
 /** Lo que hace falta para saber si a un correo le toca este filtro. */
 const CAMPOS =
-  "id, from_email, from_name, subject, snippet, bulk, triaged_at, triage_status, triage_category, summary, dismissed_at, triage_model";
+  "id, from_email, from_name, subject, snippet, bulk, gmail_important, triaged_at, triage_status, triage_category, summary, dismissed_at, triage_model";
 
 type Candidato = ScreenedEmail & {
   triaged_at: string | null;
@@ -268,6 +274,7 @@ async function classify(
     subject: email.subject,
     snippet: email.snippet,
     bulk: email.bulk ?? false,
+    important: email.gmail_important ?? false,
     hint: knownSpaceFor(email.from_email, [], sources),
   }));
 

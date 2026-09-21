@@ -87,6 +87,34 @@ describe("filtro por asunto", () => {
   });
 });
 
+describe("la marca de importante de Gmail", () => {
+  it("viaja en la línea del correo", () => {
+    expect(buildGateUserPrompt([email({ important: true })])).toContain(
+      "(Gmail: importante)",
+    );
+  });
+
+  it("sin marca, la línea no cambia", () => {
+    expect(buildGateUserPrompt([email()])).not.toContain("Gmail:");
+  });
+
+  it("se pesa fuerte, pero no es un pase", () => {
+    // La lección del atajo de remitentes de confianza, que metió doscientos
+    // sesenta avisos de Airbnb en el parte: una señal buena sigue siendo una
+    // señal, no una puerta abierta.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("Pésala fuerte");
+    expect(prompt).toContain("No es un pase");
+  });
+
+  it("no estar marcado no dice nada", () => {
+    // Lo que más importa del negocio son los clientes nuevos, y de alguien
+    // que escribe por primera vez Gmail no tiene historial del que aprender.
+    const prompt = buildGateSystemPrompt(context);
+    expect(prompt).toContain("al revés no vale");
+  });
+});
+
 describe("la pista del remitente", () => {
   it("dice de qué vida sería, no que haya que quedárselo", () => {
     // El atajo que había antes —remitente conocido, se salta el filtro— metió

@@ -40,3 +40,28 @@ describe("las dos ventanas son la misma", () => {
     expect(pipeline).not.toMatch(/const VENTANA_MAX_MS = \d/);
   });
 });
+
+describe("hasta dónde avanza la marca de la última ingesta", () => {
+  it("una pasada a medias no mueve la marca", async () => {
+    // El agujero que se tragó el correo de la junta de propietarios. Cuando
+    // "se acabó el tiempo" dejó de contar como error, una pasada incompleta
+    // pasó a contar como buena: la marca saltaba a su hora de fin y todo lo
+    // que no había dado tiempo a descargar quedaba detrás, sin pedirse nunca
+    // más. Con doscientos correos al día, eso es perder uno importante por
+    // semana y no enterarse.
+    //
+    // La consulta es la garantía, así que es lo que se comprueba: exige a la
+    // vez estado ok y columna de error vacía. El aviso de "me quedé a medias"
+    // vive en esa columna aunque el estado sea ok.
+    const fuente = await import("fs/promises").then((fs) =>
+      fs.readFile(new URL("../lib/pipeline.ts", import.meta.url), "utf8"),
+    );
+
+    const consulta = fuente.slice(
+      fuente.indexOf("async function desdeCuandoMirar"),
+    );
+
+    expect(consulta).toContain('.eq("status", "ok")');
+    expect(consulta).toContain('.is("error", null)');
+  });
+});

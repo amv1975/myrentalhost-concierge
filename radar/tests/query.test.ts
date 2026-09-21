@@ -41,11 +41,22 @@ describe("buildInboxQuery", () => {
       "-category:forums",
       "-in:spam",
       "-in:trash",
-      "-in:sent",
-      "-in:draft",
     ]) {
       expect(query).toContain(excluded);
     }
+  });
+
+  it("pide la bandeja, en vez de negar lo enviado", () => {
+    // El agujero que costó una semana de correos de trabajo: Gmail etiqueta
+    // como SENT cualquier mensaje que salga de tu propio dominio, incluidos
+    // los que llegan a tu bandeja. La automatización de MyRentalHost se
+    // escribe a sí misma —"Trabajo finalizado, listo para facturar"— y esos
+    // llevan INBOX y SENT a la vez, así que "-in:sent" los tiraba todos.
+    const query = buildInboxQuery(new Date());
+    expect(query).toContain("in:inbox");
+    expect(query).not.toContain("-in:sent");
+    // Y sobra excluir lo que por definición no está en la bandeja.
+    expect(query).not.toContain("-in:draft");
   });
 });
 

@@ -26,10 +26,21 @@ export function buildInboxQuery(since: Date): string {
     "-category:promotions",
     "-category:social",
     "-category:forums",
+    // La bandeja, y punto.
+    //
+    // Antes esto era "-in:sent -in:draft", y esa negación tenía un agujero que
+    // se tragaba correos de trabajo enteros: Gmail etiqueta como SENT
+    // cualquier mensaje que salga de tu propio dominio, incluidos los que
+    // llegan a tu bandeja. La automatización de MyRentalHost se escribe a sí
+    // misma —"Trabajo finalizado, listo para facturar"— y esos mensajes llevan
+    // a la vez INBOX y SENT, así que Radar no ha visto ni uno.
+    //
+    // Pedir in:inbox dice lo que de verdad se quiere: lo que ha llegado y está
+    // esperando. De paso sobra excluir borradores y enviados, que por
+    // definición no están en la bandeja.
+    "in:inbox",
     "-in:spam",
     "-in:trash",
-    "-in:sent",
-    "-in:draft",
   ].join(" ");
 }
 

@@ -246,6 +246,20 @@ async function desdeCuandoMirar(): Promise<Date> {
     .select("finished_at")
     .eq("kind", "ingest")
     .eq("status", "ok")
+    // Y que además llegara hasta el final.
+    //
+    // Aquí estaba el agujero por el que se colaban correos, y lo abrí yo el
+    // día que separé "se acabó el tiempo" de "ha fallado". Una pasada que se
+    // queda a medias pasó a contar como buena, así que la marca avanzaba hasta
+    // su hora de fin y la siguiente empezaba a partir de ahí: todo lo que no
+    // dio tiempo a descargar quedaba detrás de la marca y no se pedía nunca
+    // más. En una bandeja con doscientos mensajes al día eso es un correo
+    // importante perdido por semana, y sin rastro en ninguna pantalla.
+    //
+    // La columna error guarda el aviso de "me quedé a medias" aunque el estado
+    // sea ok, así que exigir que esté vacía es exigir que la pasada cubriera
+    // su ventana entera.
+    .is("error", null)
     .not("finished_at", "is", null)
     .order("finished_at", { ascending: false })
     .limit(1)

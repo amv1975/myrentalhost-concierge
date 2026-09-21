@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { enlaceWhatsApp, textoParaElEquipo } from "@/lib/equipo";
 import type { ParteEntry } from "@/lib/parte";
 
@@ -10,10 +11,11 @@ import type { ParteEntry } from "@/lib/parte";
  * Solo existe cuando hay algo elegido: una app que se mira medio dormido no
  * puede tener un botón permanente para algo que se usa dos veces al día.
  *
- * Y no toca nada más. Pasar algo al equipo no lo marca como hecho ni lo saca
- * del parte, porque delegar no es despachar: hasta que no vuelvan con una
- * respuesta sigue siendo tuyo. Si quieres que desaparezca, Listo está donde
- * siempre.
+ * Enviar no despacha nada por su cuenta: delegar no es lo mismo que resolver,
+ * y hay cosas que uno pasa al equipo y quiere seguir viendo hasta que vuelvan.
+ * Pero después de enviar aparece el atajo, porque la mayoría de las veces sí
+ * es el final del asunto y si no estuviera habría que ir fila por fila
+ * pulsando Listo en las mismas tres que acabas de mandar.
  */
 export function ParteEquipo({
   elegidos,
@@ -22,7 +24,10 @@ export function ParteEquipo({
   elegidos: ParteEntry[];
   onLimpiar: () => void;
 }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const [enviado, setEnviado] = useState(false);
+  const [despachando, setDespachando] = useState(false);
 
   if (elegidos.length === 0) return null;
 
@@ -46,12 +51,56 @@ export function ParteEquipo({
     setEnviado(true);
   }
 
+  /**
+   * Darlos por despachados sin ir uno a uno.
+   *
+   * "Listo" y no "Descartar": descartar le enseña al filtro a no subir más
+   * avisos de este tipo, y pasarle algo al equipo no significa eso ni de
+   * lejos. Significa que ya se ocupó alguien.
+   */
+  async function marcarListos() {
+    setDespachando(true);
+    await Promise.all(
+      elegidos.map((entry) =>
+        fetch(
+          entry.kind === "item"
+            ? `/api/items/${entry.id}`
+            : `/api/emails/${entry.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: entry.kind === "item" ? "hecho" : "visto",
+            }),
+          },
+        ).catch(() => null),
+      ),
+    );
+    setDespachando(false);
+    setEnviado(false);
+    onLimpiar();
+    startTransition(() => router.refresh());
+  }
+
   return (
     <div className="parte-equipo">
       <div>
-        <button type="button" className="mandar" onClick={enviar}>
-          {enviado ? "Enviar otra vez" : `Pasar ${elegidos.length} al equipo`}
-        </button>
+        {enviado ? (
+          <button
+            type="button"
+            className="mandar"
+            onClick={marcarListos}
+            disabled={despachando}
+          >
+            {despachando
+              ? "Quitando…"
+              : `Marcar ${elegidos.length} como Listo`}
+          </button>
+        ) : (
+          <button type="button" className="mandar" onClick={enviar}>
+            Pasar {elegidos.length} al equipo
+          </button>
+        )}
         <button
           type="button"
           className="quitar"
@@ -61,9 +110,15 @@ export function ParteEquipo({
           }}
           aria-label="Quitar la selección"
         >
-          Quitar
+          {enviado ? "Dejarlos" : "Quitar"}
         </button>
       </div>
+      {enviado ? (
+        <p className="aviso">
+          Enviado. Si el equipo se ocupa, quítalos de tu parte; si quieres
+          seguirlos, déjalos.
+        </p>
+      ) : null}
     </div>
   );
 }

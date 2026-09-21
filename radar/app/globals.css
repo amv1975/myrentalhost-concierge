@@ -757,6 +757,15 @@ body {
   border: 1px solid var(--p-solid-line);
 }
 
+.parte-equipo .aviso {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--p-muted);
+  margin: 6px auto 0;
+  max-width: 42rem;
+}
+
 .parte-equipo .quitar {
   background: none;
   color: var(--p-muted);

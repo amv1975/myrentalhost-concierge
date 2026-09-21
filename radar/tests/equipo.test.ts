@@ -25,14 +25,36 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
 }
 
 describe("lo que le llega al equipo", () => {
-  it("cada línea lleva el enlace al correo original", () => {
-    // Llega suelto a un grupo, entre otras veinte cosas, y a quien lo lee no
-    // le sirve un resumen sin forma de abrir el correo: el buzón no es suyo.
+  it("nunca lleva un enlace al buzón de Agustín", () => {
+    // El equipo no tiene acceso a su Gmail, así que ese enlace no abría nada:
+    // era ocupar la mitad del mensaje con algo inservible.
     const texto = textoParaElEquipo([entrada({ id: "1" })]);
+    expect(texto).not.toContain("mail.google.com");
+  });
+
+  it("lleva con qué buscarlo en el sitio de ellos", () => {
+    // Entran por Airbnb, por Booking o por el programa de facturación. Sin el
+    // nombre del huésped o el código de reserva no pueden abrir nada.
+    const texto = textoParaElEquipo([
+      entrada({
+        id: "1",
+        detail:
+          "Reserva 4782913 a nombre de Marta Ruiz, piso Gràcia 4. Pide la factura desde el lunes.",
+      }),
+    ]);
 
     expect(texto).toContain("Una huésped pide la factura");
+    expect(texto).toContain("4782913");
+    expect(texto).toContain("Marta Ruiz");
+    expect(texto).toContain("Gràcia 4");
     expect(texto).toContain("Booking.com");
-    expect(texto).toContain("mail.google.com");
+  });
+
+  it("sin detalle, el mensaje sigue teniendo sentido", () => {
+    const texto = textoParaElEquipo([entrada({ id: "1", detail: null })]);
+    expect(texto).toContain("Una huésped pide la factura");
+    expect(texto).toContain("Booking.com");
+    expect(texto).not.toContain("null");
   });
 
   it("numera y dice cuántas son", () => {

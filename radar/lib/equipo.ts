@@ -1,16 +1,17 @@
 import type { ParteEntry } from "@/lib/parte";
-import { gmailSearchUrl } from "@/lib/gmail-link";
 
 /**
  * El mensaje que recibe el equipo por WhatsApp.
  *
  * Se escribe para quien NO ha visto el parte: en el grupo de administración
  * llega suelto, entre otras veinte cosas, y nadie va a preguntar de qué va.
- * Por eso cada línea lleva quién escribe y el enlace al correo original — sin
- * él, el resumen obliga a buscarlo a mano en un buzón que además no es suyo.
  *
- * WhatsApp corta los mensajes largos con un "Leer más", así que se va al grano:
- * el titular, de quién es, y el enlace. El detalle se lee en el correo.
+ * Aquí iba el enlace al correo original, y era inútil: abre el buzón de
+ * Agustín, al que el equipo no tiene acceso. Lo que sí les sirve es con qué
+ * buscarlo en su propio sitio —el nombre del huésped, el código de reserva, el
+ * piso, el número de factura—, y eso ya está escrito en el detalle. Ellos
+ * entran por Airbnb, por Booking o por el programa de facturación, no por su
+ * Gmail.
  */
 export function textoParaElEquipo(entries: ParteEntry[]): string {
   if (entries.length === 0) return "";
@@ -22,17 +23,16 @@ export function textoParaElEquipo(entries: ParteEntry[]): string {
 
   const lineas = entries.map((entry, i) => {
     const cuando = entry.when ? ` (${entry.when})` : "";
-    const enlace = gmailSearchUrl({
-      fromEmail: entry.fromEmail,
-      subject: entry.subject,
-      messageId: entry.gmailMessageId,
-    });
 
     return [
       `${i + 1}. ${entry.headline}${cuando}`,
-      `${entry.who}`,
-      enlace,
-    ].join("\n");
+      // El detalle lleva los identificadores delante: huésped, código de
+      // reserva, piso, número de factura. Es por donde van a buscarlo.
+      entry.detail?.trim(),
+      `— ${entry.who}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
   });
 
   return [cabecera, ...lineas].join("\n\n");

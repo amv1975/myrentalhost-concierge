@@ -35,3 +35,12 @@ create index if not exists feed_digests_recent_idx
 -- buzón. Sin esto, cualquier miembro de cualquier espacio los leería.
 alter table feeds enable row level security;
 alter table feed_digests enable row level security;
+
+-- El `grant all on all tables` del 0001 fue una foto, no una regla: alcanzó a
+-- las tablas que existían aquel día y a ninguna posterior. Por eso estas dos
+-- nacieron invisibles para el código —"permission denied for table feeds"—
+-- aunque estuvieran creadas.
+grant all on feeds, feed_digests to service_role;
+
+-- Y para que la siguiente tabla no repita el viaje.
+alter default privileges in schema public grant all on tables to service_role;

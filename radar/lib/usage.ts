@@ -67,16 +67,38 @@ export function costUsd(model: string, usage: Usage): number {
   );
 }
 
+/**
+ * En qué se va el dinero, no solo cuánto.
+ *
+ * El total de una pasada no dice nada accionable: si un mes sale caro, la
+ * pregunta es si fue el filtro (mucho correo entrando) o la lectura (mucho
+ * correo bueno), porque se arreglan de formas distintas. Un solo número las
+ * mezcla y no deja tocar ninguna.
+ */
+export type Concepto = "filtro" | "lectura" | "feed";
+
 /** Suma de gasto a lo largo de una pasada, con varios modelos por medio. */
 export class Spend {
   private total = 0;
   private tokensIn = 0;
   private tokensOut = 0;
+  private porConcepto = new Map<Concepto, number>();
 
-  add(model: string, usage: Usage): void {
-    this.total += costUsd(model, usage);
+  add(model: string, usage: Usage, concepto: Concepto): void {
+    const usd = costUsd(model, usage);
+    this.total += usd;
+    this.porConcepto.set(concepto, (this.porConcepto.get(concepto) ?? 0) + usd);
     this.tokensIn += usage.input + usage.cacheWrite + usage.cacheRead;
     this.tokensOut += usage.output;
+  }
+
+  /** Para guardar: `{ filtro: 0.0004, lectura: 0.0031 }`. Sin ceros. */
+  get desglose(): Record<string, number> {
+    const salida: Record<string, number> = {};
+    for (const [concepto, usd] of this.porConcepto) {
+      if (usd > 0) salida[concepto] = usd;
+    }
+    return salida;
   }
 
   get usd(): number {

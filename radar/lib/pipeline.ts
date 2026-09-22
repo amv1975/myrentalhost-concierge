@@ -353,6 +353,7 @@ async function recordSpend(
     input_tokens: spend.inputTokens,
     output_tokens: spend.outputTokens,
     cost_usd: spend.usd,
+    desglose: spend.desglose,
     error: nota,
   });
 

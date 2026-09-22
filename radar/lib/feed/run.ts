@@ -160,7 +160,7 @@ export async function sincronizarFeed(): Promise<FeedResult> {
       limites(plazo),
     );
 
-    spend.add(MODEL, readUsage(response.usage));
+    spend.add(MODEL, readUsage(response.usage), "feed");
 
     const markdown = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")

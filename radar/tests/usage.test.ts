@@ -34,7 +34,7 @@ describe("coste", () => {
         cacheWrite: 0,
         cacheRead: 800,
         output: 300,
-      });
+      }, "filtro");
     }
     expect(spend.usd).toBeLessThan(0.15);
   });
@@ -55,5 +55,21 @@ describe("coste", () => {
     expect(formatUsd(0)).toBe("0 $");
     expect(formatUsd(0.0004)).toBe("<0,01 $");
     expect(formatUsd(1.5)).toBe("1,50 $");
+  });
+});
+
+describe("desglose", () => {
+  it("reparte por concepto y no cuenta los ceros", () => {
+    const spend = new Spend();
+    const usage = { input: 1000, cacheWrite: 0, cacheRead: 0, output: 100 };
+    spend.add("claude-haiku-4-5", usage, "filtro");
+    spend.add("claude-haiku-4-5", usage, "lectura");
+    spend.add("claude-haiku-4-5", { input: 0, cacheWrite: 0, cacheRead: 0, output: 0 }, "feed");
+
+    const partes = spend.desglose;
+    expect(Object.keys(partes).sort()).toEqual(["filtro", "lectura"]);
+    // El desglose tiene que cuadrar con el total, o la pantalla miente.
+    const suma = Object.values(partes).reduce((a, b) => a + b, 0);
+    expect(suma).toBeCloseTo(spend.usd, 12);
   });
 });

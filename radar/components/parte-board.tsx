@@ -136,6 +136,8 @@ export function ParteBoard({
         </span>
         <span>
           <Link href="/estado">Cómo va la app</Link>
+          {" · "}
+          <Link href="/gasto">Gasto</Link>
         </span>
       </p>
 

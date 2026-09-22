@@ -294,7 +294,7 @@ async function classify(
     messages: [{ role: "user", content: buildGateUserPrompt(emails) }],
   }, limites(plazo));
 
-  spend.add(GATE_MODEL, readUsage(response.usage));
+  spend.add(GATE_MODEL, readUsage(response.usage), "filtro");
 
   if (response.stop_reason === "refusal" || !response.parsed_output) {
     throw new Error("El filtro por asunto no devolvió una respuesta válida.");

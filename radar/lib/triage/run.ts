@@ -104,7 +104,7 @@ export async function triageOne(
     ],
   }, limites(plazo));
 
-  spend?.add(TRIAGE_MODEL, readUsage(response.usage));
+  spend?.add(TRIAGE_MODEL, readUsage(response.usage), "lectura");
 
   if (response.stop_reason === "refusal") {
     throw new Error("El modelo rechazó clasificar este correo.");

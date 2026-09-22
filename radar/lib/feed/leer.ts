@@ -1,8 +1,18 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { describeError } from "@/lib/errors";
+import { describeError, FALTA_LA_TABLA } from "@/lib/errors";
 
+/**
+ * Si el Feed está montado o no.
+ *
+ * Es opcional y necesita dos tablas que pueden no existir. Cuando faltan,
+ * PostgREST contesta con su código y su "perhaps you meant the table items",
+ * que en la pantalla se lee como que algo se ha roto. No se ha roto nada:
+ * simplemente no está montado, y lo que hace falta es decir qué falta.
+ */
 export interface FeedVista {
+  /** Las tablas del Feed no existen todavía. */
+  sinMontar?: boolean;
   seguidos: { fromEmail: string; name: string | null }[];
   ultima: {
     markdown: string;
@@ -48,6 +58,11 @@ export async function getFeed(): Promise<FeedVista> {
         : null,
     };
   } catch (error) {
-    return { seguidos: [], ultima: null, error: describeError(error) };
+    const texto = describeError(error);
+    if (FALTA_LA_TABLA.test(texto)) {
+      return { seguidos: [], ultima: null, sinMontar: true };
+    }
+    return { seguidos: [], ultima: null, error: texto };
   }
 }
+

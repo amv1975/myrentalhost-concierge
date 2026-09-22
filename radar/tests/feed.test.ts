@@ -82,3 +82,28 @@ describe("el cuerpo de los boletines es contenido no confiable", () => {
     expect(prompt).toContain("Son 2 boletines");
   });
 });
+
+describe("el Feed sin montar no es un error", () => {
+  it("la respuesta de PostgREST cuando falta la tabla se reconoce", async () => {
+    // "Could not find the table 'public.feeds' in the schema cache · Perhaps
+    // you meant the table 'public.items' (PGRST205)". En la pantalla eso se
+    // lee como que algo se ha roto, y no se ha roto nada: el Feed es opcional
+    // y simplemente no está montado todavía.
+    const { FALTA_LA_TABLA } = await import("@/lib/errors");
+
+    for (const mensaje of [
+      "Could not find the table 'public.feeds' in the schema cache (PGRST205)",
+      'relation "feeds" does not exist',
+    ]) {
+      expect(FALTA_LA_TABLA.test(mensaje)).toBe(true);
+    }
+  });
+
+  it("un fallo de verdad sigue contándose", async () => {
+    const { FALTA_LA_TABLA } = await import("@/lib/errors");
+    // Si se traga cualquier error como "no está montado", un problema real se
+    // esconde detrás de unas instrucciones que no vienen a cuento.
+    expect(FALTA_LA_TABLA.test("connection refused")).toBe(false);
+    expect(FALTA_LA_TABLA.test("JWT expired")).toBe(false);
+  });
+});

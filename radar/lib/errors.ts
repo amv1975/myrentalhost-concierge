@@ -34,3 +34,18 @@ export function describeError(error: unknown): string {
 
   return String(error);
 }
+
+/**
+ * Cuando lo que falta es la tabla, no la conexión.
+ *
+ * PostgREST contesta "Could not find the table 'public.feeds' in the schema
+ * cache · Perhaps you meant the table 'public.items' (PGRST205)", y eso en
+ * una pantalla se lee como que algo se ha roto. No se ha roto nada: una parte
+ * opcional no está montada todavía, y lo que hace falta es decir qué falta en
+ * vez de enseñar el código de error.
+ *
+ * Deliberadamente estrecho: si se tragara cualquier fallo como "no está
+ * montado", un problema de verdad se escondería detrás de unas instrucciones
+ * que no vienen a cuento.
+ */
+export const FALTA_LA_TABLA = /PGRST205|schema cache|does not exist/i;

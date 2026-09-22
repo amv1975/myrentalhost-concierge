@@ -23,16 +23,27 @@ export default async function FeedPage() {
         <h1 className="parte-date">Lo que se dice en tu sector</h1>
       </header>
 
-      {feed.error ? (
+      {feed.sinMontar ? (
+        <div className="parte-broken">
+          <p className="que">El Feed todavía no está montado</p>
+          <p className="que-hacer">
+            Le faltan dos tablas en la base de datos. No es un fallo de la app
+            ni se ha perdido nada: el resto de Radar funciona igual. En
+            Supabase, SQL Editor, crea <code>feeds</code> y{" "}
+            <code>feed_digests</code>, y si ya lo hiciste, fuerza la recarga
+            desde Settings → API → Reload schema cache.
+          </p>
+        </div>
+      ) : feed.error ? (
         <div className="parte-broken">
           <p className="que">No se pudo abrir el Feed</p>
           <p className="detalle">{feed.error}</p>
         </div>
       ) : null}
 
-      <FeedSync seguidos={feed.seguidos.length} />
+      {feed.sinMontar ? null : <FeedSync seguidos={feed.seguidos.length} />}
 
-      {feed.ultima ? (
+      {feed.sinMontar ? null : feed.ultima ? (
         <section className="feed-digest">
           <p className="cuando">
             {fecha(feed.ultima.createdAt)} · {feed.ultima.emails} boletines
@@ -50,6 +61,7 @@ export default async function FeedPage() {
         </p>
       )}
 
+      {feed.sinMontar ? null : (
       <section className="feed-lista">
         <h2>Boletines que sigues</h2>
         {feed.seguidos.length === 0 ? (
@@ -65,6 +77,7 @@ export default async function FeedPage() {
           </ul>
         )}
       </section>
+      )}
 
       <p className="parte-foot">
         <span>

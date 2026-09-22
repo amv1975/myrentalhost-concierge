@@ -96,11 +96,19 @@ export interface Parte {
   reading: number;
   /** Qué se tiró. Vacío si este usuario no es el dueño del buzón. */
   noise: NoiseEntry[];
+  /**
+   * Boletines llegados desde la última síntesis del Feed.
+   *
+   * Es lo que convierte el enlace del Feed en un motivo para entrar. Sin el
+   * número, es una pestaña más que hay que acordarse de mirar.
+   */
+  feedPendientes: number;
   /** Qué ha fallado al construir el parte, si ha fallado algo. */
   error?: string;
 }
 
 const VACIO: Parte = {
+  feedPendientes: 0,
   reading: 0,
   scanned: 0,
   discarded: 0,
@@ -237,7 +245,53 @@ async function buildParte(): Promise<Parte> {
     rest: unicas.filter((e) => !e.urgent && e.actionable),
     fyi: unicas.filter((e) => !e.urgent && !e.actionable),
     noise: noise.list,
+    feedPendientes: await contarFeedPendientes(),
   };
+}
+
+/**
+ * Cuántos boletines han llegado desde la última síntesis.
+ *
+ * Aislado y con cero por defecto a propósito: el Feed es opcional y sus tablas
+ * pueden no existir todavía —o tardar en aparecer en la caché de PostgREST,
+ * que es lo que pasó la primera vez—. Un extra que no está montado no puede
+ * tumbar la pantalla de inicio.
+ */
+async function contarFeedPendientes(): Promise<number> {
+  try {
+    const admin = createAdminClient();
+
+    const { data: feeds, error } = await admin
+      .from("feeds")
+      .select("from_email");
+    if (error) return 0;
+
+    const remitentes = ((feeds ?? []) as { from_email: string }[]).map(
+      (f) => f.from_email,
+    );
+    if (remitentes.length === 0) return 0;
+
+    const { data: ultima } = await admin
+      .from("feed_digests")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const desde =
+      (ultima as { created_at: string } | null)?.created_at ??
+      new Date(Date.now() - VENTANA_MS).toISOString();
+
+    const { count } = await admin
+      .from("emails")
+      .select("id", { count: "exact", head: true })
+      .in("from_email", remitentes)
+      .gte("received_at", desde);
+
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**

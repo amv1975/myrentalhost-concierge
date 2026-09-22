@@ -35,6 +35,7 @@ export const SAMPLE_PARTE: Parte = {
   discarded: 419,
   updatedAt: "2026-09-10T19:08:00Z",
   reading: 3,
+  feedPendientes: 4,
   noise: [
     { id: "n1", who: "Booking.com", fromEmail: "noreply@booking.com", subject: "Nueva reserva confirmada" },
     { id: "n2", who: "Smart Travel News", fromEmail: "news@smarttravel.news", subject: "Google AI Mode y el billboard effect de las OTA" },

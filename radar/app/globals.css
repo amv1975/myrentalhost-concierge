@@ -242,6 +242,39 @@ body {
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
+.parte-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Discreto pero alcanzable con el pulgar: es lo opcional de la pantalla, no
+   puede competir con la fecha ni con lo que urge. */
+.parte-feed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--p-muted);
+  text-decoration: none;
+  border: 1px solid var(--p-rule);
+  border-radius: 2px;
+  padding: 6px 9px;
+}
+
+.parte-feed-badge .n {
+  font-variant-numeric: tabular-nums;
+  background: var(--p-work);
+  color: var(--p-paper);
+  border-radius: 999px;
+  padding: 0 6px;
+  letter-spacing: 0;
+}
+
 .parte-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 13.5px;

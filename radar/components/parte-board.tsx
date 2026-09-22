@@ -25,7 +25,21 @@ export function ParteBoard({
   return (
     <div className="parte">
       <header>
-        <p className="parte-eyebrow">Parte de la mañana</p>
+        {/*
+          El Feed vivía en el pie, debajo de los descartados, y ahí no lo ve
+          nadie: hay que bajar toda la pantalla para encontrarlo. Arriba y con
+          el número de boletines nuevos es un motivo para entrar; sin el
+          número sería una pestaña más de la que hay que acordarse.
+        */}
+        <div className="parte-top">
+          <p className="parte-eyebrow">Parte de la mañana</p>
+          <Link className="parte-feed-badge" href="/feed">
+            Feed
+            {parte.feedPendientes > 0 ? (
+              <span className="n">{parte.feedPendientes}</span>
+            ) : null}
+          </Link>
+        </div>
         <h1 className="parte-date">{longDate()}</h1>
         {/*
           Una línea, y corta. Decía "702 correos mirados / 10 para ti / al día
@@ -121,8 +135,6 @@ export function ParteBoard({
           ))}
         </span>
         <span>
-          <Link href="/feed">Feed</Link>
-          {" · "}
           <Link href="/estado">Cómo va la app</Link>
         </span>
       </p>

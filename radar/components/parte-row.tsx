@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { gmailSearchUrl } from "@/lib/gmail-link";
 import type { ParteEntry } from "@/lib/parte";
 import { spaceLabel } from "@/lib/types";
+import { decidirEje, resultado, SWIPE_PX } from "@/lib/gesto";
 
 /**
  * Una línea del parte.
@@ -42,6 +43,16 @@ export function ParteRow({
   const [failed, setFailed] = useState(false);
   const [offset, setOffset] = useState(0);
   const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  /**
+   * Qué resultó ser el gesto.
+   *
+   * Se decide una vez, al principio, y ya no cambia. Sin esto, bajar por la
+   * lista con el pulgar —que nunca baja recto— iba arrastrando la fila de
+   * lado, y un dedo que se desvía cuarenta píxeles mientras hace scroll
+   * acababa descartando un correo que ni se llegó a leer.
+   */
+  const eje = useRef<null | "x" | "y">(null);
 
   async function send(action: string): Promise<boolean> {
     try {
@@ -109,34 +120,51 @@ export function ParteRow({
   /* Deslizar: a la derecha descarta, a la izquierda marca hecho. */
   function onTouchStart(event: React.TouchEvent) {
     startX.current = event.touches[0].clientX;
+    startY.current = event.touches[0].clientY;
+    eje.current = null;
   }
 
   function onTouchMove(event: React.TouchEvent) {
-    if (startX.current === null) return;
-    setOffset(event.touches[0].clientX - startX.current);
+    if (startX.current === null || startY.current === null) return;
+    const dx = event.touches[0].clientX - startX.current;
+    const dy = event.touches[0].clientY - startY.current;
+
+    // Hasta que el dedo no se ha movido lo suficiente para saber qué está
+    // haciendo, no se hace nada. Decidir en el primer píxel es decidir con
+    // ruido.
+    if (eje.current === null) {
+      eje.current = decidirEje(dx, dy);
+      if (eje.current === null) return;
+    }
+
+    if (eje.current === "y") return;
+    setOffset(dx);
   }
 
   function onTouchEnd() {
-    if (startX.current === null) return;
-    const moved = offset;
+    const gesto = resultado(eje.current, offset);
     startX.current = null;
+    startY.current = null;
+    eje.current = null;
 
-    if (moved > SWIPE_PX) {
-      setOffset(400);
-      void act("descartado");
-    } else if (moved < -SWIPE_PX) {
-      setOffset(-400);
-      void act("listo");
-    } else {
+    if (gesto === null) {
       setOffset(0);
+      return;
     }
+    setOffset(gesto === "descartado" ? 400 : -400);
+    void act(gesto);
   }
 
   if (gone) {
+    // Decir cuál era, no solo que se fue. "Descartado. No volverá." sobre una
+    // fila que ya no está deja al que lo hizo sin saber qué acaba de perder, y
+    // entonces Deshacer tampoco sirve: no sabes si pulsarlo.
     return (
       <div className="parte-undo">
         <span>
-          {gone === "descartado" ? "Descartado. No volverá." : "Listo."}
+          <b>{gone === "descartado" ? "Descartado" : "Listo"}</b>
+          {": "}
+          {entry.headline}
         </span>
         <button type="button" onClick={undo}>
           Deshacer
@@ -146,7 +174,10 @@ export function ParteRow({
   }
 
   const life = entry.life;
-  const pulling = Math.abs(offset) > 12;
+  // Lo de detrás solo asoma cuando ya hay arrastre de verdad, y crece con él:
+  // así se ve venir lo que va a pasar antes de que pase.
+  const pulling = Math.abs(offset) > 24;
+  const listo = Math.min(1, Math.abs(offset) / SWIPE_PX);
 
   return (
     <div className="parte-item">
@@ -155,8 +186,11 @@ export function ParteRow({
         <span
           className="parte-behind"
           data-side={offset > 0 ? "descartar" : "listo"}
+          data-armed={listo >= 1}
+          style={{ opacity: 0.35 + listo * 0.65 }}
         >
           {offset > 0 ? "Descartar" : "Listo"}
+          {listo >= 1 ? " ›" : null}
         </span>
       ) : null}
 
@@ -279,9 +313,6 @@ export function ParteRow({
     </div>
   );
 }
-
-/** Cuánto hay que arrastrar para que cuente. Menos, y se dispara sin querer. */
-const SWIPE_PX = 70;
 
 /** Un compromiso se despacha como ítem; un correo, como correo. */
 function endpoint(entry: ParteEntry): string {

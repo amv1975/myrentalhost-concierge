@@ -371,6 +371,18 @@ body {
   background: var(--p-work-soft);
 }
 
+/*
+ * Cuando el arrastre ya basta para que el gesto cuente.
+ *
+ * Antes no había forma de saberlo hasta soltar, y soltar es irreversible en la
+ * práctica: si no te das cuenta de que has descartado algo, el Deshacer está
+ * ahí pero no lo pulsas. Esto lo dice antes, mientras el dedo todavía puede
+ * volver atrás.
+ */
+.parte-behind[data-armed="true"] {
+  font-weight: 700;
+}
+
 .parte-row {
   display: grid;
   grid-template-columns: 3.1rem 1fr auto;
@@ -964,6 +976,24 @@ body {
   padding: 14px 0;
   font-size: 14.9px;
   color: var(--p-faint);
+}
+
+/* El titular de lo que se acaba de ir, en una línea: dice cuál era sin empujar
+   el botón de Deshacer fuera de la pantalla. */
+.parte-undo > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.parte-undo b {
+  color: var(--p-ink);
+  font-weight: 600;
+}
+
+.parte-undo button {
+  flex: none;
 }
 
 .parte-undo button {

@@ -10,6 +10,10 @@
  * app que corre sola de madrugada es la diferencia entre enterarse y no.
  */
 export function describeError(error: unknown): string {
+  return traducir(crudo(error));
+}
+
+function crudo(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
 
@@ -33,6 +37,25 @@ export function describeError(error: unknown): string {
   }
 
   return String(error);
+}
+
+/**
+ * Lo mismo, dicho para quien lo va a leer en el móvil.
+ *
+ * Un código de PostgREST en pantalla no informa: informa de que algo falló y
+ * de nada más. Y la diferencia importa, porque estos dos fallos concretos se
+ * parecen —los dos salen en rojo— y piden cosas opuestas: uno que esperes, el
+ * otro que ejecutes un SQL.
+ *
+ * Solo se traduce lo que se ha visto de verdad. Inventar traducciones para
+ * códigos que nunca han pasado es escribir ficción sobre datos que no existen,
+ * que es exactamente cómo se cuelan los errores peores.
+ */
+function traducir(texto: string): string {
+  if (/PGRST303|JWT issued at future|JWT expired/i.test(texto)) {
+    return `Supabase ha rechazado la llave por un desajuste de reloj entre sus servidores y la fecha del token. No es un fallo de la app ni de tus datos: recarga en un minuto. (${texto})`;
+  }
+  return texto;
 }
 
 /**

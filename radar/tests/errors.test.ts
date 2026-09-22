@@ -47,3 +47,21 @@ describe("contar un fallo", () => {
     }
   });
 });
+
+describe("desajuste de reloj", () => {
+  it("dice qué hacer, no el código", () => {
+    const texto = describeError({
+      message: "JWT issued at future",
+      code: "PGRST303",
+    });
+    expect(texto).toContain("recarga");
+    // El código sigue estando, para poder buscarlo si hace falta.
+    expect(texto).toContain("PGRST303");
+  });
+
+  it("no toca los errores que no conoce", () => {
+    expect(describeError(new Error("cualquier otra cosa"))).toBe(
+      "cualquier otra cosa",
+    );
+  });
+});

@@ -70,6 +70,8 @@ export interface NoiseEntry {
   /** Hace falta para poder rescatarlo: sin id, la lista solo se mira. */
   id: string;
   who: string;
+  /** El remitente de verdad, para poder seguirlo como boletín. */
+  fromEmail: string;
   subject: string;
   /**
    * Apareció buscando en Gmail, no en lo que Radar había descartado.
@@ -400,6 +402,7 @@ async function getNoise(
   >[]).map((row) => ({
     id: row.id,
     who: sourceLabel(row.from_email, row.from_name) ?? row.from_email,
+    fromEmail: row.from_email,
     subject: row.subject ?? "(sin asunto)",
   }));
 

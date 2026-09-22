@@ -693,6 +693,79 @@ body {
   max-width: 58ch;
 }
 
+/* El Feed. Misma paleta que el parte: es la misma app, otra pregunta. */
+.feed {
+  padding-bottom: 40px;
+}
+
+.feed-sync button {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 15px;
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--p-solid);
+  color: var(--p-solid-ink);
+  border: 1px solid var(--p-solid-line);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.feed-sync button[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.feed-sync .nota {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  color: var(--p-muted);
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+.feed-digest .cuando {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  color: var(--p-faint);
+  margin: 0 0 14px;
+}
+
+.feed-digest p {
+  font-size: 16.9px;
+  line-height: 1.55;
+  color: var(--p-ink);
+  margin: 0 0 14px;
+  max-width: 62ch;
+}
+
+.feed-lista h2 {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--p-faint);
+  margin: 0 0 10px;
+}
+
+.feed-lista ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13.5px;
+  color: var(--p-muted);
+}
+
+.feed-lista .nota {
+  font-size: 13.5px;
+  color: var(--p-faint);
+  margin: 0;
+  max-width: 58ch;
+}
+
 .parte-empty {
   font-family: var(--font-serif), Georgia, serif;
   font-size: 21.7px;

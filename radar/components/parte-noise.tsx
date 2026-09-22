@@ -40,6 +40,8 @@ export function ParteNoise({
   const [resumen, setResumen] = useState<Record<string, string>>({});
   const [leyendo, setLeyendo] = useState<string | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
+  /** Boletines que acabas de marcar para seguir. */
+  const [siguiendo, setSiguiendo] = useState<Record<string, true>>({});
 
   /**
    * Buscar entre todos los descartados, no solo entre los que caben en la
@@ -79,6 +81,43 @@ export function ParteNoise({
       cortar.abort();
     };
   }, [busqueda]);
+
+  /**
+   * Seguir un boletín.
+   *
+   * El botón vive aquí y no en una pantalla de ajustes porque es exactamente
+   * donde están: un boletín del sector es ruido para el parte —no tiene plazo
+   * ni pide nada— y el filtro hace bien en tirarlo. La lista de descartados es
+   * el único sitio donde uno se los encuentra.
+   */
+  async function seguir(entry: NoiseEntry) {
+    setFallo(null);
+    setSiguiendo((prev) => ({ ...prev, [entry.id]: true }));
+    try {
+      const response = await fetch("/api/feed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "seguir",
+          fromEmail: entry.fromEmail,
+          name: entry.who,
+        }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(body.error ?? "No se pudo guardar.");
+      }
+    } catch (error) {
+      setSiguiendo((prev) => {
+        const copia = { ...prev };
+        delete copia[entry.id];
+        return copia;
+      });
+      setFallo(error instanceof Error ? error.message : "No se pudo guardar.");
+    }
+  }
 
   async function rescatar(id: string, espacio: SpaceKey) {
     setEligiendo(null);
@@ -183,6 +222,15 @@ export function ParteNoise({
                     <button type="button" onClick={() => setEligiendo(entry.id)}>
                       Esto sí me importa
                     </button>
+                    {entry.fromEmail ? (
+                      <button
+                        type="button"
+                        onClick={() => seguir(entry)}
+                        disabled={siguiendo[entry.id]}
+                      >
+                        {siguiendo[entry.id] ? "✓ En el Feed" : "Seguir"}
+                      </button>
+                    ) : null}
                   </span>
                 )}
               </li>

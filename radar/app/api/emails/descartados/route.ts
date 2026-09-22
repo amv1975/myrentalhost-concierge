@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
     }[]).map((row) => ({
       id: row.id,
       who: sourceLabel(row.from_email, row.from_name) ?? row.from_email,
+      fromEmail: row.from_email,
       subject: row.subject ?? "(sin asunto)",
       at: row.received_at,
     }));
@@ -183,6 +184,7 @@ async function buscarEnGmail(q: string): Promise<Encontrado[]> {
       salida.push({
         id: fila.id,
         who: sourceLabel(fila.from_email, fila.from_name) ?? fila.from_email,
+        fromEmail: fila.from_email,
         subject: fila.subject ?? "(sin asunto)",
         at: fila.received_at,
         deGmail: true,
@@ -201,6 +203,7 @@ const MAX_GMAIL = 15;
 interface Encontrado {
   id: string;
   who: string;
+  fromEmail: string;
   subject: string;
   at: string;
   /** Venía del buzón, no de la lista de descartados. La pantalla lo dice. */

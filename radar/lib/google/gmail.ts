@@ -10,6 +10,8 @@ import "server-only";
  * código es la garantía de primer orden. tests/permissions.test.ts la vigila.
  */
 
+import type { MensajeDelHilo } from "@/lib/google/hilo-parse";
+
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
 /**
@@ -209,6 +211,34 @@ export async function getMessageBody(
     { format: "full" },
   );
   return extractBody(raw.payload);
+}
+
+/**
+ * El hilo entero, solo en etiquetas y fechas.
+ *
+ * `format=metadata` sin pedir ninguna cabecera devuelve la lista de mensajes
+ * con su `labelIds`, su `internalDate` y poco más. Con eso basta para saber
+ * quién habló el último, que es toda la pregunta, y no se baja ni un cuerpo.
+ *
+ * Es de lectura, como todo lo demás de este fichero.
+ */
+export async function getThreadMessages(
+  accessToken: string,
+  threadId: string,
+): Promise<MensajeDelHilo[]> {
+  const raw = await gmailGet<{ messages?: RawMessage[] }>(
+    accessToken,
+    `/threads/${threadId}`,
+    { format: "metadata", metadataHeaders: ["From"] },
+  );
+
+  return (raw.messages ?? []).map((mensaje) => ({
+    labelIds: mensaje.labelIds ?? [],
+    internalDate: Number(mensaje.internalDate ?? 0),
+    fromEmail: parseFrom(
+      headerValue(mensaje.payload?.headers ?? [], "From") ?? "",
+    ).email,
+  }));
 }
 
 export async function getMessage(

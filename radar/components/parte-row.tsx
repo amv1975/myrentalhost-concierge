@@ -6,6 +6,7 @@ import { gmailSearchUrl } from "@/lib/gmail-link";
 import type { ParteEntry } from "@/lib/parte";
 import { spaceLabel } from "@/lib/types";
 import { decidirEje, resultado, SWIPE_PX } from "@/lib/gesto";
+import { desdeCuando } from "@/lib/google/hilo-parse";
 
 /**
  * Una línea del parte.
@@ -223,6 +224,17 @@ export function ParteRow({
             ) : null}
             {entry.reading ? (
               <span className="parte-reading">· leyéndolo</span>
+            ) : null}
+            {/* Lo más accionable de la línea, y por eso va en la cabecera y no
+                escondido en el detalle: no es lo mismo una pregunta que
+                contestaste que una que lleva dos mensajes esperando. */}
+            {entry.espera ? (
+              <span className="parte-espera">
+                · sin responder {desdeCuando(new Date(entry.espera.desde))}
+                {entry.espera.mensajes > 1
+                  ? ` (${entry.espera.mensajes} mensajes)`
+                  : null}
+              </span>
             ) : null}
           </span>
           {entry.link ? (

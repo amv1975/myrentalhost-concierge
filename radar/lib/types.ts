@@ -72,6 +72,10 @@ export interface Email {
   detail: string | null;
   /** Qué se rompe si nadie lo mira hoy. Null casi siempre, y así debe ser. */
   riesgo: string | null;
+  /** Desde cuándo esperan respuesta. Null si el último del hilo lo mandaste tú. */
+  esperando_desde: string | null;
+  /** Cuántos han escrito sin que contestaras. */
+  sin_responder: number;
   /** Qué tiene que ver con otro correo del día. Sale de mirarlos juntos. */
   link_note: string | null;
   /** Si pide algo concreto; solo entonces se le buscan compromisos. */

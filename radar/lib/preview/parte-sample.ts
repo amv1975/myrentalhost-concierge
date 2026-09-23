@@ -16,7 +16,9 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
     at: "2026-09-10T08:12:00Z",
     who: "Col·legi Lestonnac",
     headline: "",
-    riesgo: null,
+    riesgo:
+      "Si no sale hoy, entra mañana enojado y con el cobro en disputa.",
+    espera: { desde: "2026-09-22T21:10:00Z", mensajes: 2 },
     detail: null,
     when: null,
     fromEmail: "info@lestonnac.cat",
@@ -50,6 +52,7 @@ export const SAMPLE_PARTE: Parte = {
       who: "Ajuntament de Barcelona",
       headline: "La subvención de deporte cierra el viernes 18",
       riesgo: null,
+    espera: null,
     detail:
         "Quedan 8 días. Piden el certificado de empadronamiento y el recibo del trimestre, que el colegio manda por separado.",
       when: "vie 18 sept",
@@ -61,6 +64,7 @@ export const SAMPLE_PARTE: Parte = {
       who: "Airbnb",
       headline: "Marta pregunta si puede entrar a las 12:00 en Gràcia 4",
       riesgo: null,
+    espera: null,
     detail: "Lleva esperando desde ayer a las 19:40. Entra el sábado.",
       fromEmail: "automated@airbnb.com",
     }),
@@ -72,6 +76,7 @@ export const SAMPLE_PARTE: Parte = {
       who: "Hilari Garcia",
       headline: "La reunión de vecinos del 15 se aplaza al 30",
       riesgo: null,
+    espera: null,
     detail:
         "Se espera a la reunión con el administrador de FINPER. Se tratará el tema de obras y permisos.",
       when: "mar 30 sept, 19:00",
@@ -93,6 +98,7 @@ export const SAMPLE_PARTE: Parte = {
       headline:
         "El colegio comparte el dossier informativo de tercero y cuarto de primaria",
       riesgo: null,
+    espera: null,
     detail: null,
     }),
   ],

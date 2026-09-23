@@ -12,6 +12,7 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
     headline: "Una huésped pide la factura de su reserva",
     detail: null,
     riesgo: null,
+    espera: null,
     when: null,
     fromEmail: "noreply@booking.com",
     subject: "Invoice request",

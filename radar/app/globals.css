@@ -1425,3 +1425,9 @@ body {
 .parte-agenda .pisado b {
   font-weight: 600;
 }
+
+/* Que están esperando respuesta tuya. Se pinta en el color de aviso dentro de
+   la línea de meta: es un dato de estado, no una alarma aparte. */
+.parte-espera {
+  color: var(--p-alert);
+}

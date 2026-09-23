@@ -57,6 +57,8 @@ describe("superficie de escritura en Gmail", () => {
     "/messages/batchModify",
     "/messages/batchDelete",
     "users/me/drafts",
+    "/threads/modify",
+    "/threads/trash",
     "/trash",
     "/untrash",
   ];

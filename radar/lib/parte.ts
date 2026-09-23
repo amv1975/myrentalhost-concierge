@@ -46,6 +46,12 @@ export interface ParteEntry {
    * avisaran de una consecuencia, ninguna avisaría de nada.
    */
   riesgo: string | null;
+  /**
+   * Que llevan esperando respuesta tuya, y desde cuándo.
+   *
+   * Null cuando el último mensaje del hilo lo mandaste tú, que es lo normal.
+   */
+  espera: { desde: string; mensajes: number } | null;
   /** Para un compromiso: cuándo cae. Para un correo, nada. */
   when: string | null;
   fromEmail: string | null;
@@ -360,6 +366,7 @@ function itemEntry(
     detail: item.description,
     // Un compromiso ya lleva su fecha delante; el riesgo es de los correos.
     riesgo: null,
+    espera: null,
     when: whenLabel(item),
     fromEmail: item.emails?.from_email ?? null,
     subject: item.emails?.subject ?? null,
@@ -404,6 +411,10 @@ function emailEntry(
     // de que existiera el detalle, o si aún no se ha leído.
     detail: email.detail ?? email.snippet,
     riesgo: email.riesgo,
+    espera:
+      email.esperando_desde && email.sin_responder > 0
+        ? { desde: email.esperando_desde, mensajes: email.sin_responder }
+        : null,
     reading: email.summary === null,
     when: null,
     fromEmail: email.from_email,

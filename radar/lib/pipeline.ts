@@ -6,6 +6,7 @@ import { gatePending } from "@/lib/triage/gate";
 import { triagePending } from "@/lib/triage/run";
 import { buildTriageContext } from "@/lib/triage/context";
 import { syncSpace } from "@/lib/calendar/sync";
+import { refrescarHilos } from "@/lib/triage/hilos";
 import { Spend } from "@/lib/usage";
 import { deadlineIn, porcion, type Deadline } from "@/lib/deadline";
 import type { Space } from "@/lib/types";
@@ -176,6 +177,13 @@ export async function runPipeline(
   if (triaged.error) result.errors.push(triaged.error);
 
   result.remaining = await countUnread();
+
+  // Quién sigue esperando respuesta. Va después de leer y antes del
+  // calendario: no cuesta modelo, solo metadatos, y es lo que convierte "el
+  // huésped pregunta por el check-in" en "lleva dos mensajes y dos días
+  // esperando".
+  const hilos = await refrescarHilos(accessToken, context.ownAddresses, plazo);
+  if (hilos.error) result.parciales.push(hilos.error);
 
   // Poner algo en el calendario lo decides tú, con el botón de la ficha. Aquí
   // solo se lleva a Google lo que ya has confirmado, y lo que descartaste

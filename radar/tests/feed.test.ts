@@ -22,11 +22,11 @@ function boletin(over: Partial<FeedEmail> = {}): FeedEmail {
 describe("qué le pedimos a la síntesis del Feed", () => {
   it("puede decir que esta semana no hay nada", () => {
     // La regla que la mantiene legible. Un resumen que siempre encuentra tres
-    // cosas importantes es uno que se inventa dos, y a la tercera semana deja
+    // cosas importantes es uno que se inventa cuatro, y a la tercera semana deja
     // de abrirse.
     const prompt = buildFeedSystemPrompt(context);
     expect(prompt).toContain("Puedes decir que no hay nada");
-    expect(prompt).toContain("se inventa dos");
+    expect(prompt).toContain("se inventa cuatro");
   });
 
   it("prohíbe el boletín de boletines", () => {
@@ -105,5 +105,36 @@ describe("el Feed sin montar no es un error", () => {
     // esconde detrás de unas instrucciones que no vienen a cuento.
     expect(FALTA_LA_TABLA.test("connection refused")).toBe(false);
     expect(FALTA_LA_TABLA.test("JWT expired")).toBe(false);
+  });
+});
+
+describe("lo que el Feed no puede tirar", () => {
+  const prompt = buildFeedSystemPrompt({ negocio: "pisos turísticos" });
+
+  it("no descarta algo por ser de hoteles, sino por no aplicarle", () => {
+    // El fallo real: cerró con "lo demás iba de hoteles" y ahí dentro iba un
+    // estudio sobre la nota de ubicación de Booking, aplicable palabra por
+    // palabra a sus pisos.
+    expect(prompt).toContain("Que sea de hoteles no lo descarta");
+    expect(prompt).toContain("Booking");
+  });
+
+  it("la línea de 'puedes ignorar' no es un cajón para categorías enteras", () => {
+    expect(prompt).toContain("no es un cajón");
+  });
+
+  it("nombra las cuatro familias que sí le cambian algo", () => {
+    for (const familia of [
+      "Reglas del juego",
+      "Demanda en su mercado",
+      "Mecánica de los canales",
+      "Por dónde le encuentran",
+    ]) {
+      expect(prompt).toContain(familia);
+    }
+  });
+
+  it("el tope sigue siendo un techo y no una cuota", () => {
+    expect(prompt).toContain("no una cuota");
   });
 });

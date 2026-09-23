@@ -16,6 +16,7 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
     at: "2026-09-10T08:12:00Z",
     who: "Col·legi Lestonnac",
     headline: "",
+    riesgo: null,
     detail: null,
     when: null,
     fromEmail: "info@lestonnac.cat",
@@ -48,7 +49,8 @@ export const SAMPLE_PARTE: Parte = {
       life: "personal",
       who: "Ajuntament de Barcelona",
       headline: "La subvención de deporte cierra el viernes 18",
-      detail:
+      riesgo: null,
+    detail:
         "Quedan 8 días. Piden el certificado de empadronamiento y el recibo del trimestre, que el colegio manda por separado.",
       when: "vie 18 sept",
     }),
@@ -58,7 +60,8 @@ export const SAMPLE_PARTE: Parte = {
       urgent: true,
       who: "Airbnb",
       headline: "Marta pregunta si puede entrar a las 12:00 en Gràcia 4",
-      detail: "Lleva esperando desde ayer a las 19:40. Entra el sábado.",
+      riesgo: null,
+    detail: "Lleva esperando desde ayer a las 19:40. Entra el sábado.",
       fromEmail: "automated@airbnb.com",
     }),
   ],
@@ -68,7 +71,8 @@ export const SAMPLE_PARTE: Parte = {
       life: "personal",
       who: "Hilari Garcia",
       headline: "La reunión de vecinos del 15 se aplaza al 30",
-      detail:
+      riesgo: null,
+    detail:
         "Se espera a la reunión con el administrador de FINPER. Se tratará el tema de obras y permisos.",
       when: "mar 30 sept, 19:00",
       agenda: "puede",
@@ -88,13 +92,22 @@ export const SAMPLE_PARTE: Parte = {
       actionable: false,
       headline:
         "El colegio comparte el dossier informativo de tercero y cuarto de primaria",
-      detail: null,
+      riesgo: null,
+    detail: null,
     }),
   ],
 };
 
 export const SAMPLE_AGENDA: Agenda = {
   ok: true,
+  marco: "Tu hueco más largo de hoy son 3 h 45 min, de 08:00 a 11:45.",
+  pisados: [
+    {
+      a: "Telefonillo Galileu",
+      b: "Desmontar cajón Casanova",
+      when: "mañana" as const,
+    },
+  ],
   blocks: 12,
   slots: [
     {

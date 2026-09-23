@@ -1397,3 +1397,31 @@ body {
   display: block;
   margin-top: 2px;
 }
+
+/* Lo que se rompe si nadie lo mira hoy.
+   En el color de aviso pero sin fondo: tiene que destacar dentro de la ficha
+   sin convertirla en una alarma, porque el resto del detalle también se lee. */
+.parte-riesgo {
+  color: var(--p-alert);
+  border-left: 2px solid var(--p-alert);
+  padding-left: 10px;
+}
+
+/* La conclusión del día: cuánto tiempo seguido te queda de verdad.
+   En el tono del texto normal y no en gris de nota, porque es lo único de
+   este bloque que contesta una pregunta en vez de listar datos. */
+.parte-agenda .marco {
+  color: var(--p-ink);
+  margin-top: 4px;
+}
+
+/* Dos cosas que se pisan. Se avisa en el color de alerta porque es un
+   problema, no un dato. */
+.parte-agenda .pisado {
+  color: var(--p-alert);
+  margin-top: 4px;
+}
+
+.parte-agenda .pisado b {
+  font-weight: 600;
+}

@@ -293,6 +293,7 @@ async function save(
       triage_category: category,
       summary: triage.summary,
       detail: triage.detail,
+      riesgo: triage.riesgo,
       actionable: triage.actionable,
       importance: triage.importance,
       space_id: spaceId,

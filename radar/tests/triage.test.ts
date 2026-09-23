@@ -3,6 +3,7 @@ import {
   buildTriageSystemPrompt,
   buildTriageUserPrompt,
 } from "@/lib/triage/prompt";
+import { TriageResultSchema } from "@/lib/triage/schema";
 
 const context = {
   personalDescription:
@@ -85,7 +86,7 @@ describe("prompt de clasificación", () => {
     expect(prompt).toContain("Los números");
     expect(prompt).toContain("convertido en fecha");
     expect(prompt).toContain("Quién espera qué, y desde cuándo");
-    expect(prompt).toContain("Qué se rompe si nadie lo mira");
+    expect(prompt).toContain("qué se rompe si nadie lo mira hoy");
   });
 
   it("separa «importa» de «hay que hacer algo»", () => {
@@ -107,5 +108,33 @@ describe("prompt de clasificación", () => {
 
   it("fecha el correo por cuándo llegó, no por hoy", () => {
     expect(userPrompt()).toContain("5 de marzo de 2026");
+  });
+});
+
+describe("el riesgo", () => {
+  const prompt = buildTriageSystemPrompt(context);
+
+  it("va aparte del detalle, porque es lo que decide si se mira ahora", () => {
+    expect(prompt).toContain("## El riesgo");
+    expect(prompt).toContain("qué se rompe si nadie lo mira hoy");
+  });
+
+  it("da permiso explícito para dejarlo vacío", () => {
+    // Sin esto, el modelo le inventa una consecuencia a todo, y entonces
+    // ninguna consecuencia significa nada.
+    expect(prompt).toContain("null cuando no pase nada");
+    expect(prompt).toContain("No inventes la urgencia");
+  });
+
+  it("el esquema lo pide siempre, aunque la respuesta sea null", () => {
+    const sinRiesgo = TriageResultSchema.safeParse({
+      category: "work",
+      summary: "x",
+      detail: "y",
+      actionable: true,
+      importance: "alta",
+      cita: null,
+    });
+    expect(sinRiesgo.success).toBe(false);
   });
 });

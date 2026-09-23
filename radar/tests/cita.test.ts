@@ -54,6 +54,7 @@ describe("qué le pedimos al modelo sobre las citas", () => {
       detail: "Son 84,20 € del seguro del coche. Hay que reponerlo esta semana.",
       actionable: true,
       importance: "alta",
+      riesgo: null,
       cita: null,
     });
     expect(resultado.success).toBe(true);

@@ -29,6 +29,19 @@ export function ParteAgenda({ agenda }: { agenda: Agenda }) {
         <>
           <Day label="Hoy" slots={hoy} />
           <Day label="Mañana" slots={manana} />
+
+          {/* Lo que se pisa va después de la lista y no dentro: mirando la
+              lista no se ve, porque dos horas seguidas no parecen un choque
+              hasta que sabés cuánto dura la primera. */}
+          {agenda.pisados.map((choque, i) => (
+            <p className="pisado" key={i}>
+              {choque.when === "hoy" ? "Hoy" : "Mañana"} se te pisan{" "}
+              <b>{choque.a}</b> y <b>{choque.b}</b>.
+            </p>
+          ))}
+
+          {/* Y el marco al final, que es la conclusión de todo lo anterior. */}
+          {agenda.marco ? <p className="marco">{agenda.marco}</p> : null}
         </>
       )}
     </section>

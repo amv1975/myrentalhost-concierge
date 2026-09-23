@@ -67,9 +67,11 @@ export interface Email {
   triage_category: TriageCategory | null;
   /** El titular: qué pasa, en una frase. */
   summary: string | null;
-  /** Lo que hace falta para decidir sin abrir Gmail: cifras, plazos, quién
-   *  espera qué y qué se rompe si nadie lo mira. */
+  /** Lo que hace falta para decidir sin abrir Gmail: cifras, plazos y quién
+   *  espera qué desde cuándo. */
   detail: string | null;
+  /** Qué se rompe si nadie lo mira hoy. Null casi siempre, y así debe ser. */
+  riesgo: string | null;
   /** Qué tiene que ver con otro correo del día. Sale de mirarlos juntos. */
   link_note: string | null;
   /** Si pide algo concreto; solo entonces se le buscan compromisos. */

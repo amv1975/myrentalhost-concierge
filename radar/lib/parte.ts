@@ -39,6 +39,13 @@ export interface ParteEntry {
   who: string;
   headline: string;
   detail: string | null;
+  /**
+   * Qué se rompe si nadie lo mira hoy.
+   *
+   * Null casi siempre, y tiene que seguir siéndolo: si todas las líneas
+   * avisaran de una consecuencia, ninguna avisaría de nada.
+   */
+  riesgo: string | null;
   /** Para un compromiso: cuándo cae. Para un correo, nada. */
   when: string | null;
   fromEmail: string | null;
@@ -351,6 +358,8 @@ function itemEntry(
     who: sourceLabel(item.emails?.from_email, item.emails?.from_name) ?? "",
     headline: item.title,
     detail: item.description,
+    // Un compromiso ya lleva su fecha delante; el riesgo es de los correos.
+    riesgo: null,
     when: whenLabel(item),
     fromEmail: item.emails?.from_email ?? null,
     subject: item.emails?.subject ?? null,
@@ -394,6 +403,7 @@ function emailEntry(
     // El snippet de Gmail solo se usa si el correo es viejo y se resumió antes
     // de que existiera el detalle, o si aún no se ha leído.
     detail: email.detail ?? email.snippet,
+    riesgo: email.riesgo,
     reading: email.summary === null,
     when: null,
     fromEmail: email.from_email,

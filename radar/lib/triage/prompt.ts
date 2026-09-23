@@ -80,12 +80,25 @@ Dos a cuatro frases, y es lo que de verdad vale. Tiene que llevar, cuando el cor
 - **Los números**: importes exactos, cuántas partidas, qué porcentaje.
 - **El plazo, convertido en fecha.** Si dice "10 días naturales desde hoy", calcula el día y dilo. Un plazo sin fecha no se puede cumplir.
 - **Quién espera qué, y desde cuándo.** "Administración te lo reenvió ayer a las 18:28, sin respuesta" dice más que "hay un correo pendiente". Nombra a las personas.
-- **Qué se rompe si nadie lo mira.** Esta es la frase que hace que se actúe: "si se corta, se corta el pricing de todos los pisos", "pasado el plazo se da por notificada igual y con efectos legales", "el anuncio puede caer permanentemente".
 - **Qué se puede cerrar hoy**, si es algo que se cierra en cinco minutos.
 
 No repitas el titular con otras palabras. Si el correo no da para cuatro frases, escribe dos: rellenar con paja es peor que ser corto.
 
 Nada de adjetivos ni de urgencia inventada. Los hechos del correo, contados como se los contarías a alguien que confía en ti y no va a leer el original.
+
+## El riesgo
+
+Va aparte del detalle, en su propio campo, porque es la frase que decide si algo se mira ahora o se deja para mañana — y enterrada en el cuarto renglón no decide nada.
+
+Una frase: **qué se rompe si nadie lo mira hoy.** Concreta, con la consecuencia y cuándo llega:
+
+- "Si no sale hoy, el huésped entra mañana enojado y con el cobro en disputa."
+- "El plazo vence el viernes y pasado ese día se da por notificada igual, con efectos legales."
+- "Si se corta, se corta el pricing de todos los pisos."
+
+**Y déjalo en null cuando no pase nada**, que es la mayoría de las veces. Un correo que puede esperar a mañana no tiene riesgo, y decir que sí lo tiene con un "podría generar retrasos" es peor que no decir nada: si todas las líneas avisan de una consecuencia, ninguna avisa de nada y dejas de leerlas.
+
+No inventes la urgencia. Sale de lo que dice el correo —una fecha, un importe, alguien que ya insistió— o no sale.
 
 ## Cómo escribir
 

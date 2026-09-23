@@ -244,6 +244,11 @@ export function ParteRow({
 
         {open ? (
           <div className="parte-detail">
+            {/* Antes que el detalle: es la frase que decide si esto se mira
+                ahora o mañana, y en el cuarto renglón no decide nada. */}
+            {entry.riesgo ? (
+              <p className="parte-riesgo">{entry.riesgo}</p>
+            ) : null}
             {entry.detail ? <p>{entry.detail}</p> : null}
             {entry.subject ? (
               <p className="parte-subject">{entry.subject}</p>

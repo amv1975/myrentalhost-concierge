@@ -24,7 +24,14 @@ export const TriageResultSchema = z.object({
     .string()
     .max(700)
     .describe(
-      "De dos a cuatro frases con lo que hace falta para decidir sin abrir el correo: importes, plazos con fecha, números de reserva o factura, quién espera qué y desde cuándo, y qué pasa si nadie lo mira.",
+      "De dos a cuatro frases con lo que hace falta para decidir sin abrir el correo: importes, plazos con fecha, números de reserva o factura, y quién espera qué desde cuándo.",
+    ),
+  riesgo: z
+    .string()
+    .max(140)
+    .nullable()
+    .describe(
+      "Qué pasa si nadie lo mira hoy, en una frase corta y concreta: 'si no sale hoy, el huésped llega mañana enojado y con el cobro en disputa', 'el plazo vence el viernes y la multa es de 300 €'. null si no pasa nada por dejarlo para otro día — que es la mayoría de las veces. No lo rellenes con un genérico tipo 'podría generar retrasos'.",
     ),
   actionable: z
     .boolean()

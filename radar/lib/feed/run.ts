@@ -14,6 +14,11 @@ import {
   buildFeedUserPrompt,
   type FeedEmail,
 } from "@/lib/feed/prompt";
+import {
+  dentroDeVentana,
+  desdeParaCada,
+  sinNoticias,
+} from "@/lib/feed/ventana";
 
 /**
  * El Feed no corre solo, y esa es toda la idea.
@@ -53,13 +58,23 @@ export async function sincronizarFeed(): Promise<FeedResult> {
   try {
     const { data: feedRows, error: feedError } = await admin
       .from("feeds")
-      .select("from_email");
+      .select("from_email, name, created_at");
     if (feedError) throw feedError;
 
-    const remitentes = (feedRows ?? []).map(
-      (f) => (f as { from_email: string }).from_email,
-    );
-    if (remitentes.length === 0) {
+    const seguidos = (feedRows ?? []).map((f) => {
+      const fila = f as {
+        from_email: string;
+        name: string | null;
+        created_at: string;
+      };
+      return {
+        fromEmail: fila.from_email,
+        name: fila.name,
+        createdAt: fila.created_at,
+      };
+    });
+
+    if (seguidos.length === 0) {
       return {
         markdown: null,
         emails: 0,
@@ -68,18 +83,24 @@ export async function sincronizarFeed(): Promise<FeedResult> {
       };
     }
 
-    const desde = await desdeCuando();
+    // El tope es hasta dónde llega el buzón; la ventana de verdad la pone cada
+    // remitente, porque uno recién añadido no tiene nada leído que repetir.
+    const tope = new Date(Date.now() - PRIMERA_VENTANA_MS);
+    const ventanas = desdeParaCada(seguidos, await ultimaSintesis(), tope);
 
     const { data: rows, error } = await admin
       .from("emails")
       .select("id, from_email, from_name, subject, received_at, body_text")
-      .in("from_email", remitentes)
-      .gte("received_at", desde.toISOString())
+      .in(
+        "from_email",
+        seguidos.map((s) => s.fromEmail),
+      )
+      .gte("received_at", tope.toISOString())
       .order("received_at", { ascending: false })
       .limit(MAX_EMAILS);
     if (error) throw error;
 
-    const correos = (rows ?? []) as {
+    const todos = (rows ?? []) as {
       id: string;
       from_email: string;
       from_name: string | null;
@@ -88,12 +109,21 @@ export async function sincronizarFeed(): Promise<FeedResult> {
       body_text: string | null;
     }[];
 
+    const correos = dentroDeVentana(todos, ventanas);
+
     if (correos.length === 0) {
+      // Decir de quién no ha llegado nada, por su nombre. Es la diferencia
+      // entre entender que un medio al que citan otros no te escribe a ti, y
+      // pensar que la app está rota.
+      const callados = sinNoticias(seguidos, todos);
       return {
         markdown: null,
         emails: 0,
         costUsd: 0,
-        error: "No ha llegado ningún boletín nuevo desde la última vez.",
+        error:
+          callados.length > 0
+            ? `No ha llegado nada nuevo. Sin correos esta semana de: ${callados.join(", ")}.`
+            : "No ha llegado ningún boletín nuevo desde la última vez.",
       };
     }
 
@@ -178,7 +208,10 @@ export async function sincronizarFeed(): Promise<FeedResult> {
     }
 
     await admin.from("feed_digests").insert({
-      since: desde.toISOString(),
+      // El más antiguo que ha entrado: es lo que de verdad cubre esta
+      // síntesis, y con ventanas por remitente ya no hay una sola fecha de
+      // partida que valga para todos.
+      since: correos[correos.length - 1].received_at,
       markdown,
       emails: conCuerpo.length,
       cost_usd: spend.usd,
@@ -202,7 +235,8 @@ export async function sincronizarFeed(): Promise<FeedResult> {
  * —o después de mucho tiempo— una semana, que es lo que cabe leer de una
  * sentada sin que la síntesis se vuelva un resumen de resúmenes.
  */
-async function desdeCuando(): Promise<Date> {
+/** Cuándo se hizo la última síntesis, o null si no hay ninguna. */
+async function ultimaSintesis(): Promise<string | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("feed_digests")
@@ -211,10 +245,7 @@ async function desdeCuando(): Promise<Date> {
     .limit(1)
     .maybeSingle();
 
-  const ultima = (data as { created_at: string } | null)?.created_at;
-  const tope = Date.now() - PRIMERA_VENTANA_MS;
-  if (!ultima) return new Date(tope);
-  return new Date(Math.max(Date.parse(ultima), tope));
+  return (data as { created_at: string } | null)?.created_at ?? null;
 }
 
 async function gmailIdDe(id: string): Promise<string> {

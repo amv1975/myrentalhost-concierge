@@ -2,7 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /preview solo existe con RADAR_PREVIEW=1 y no lee datos de nadie.
-const PUBLIC_PATHS = ["/login", "/auth", "/preview"];
+// Privacidad y términos tienen que abrirse sin haber entrado: Google los pide
+// para sacar la app del modo Testing, y una política de privacidad que te
+// manda al login no es una política de privacidad.
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth",
+  "/preview",
+  "/privacidad",
+  "/terminos",
+];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

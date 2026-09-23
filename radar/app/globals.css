@@ -145,8 +145,8 @@ body {
   --p-paper: var(--color-ground);
   --p-surface: #f8f9f7;
   --p-ink: #141816;
-  --p-muted: #5a6360;
-  --p-faint: #8b9490;
+  --p-muted: #4e5754;
+  --p-faint: #6d7773;
   --p-rule: #d6dbd7;
   --p-rule-soft: #e4e8e5;
   --p-work: #0b4f4a;
@@ -211,9 +211,19 @@ body {
 
   .parte {
     --p-surface: #171b19;
-    --p-ink: #e4e8e5;
-    --p-muted: #97a19d;
-    --p-faint: #6b7571;
+    --p-ink: #e6eae7;
+    /*
+     * Estos dos grises se eligieron mirando el color, no el contraste contra
+     * el fondo que acabaron teniendo. `#6b7571` sobre `#171b19` da 3,6:1, por
+     * debajo del mínimo legible para texto pequeño, y encima casi todo lo que
+     * lo usaba iba en mono a 12,5 px. En un móvil, de noche, eso no es un
+     * matiz de jerarquía: es texto que no se lee.
+     *
+     * Siguen siendo secundarios —se distinguen del ink a simple vista— pero
+     * ahora pasan de 7:1 y 5:1.
+     */
+    --p-muted: #b4beb9;
+    --p-faint: #99a4a0;
     --p-rule: #272d2a;
     --p-rule-soft: #1f2422;
     --p-work: #6fbfb2;
@@ -256,7 +266,7 @@ body {
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--p-muted);
@@ -277,7 +287,7 @@ body {
 
 .parte-eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -303,7 +313,7 @@ body {
 
 .parte-tally {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-muted);
   display: flex;
   flex-wrap: wrap;
@@ -323,7 +333,7 @@ body {
 
 .parte h2 {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -355,7 +365,7 @@ body {
   align-items: center;
   padding: 0 14px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   pointer-events: none;
@@ -436,7 +446,7 @@ body {
 
 .parte-at {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
   font-variant-numeric: tabular-nums;
   padding-top: 2px;
@@ -456,7 +466,7 @@ body {
   align-items: center;
   gap: 4px 7px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
 }
 .parte-who {
@@ -468,7 +478,7 @@ body {
 
 .parte-chip {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   font-weight: 500;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -507,7 +517,7 @@ body {
 
 .parte-flag {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   letter-spacing: 0.06em;
   color: var(--p-alert);
   text-transform: uppercase;
@@ -534,7 +544,7 @@ body {
 }
 .parte-subject {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
   word-break: break-word;
 }
@@ -583,7 +593,7 @@ body {
 }
 .parte-noise summary {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-muted);
   cursor: pointer;
   list-style: none;
@@ -611,7 +621,7 @@ body {
   width: 100%;
   margin-top: 12px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-ink);
   background: var(--p-surface);
   border: 1px solid var(--p-rule);
@@ -640,7 +650,7 @@ body {
 }
 .parte-noise li {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   line-height: 1.4;
   color: var(--p-faint);
   display: flex;
@@ -678,7 +688,7 @@ body {
 
 .parte-noise .nacciones button {
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-ink);
   background: none;
   border: 1px solid var(--p-rule);
@@ -710,7 +720,7 @@ body {
   width: 100%;
   margin-top: 12px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-ink);
   background: var(--p-surface);
   border: 1px solid var(--p-rule);
@@ -732,7 +742,7 @@ body {
 }
 
 .parte-noise .note {
-  font-size: 13.7px;
+  font-size: 14.8px;
   color: var(--p-faint);
   margin: 12px 0 0;
   max-width: 58ch;
@@ -762,7 +772,7 @@ body {
 
 .feed-sync .nota {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-muted);
   margin: 8px 0 0;
   text-align: center;
@@ -770,7 +780,7 @@ body {
 
 .feed-digest .cuando {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
   margin: 0 0 14px;
 }
@@ -785,7 +795,7 @@ body {
 
 .feed-lista h2 {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--p-faint);
@@ -800,12 +810,12 @@ body {
   flex-direction: column;
   gap: 6px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-muted);
 }
 
 .feed-lista .nota {
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
   margin: 0;
   max-width: 58ch;
@@ -827,7 +837,7 @@ body {
 
 .parte-foot {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
   border-top: 1px solid var(--p-rule);
   padding-top: 14px;
@@ -862,7 +872,7 @@ body {
 
 .parte-equipo button {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   padding: 10px 12px;
   border-radius: 2px;
   cursor: pointer;
@@ -877,7 +887,7 @@ body {
 
 .parte-equipo .aviso {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   line-height: 1.45;
   color: var(--p-muted);
   margin: 6px auto 0;
@@ -1009,7 +1019,7 @@ body {
 }
 
 .parte-hint {
-  font-size: 13.5px;
+  font-size: 14.8px;
   line-height: 1.5;
   color: var(--p-faint);
   margin: 0;
@@ -1043,7 +1053,7 @@ body {
   min-width: 0;
   gap: 5px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   letter-spacing: 0.01em;
   text-transform: uppercase;
   padding: 8px 4px;
@@ -1095,7 +1105,7 @@ body {
 
 .parte-agenda .libre span {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   color: var(--p-faint);
 }
 
@@ -1107,7 +1117,7 @@ body {
 
 .parte-agenda .cuando {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--p-faint);
@@ -1138,7 +1148,7 @@ body {
 
 .parte-agenda .hora {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.7px;
+  font-size: 14.8px;
   font-variant-numeric: tabular-nums;
   color: var(--p-muted);
   padding-top: 1px;
@@ -1181,7 +1191,7 @@ body {
 
 .parte-broken .detalle {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   line-height: 1.5;
   color: var(--p-alert);
   margin: 0;
@@ -1243,7 +1253,7 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.7px;
+  font-size: 14.8px;
 }
 
 .estado-tabla td {
@@ -1291,13 +1301,13 @@ body {
 .estado-bloque p.mal {
   text-align: left;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   margin: 0;
   word-break: break-word;
 }
 
 .estado-bloque .nota {
-  font-size: 13.7px;
+  font-size: 14.8px;
   line-height: 1.5;
   color: var(--p-faint);
   margin: 0;
@@ -1312,7 +1322,7 @@ body {
   flex-direction: column;
   gap: 6px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13.5px;
+  font-size: 14.8px;
   line-height: 1.45;
   color: var(--p-faint);
 }
@@ -1339,14 +1349,16 @@ body {
   padding-left: 10px;
 }
 
+/* Es un botón, no una nota al pie: va en el gris de los secundarios, no en el
+   de lo prescindible. Un control que no se ve no existe. */
 .feed-elegir {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 12.5px;
+  font-size: 14px;
   letter-spacing: 0.04em;
   background: none;
   border: 0;
-  padding: 4px 0 0;
-  color: var(--p-faint);
+  padding: 6px 0 0;
+  color: var(--p-muted);
   cursor: pointer;
 }
 
@@ -1377,7 +1389,7 @@ body {
 .feed-historial .cuando {
   display: block;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--p-faint);
 }
 

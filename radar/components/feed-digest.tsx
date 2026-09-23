@@ -75,7 +75,7 @@ export function FeedDigest({
               aria-pressed={elegido}
               onClick={() => alternar(bloque.id)}
             >
-              {elegido ? "✓ Para el equipo" : "Pasar al equipo"}
+              {elegido ? "✓ Share" : "Share"}
             </button>
           </div>
         );
@@ -85,9 +85,9 @@ export function FeedDigest({
         <div className="parte-equipo">
           <div>
             <button type="button" className="mandar" onClick={enviar}>
-              {enviado
-                ? "Enviar otra vez"
-                : `Pasar ${elegidos.length} al equipo`}
+              {/* El número vale igual para uno que para cinco: nada de
+                  plurales inventados ni de "Share 1 elemento". */}
+              {enviado ? "Share otra vez" : `Share ${elegidos.length}`}
             </button>
             <button
               type="button"

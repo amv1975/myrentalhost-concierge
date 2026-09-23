@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getFeed } from "@/lib/feed/leer";
 import { FeedSync } from "@/components/feed-sync";
+import { FeedDigest } from "@/components/feed-digest";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,14 @@ export const dynamic = "force-dynamic";
  * plazo, nadie espera respuesta y no se rompe nada si no se abre, así que
  * puesto entre las cosas urgentes le quita el sitio a algo que sí urge.
  */
-export default async function FeedPage() {
-  const feed = await getFeed();
+export default async function FeedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ s?: string }>;
+}) {
+  const { s } = await searchParams;
+  const feed = await getFeed(s);
+  const leyendoVieja = feed.ultima !== null && feed.historial[0]?.id !== feed.ultima.id;
 
   return (
     <div className="parte feed">
@@ -47,8 +54,17 @@ export default async function FeedPage() {
         <section className="feed-digest">
           <p className="cuando">
             {fecha(feed.ultima.createdAt)} · {feed.ultima.emails} boletines
+            {leyendoVieja ? (
+              <>
+                {" · "}
+                <Link href="/feed">ver la última</Link>
+              </>
+            ) : null}
           </p>
-          <Markdown texto={feed.ultima.markdown} />
+          <FeedDigest
+            markdown={feed.ultima.markdown}
+            createdAt={feed.ultima.createdAt}
+          />
         </section>
       ) : (
         <p className="parte-empty">
@@ -59,6 +75,28 @@ export default async function FeedPage() {
               : "Pulsa Sincronizar cuando tengas un rato."}
           </span>
         </p>
+      )}
+
+      {feed.sinMontar || feed.historial.length < 2 ? null : (
+        <section className="feed-lista">
+          <h2>Síntesis anteriores</h2>
+          <ul className="feed-historial">
+            {feed.historial
+              .filter((h) => h.id !== feed.ultima?.id)
+              .map((h) => (
+                <li key={h.id}>
+                  <Link href={`/feed?s=${h.id}`}>
+                    <span className="cuando">{fecha(h.createdAt)}</span>
+                    <span className="titulo">{h.titulo}</span>
+                  </Link>
+                </li>
+              ))}
+          </ul>
+          <p className="nota">
+            No se borran. Lo que costó una sincronización se puede releer
+            siempre, y leídas seguidas se ve lo que se repite.
+          </p>
+        </section>
       )}
 
       {feed.sinMontar ? null : (
@@ -89,33 +127,6 @@ export default async function FeedPage() {
         </span>
       </p>
     </div>
-  );
-}
-
-/**
- * Markdown mínimo: negritas y párrafos, que es lo único que produce la
- * síntesis. Meter una librería entera para dos marcas sería pagar cien
- * kilobytes por un asterisco.
- */
-function Markdown({ texto }: { texto: string }) {
-  return (
-    <>
-      {texto
-        .split(/\n{2,}/)
-        .map((parrafo) => parrafo.trim())
-        .filter(Boolean)
-        .map((parrafo, i) => (
-          <p key={i}>
-            {parrafo.split(/(\*\*[^*]+\*\*)/g).map((trozo, j) =>
-              trozo.startsWith("**") && trozo.endsWith("**") ? (
-                <b key={j}>{trozo.slice(2, -2)}</b>
-              ) : (
-                <span key={j}>{trozo.replace(/^[-*]\s*/, "")}</span>
-              ),
-            )}
-          </p>
-        ))}
-    </>
   );
 }
 

@@ -33,6 +33,14 @@ que tenga que volver a entrar.
 3. **Pantalla de consentimiento OAuth**: tipo Externo, en modo *Testing*. Añade
    como usuarios de prueba `agustinvillafanie@gmail.com` y
    `victoria.williams1@gmail.com`.
+   **Esto caduca cada 7 días.** Un día Actualizar contesta "El permiso de
+   Google caducó" y hay que volver a conectar desde el propio parte (el enlace
+   sale con el aviso). Para que deje de pasar, en Google Cloud → Audiencia →
+   **Publicar la app**: sale una pantalla de "Google no ha verificado esta
+   aplicación" al entrar —Avanzado → Continuar— pero el permiso deja de
+   caducar. Con scopes restringidos y sin verificar, el tope son 100 usuarios,
+   que para un buzón sobra.
+
    En modo Testing el consentimiento caduca cada 7 días y hay que volver a
    entrar; para uso continuado, publica la app (con scopes sensibles Google pide
    verificación, pero para uso propio con pocos usuarios basta con aceptar el

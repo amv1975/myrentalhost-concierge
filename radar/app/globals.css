@@ -1431,3 +1431,19 @@ body {
 .parte-espera {
   color: var(--p-alert);
 }
+
+/* El pie del botón de actualizar: lo que pasó en la última pasada, o qué
+   falló. Con contraste suficiente para leerlo, que es más de lo que tenía. */
+.parte-aviso {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--p-muted);
+}
+
+.parte-aviso a {
+  color: var(--p-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

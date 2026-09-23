@@ -200,8 +200,17 @@ export function RefreshButton({
         ) : null}
       </button>
       {message && !busy ? (
-        <p className="mt-1.5 text-center text-xs leading-relaxed text-[var(--color-muted)]">
+        <p className="parte-aviso">
           {message}
+          {/* Un mensaje que dice qué hacer y no deja hacerlo es la peor clase
+              de error. El permiso de Google caduca cada siete días en modo
+              Testing y no había en ninguna pantalla forma de renovarlo. */}
+          {necesitaReconectar(message) ? (
+            <>
+              {" "}
+              <a href="/reconectar">Volver a conectar con Google</a>
+            </>
+          ) : null}
         </p>
       ) : null}
     </div>
@@ -264,12 +273,17 @@ function summary(body: {
  * está mirando el móvil. Se traducen los que tienen una causa reconocible y del
  * resto se muestra solo el principio.
  */
+/** Si el fallo se arregla volviendo a dar permiso. */
+function necesitaReconectar(mensaje: string): boolean {
+  return /permiso de Google|aceptando el acceso/i.test(mensaje);
+}
+
 function readable(raw: string): string {
   if (/Quota exceeded|rateLimitExceeded|429|limitando/i.test(raw)) {
     return "Gmail limitó las peticiones. Se guardó lo descargado; vuelve a pulsar en un minuto para el resto.";
   }
   if (/invalid_grant|refresh token/i.test(raw)) {
-    return "El permiso de Google caducó. Cierra sesión y vuelve a entrar para renovarlo.";
+    return "El permiso de Google caducó —pasa cada siete días mientras la app esté en modo Testing—.";
   }
   if (/insufficient|insufficientPermissions|403/i.test(raw)) {
     return "Google rechazó la petición por permisos. Vuelve a entrar aceptando el acceso a Gmail y Calendar.";

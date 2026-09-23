@@ -130,9 +130,10 @@ function explainTokenError(status: number, body: string): string {
 
   if (/invalid_grant/.test(body)) {
     return (
-      "El permiso de Google ya no vale: o caducó, o lo revocaste, o la app usa " +
-      "ahora un cliente OAuth distinto del que lo concedió. Cierra sesión y " +
-      "vuelve a entrar aceptando el acceso."
+      "El permiso de Google caducó. Mientras la pantalla de consentimiento " +
+      "esté en modo Testing, Google lo invalida cada siete días: no es un " +
+      "fallo de la app ni se ha perdido nada. Vuelve a conectar y sigue. " +
+      "Para que deje de pasar hay que publicar la app en Google Cloud."
     );
   }
 

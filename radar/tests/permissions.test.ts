@@ -175,3 +175,21 @@ function sourceFiles(): string[] {
   for (const dir of SCANNED) walk(path.join(ROOT, dir));
   return files;
 }
+
+describe("volver a conectar", () => {
+  it("el mensaje del permiso caducado dice qué pasa y cómo se arregla", () => {
+    const oauth = readFileSync(path.join(ROOT, "lib/google/oauth.ts"), "utf8");
+    // Antes decía "o caducó, o lo revocaste, o la app usa otro cliente": tres
+    // hipótesis, ninguna accionable. La causa real es una y está documentada.
+    expect(oauth).toContain("modo Testing");
+    expect(oauth).not.toContain("Cierra sesión y");
+  });
+
+  it("existe una ruta para volver a conectar", () => {
+    const ruta = readFileSync(path.join(ROOT, "app/reconectar/route.ts"), "utf8");
+    expect(ruta).toContain("signOut");
+    // Sin esto, el mensaje decía qué hacer y no había forma de hacerlo.
+    const boton = readFileSync(path.join(ROOT, "components/refresh-button.tsx"), "utf8");
+    expect(boton).toContain("/reconectar");
+  });
+});

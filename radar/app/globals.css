@@ -1146,6 +1146,13 @@ body {
   line-height: 1.4;
 }
 
+/* El texto se queda con el espacio que sobra y el botón no se sale de la
+   pantalla cuando el título es largo. */
+.parte-agenda li .que {
+  flex: 1;
+  min-width: 0;
+}
+
 .parte-agenda .hora {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 14.8px;
@@ -1460,4 +1467,52 @@ body {
   margin-top: 10px;
   border-top: 1px solid var(--p-rule-soft);
   padding-top: 10px;
+}
+
+/* Despachar una cita: "con verlo una vez ya está".
+   El botón vive apagado al final de la línea — es lo opcional de la fila, y
+   una columna de botones encendidos convierte la agenda en un formulario. */
+.parte-agenda .agenda-listo {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  background: none;
+  border: 0;
+  padding: 0 0 0 10px;
+  color: var(--p-faint);
+  cursor: pointer;
+  align-self: start;
+}
+
+.parte-agenda li:hover .agenda-listo,
+.parte-agenda .agenda-listo:focus-visible {
+  color: var(--p-ink);
+}
+
+/* Lo que se acaba de quitar, con su vuelta atrás. Nombra la cita: "quitado"
+   sobre una línea que ya no está no dice cuál era. */
+.parte-agenda .agenda-fuera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--p-faint);
+}
+
+.parte-agenda .agenda-fuera > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.parte-agenda .agenda-fuera button {
+  flex: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--p-ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }

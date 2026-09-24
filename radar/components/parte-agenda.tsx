@@ -1,4 +1,5 @@
 import type { Agenda } from "@/lib/agenda";
+import { AgendaSlotRow } from "@/components/agenda-slot";
 
 /**
  * La agenda, encima de todo lo demás.
@@ -62,16 +63,8 @@ function Day({
         <span className="nada">nada</span>
       ) : (
         <ul>
-          {slots.map((slot, index) => (
-            <li key={`${slot.time}-${index}`}>
-              <span className="hora">{slot.time}</span>
-              <span className="que">
-                {slot.title}
-                {slot.location ? (
-                  <span className="donde"> · {slot.location}</span>
-                ) : null}
-              </span>
-            </li>
+          {slots.map((slot) => (
+            <AgendaSlotRow key={slot.id} slot={slot} />
           ))}
         </ul>
       )}

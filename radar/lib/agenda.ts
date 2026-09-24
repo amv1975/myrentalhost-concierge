@@ -9,12 +9,15 @@ import { getAccessToken, getIngestUserId } from "@/lib/google/oauth";
 import type { Space } from "@/lib/types";
 import {
   choques,
-  duracion,
-  huecos,
-  mejorHueco,
+  describirDia,
+  sinLoOculto,
+  type Agenda,
+  type AgendaSlot,
   type Bloque,
-  type Choque,
 } from "@/lib/dia";
+
+export type { Agenda, AgendaSlot } from "@/lib/dia";
+export { sinLoOculto } from "@/lib/dia";
 
 /**
  * Qué tienes hoy y mañana.
@@ -29,31 +32,6 @@ import {
  * que estés en ningún sitio; una reunión a las 11:00, sí.
  */
 
-export interface AgendaSlot {
-  when: "hoy" | "mañana";
-  time: string;
-  title: string;
-  location: string | null;
-}
-
-export interface Agenda {
-  slots: AgendaSlot[];
-  /**
-   * Cómo es el día, en una frase.
-   *
-   * Los eventos en fila son una lista; esto es la respuesta. "Tenés la mañana
-   * libre hasta las 11:45" cambia lo que haces con el resto del parte, y
-   * "HOY 11:45 médico" no.
-   */
-  marco: string | null;
-  /** Lo que se pisa, hoy o mañana. Vacío casi siempre. */
-  pisados: Choque[];
-  /** Estancias y demás bloques de día completo, que solo se cuentan. */
-  blocks: number;
-  /** Null si no se pudo mirar: mejor no decir nada que decir "no tienes nada". */
-  ok: boolean;
-}
-
 const TZ = "Europe/Madrid";
 
 /** El calendario se consulta como mucho una vez cada cinco minutos. Refrescar
@@ -63,11 +41,38 @@ const TTL_MS = 5 * 60_000;
 let cached: { at: number; agenda: Agenda } | null = null;
 
 export async function getAgenda(spaces: Space[]): Promise<Agenda> {
-  if (cached && Date.now() - cached.at < TTL_MS) return cached.agenda;
+  const fresca =
+    cached && Date.now() - cached.at < TTL_MS
+      ? cached.agenda
+      : await load(spaces);
 
-  const agenda = await load(spaces);
-  cached = { at: Date.now(), agenda };
-  return agenda;
+  if (!cached || cached.agenda !== fresca) {
+    cached = { at: Date.now(), agenda: fresca };
+  }
+
+  // Lo oculto se aplica DESPUÉS del caché, no dentro. Si entrara en la parte
+  // cacheada, despachar una cita no se vería hasta cinco minutos después, y
+  // un botón que tarda cinco minutos en hacer efecto es un botón roto.
+  return sinLoOculto(fresca, await leerOcultos());
+}
+
+async function leerOcultos(): Promise<Set<string>> {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const { data, error } = await createAdminClient()
+      .from("agenda_ocultos")
+      .select("google_event_id");
+    if (error) throw error;
+    return new Set(
+      ((data ?? []) as { google_event_id: string }[]).map(
+        (f) => f.google_event_id,
+      ),
+    );
+  } catch {
+    // La tabla puede no estar creada todavía. Que falte algo opcional no
+    // puede dejar sin agenda a nadie.
+    return new Set();
+  }
 }
 
 async function load(spaces: Space[]): Promise<Agenda> {
@@ -75,6 +80,7 @@ async function load(spaces: Space[]): Promise<Agenda> {
     slots: [],
     marco: null,
     pisados: [],
+    bloques: [],
     blocks: 0,
     ok: false,
   };
@@ -105,6 +111,7 @@ async function load(spaces: Space[]): Promise<Agenda> {
       slots: real.map(toSlot).filter(isSlot),
       marco: describirDia(bloques),
       pisados: choques(bloques),
+      bloques,
       // Solo lo que Google puso solo. Antes contaba también los cumpleaños y
       // cualquier cosa de día completo, así que "3 bloques de estancias" podía
       // no tener ninguna estancia dentro.
@@ -119,58 +126,6 @@ async function load(spaces: Space[]): Promise<Agenda> {
 }
 
 
-
-/**
- * El día contado como lo contaría alguien.
- *
- * Solo dice algo cuando hay algo que decir: con la agenda vacía, la frase
- * sobra —el parte ya se lee como un día libre— y con el día acabado, prometer
- * una ventana de trabajo sería mentir.
- */
-function describirDia(bloques: Bloque[]): string | null {
-  const ahora = Date.now();
-  const hoy = bloques.filter((b) => b.when === "hoy");
-  if (hoy.length === 0) return null;
-
-  const fin = finDeJornada().getTime();
-  const libres = huecos(hoy, ahora, fin);
-  const mejor = mejorHueco(libres);
-  if (!mejor) return "Hoy ya no queda hueco libre entre lo que tenés apuntado.";
-
-  const hasta = hhmm(new Date(mejor.hasta));
-  const desde = hhmm(new Date(mejor.desde));
-  const cuanto = duracion(mejor.minutos);
-
-  // Que el hueco llegue hasta el final de la jornada quiere decir que ya no
-  // hay nada después: "hasta las 19:00" suena a tope y no lo es.
-  const abierto = mejor.hasta >= fin;
-  if (abierto) {
-    return hoy.every((b) => b.end <= ahora)
-      ? `El resto del día lo tenés libre: ${cuanto} desde las ${desde}.`
-      : `Después de lo de hoy te quedan ${cuanto}, desde las ${desde}.`;
-  }
-
-  return `Tu hueco más largo de hoy son ${cuanto}, de ${desde} a ${hasta}.`;
-}
-
-/** Hasta qué hora cuenta el día como trabajable. */
-function finDeJornada(): Date {
-  const hoy = ymd(new Date());
-  for (const desfase of ["+02:00", "+01:00"]) {
-    const t = new Date(Date.parse(`${hoy}T19:00:00${desfase}`));
-    if (ymd(t) === hoy) return t;
-  }
-  return new Date(`${hoy}T19:00:00Z`);
-}
-
-function hhmm(date: Date): string {
-  return new Intl.DateTimeFormat("es-ES", {
-    timeZone: TZ,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date);
-}
 
 /** Una hora por defecto: un evento sin fin no ocupa cero. */
 const DURACION_POR_DEFECTO_MS = 3_600_000;
@@ -187,6 +142,7 @@ function toBloque(event: CalendarEntry): Bloque | null {
   if (!when) return null;
 
   return {
+    id: event.id,
     start: event.start.getTime(),
     end:
       event.end && event.end > event.start
@@ -214,6 +170,7 @@ function toSlot(event: CalendarEntry): AgendaSlot | null {
   if (!when) return null;
 
   return {
+    id: event.id,
     when,
     time: event.allDay
       ? "todo el día"

@@ -9,7 +9,7 @@ function bloque(
   title: string,
   when: "hoy" | "mañana" = "hoy",
 ): Bloque {
-  return { start: T(desde), end: T(hasta), title, when };
+  return { id: title, start: T(desde), end: T(hasta), title, when };
 }
 
 describe("choques", () => {
@@ -126,5 +126,43 @@ describe("duracion", () => {
     expect(duracion(60)).toBe("1 hora");
     expect(duracion(120)).toBe("2 horas");
     expect(duracion(225)).toBe("3 h 45 min");
+  });
+});
+
+describe("ocultar una cita", () => {
+  it("rehace el marco del día sin lo que despachaste", async () => {
+    const { sinLoOculto } = await import("@/lib/dia");
+    const bloques = [
+      bloque("11:30", "12:30", "Telefonillo Galileu"),
+      bloque("12:00", "13:00", "Desmontar cajón Casanova"),
+    ].map((b, i) => ({ ...b, id: `ev-${i}` }));
+
+    const antes = {
+      slots: [],
+      marco: null,
+      pisados: choques(bloques),
+      bloques,
+      blocks: 0,
+      ok: true,
+    };
+    expect(antes.pisados).toHaveLength(1);
+
+    // Si despachaste la que te partía la mañana, la mañana ya no está partida.
+    const despues = sinLoOculto(antes, new Set(["ev-0"]));
+    expect(despues.pisados).toEqual([]);
+    expect(despues.bloques).toHaveLength(1);
+  });
+
+  it("sin nada oculto devuelve lo mismo, sin recalcular", async () => {
+    const { sinLoOculto } = await import("@/lib/dia");
+    const agenda = {
+      slots: [],
+      marco: "x",
+      pisados: [],
+      bloques: [],
+      blocks: 0,
+      ok: true,
+    };
+    expect(sinLoOculto(agenda, new Set())).toBe(agenda);
   });
 });

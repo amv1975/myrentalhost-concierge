@@ -114,14 +114,22 @@ export const SAMPLE_AGENDA: Agenda = {
       when: "mañana" as const,
     },
   ],
+  bloques: [],
   blocks: 12,
   slots: [
     {
+      id: "ev-tutoria",
       when: "hoy",
       time: "17:30",
       title: "Tutoría con la profesora de tercero",
       location: "Col·legi Lestonnac",
     },
-    { when: "mañana", time: "09:00", title: "Check-in Gràcia 4", location: null },
+    {
+      id: "ev-checkin",
+      when: "mañana",
+      time: "09:00",
+      title: "Check-in Gràcia 4",
+      location: null,
+    },
   ],
 };

@@ -136,7 +136,12 @@ export async function sincronizarFeed(): Promise<FeedResult> {
     const conCuerpo: FeedEmail[] = [];
     for (const correo of correos) {
       let body = correo.body_text;
-      if (!body && accessToken) {
+      // Los cuerpos guardados antes de que se conservaran los enlaces no
+      // tienen ninguno, y un boletín sin enlaces no puede llevarte a leer
+      // nada. Se vuelven a bajar una vez; a partir de ahí ya traen su
+      // dirección y esta condición no se cumple nunca más.
+      const sinEnlaces = body !== null && !/https?:\/\//.test(body);
+      if ((!body || sinEnlaces) && accessToken) {
         try {
           body = await getMessageBody(accessToken, await gmailIdDe(correo.id));
           await admin

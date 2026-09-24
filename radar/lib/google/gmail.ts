@@ -11,6 +11,9 @@ import "server-only";
  */
 
 import type { MensajeDelHilo } from "@/lib/google/hilo-parse";
+import { decodeEntities, htmlToText } from "@/lib/google/html";
+
+export { htmlToText } from "@/lib/google/html";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -370,32 +373,3 @@ function decodeBase64Url(part: GmailPart): string {
     .toString("utf8");
 }
 
-export function htmlToText(html: string): string {
-  return decodeEntities(
-    html
-      .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
-      .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<[^>]+>/g, " "),
-  )
-    .replace(/[ \t ]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/^[ \t]+|[ \t]+$/gm, "");
-}
-
-function decodeEntities(text: string): string {
-  const named: Record<string, string> = {
-    amp: "&",
-    lt: "<",
-    gt: ">",
-    quot: '"',
-    apos: "'",
-    nbsp: " ",
-  };
-  return text
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
-      String.fromCodePoint(parseInt(code, 16)),
-    )
-    .replace(/&([a-z]+);/gi, (match, name) => named[name.toLowerCase()] ?? match);
-}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { partir } from "@/lib/feed/bloques";
 import { textoDelFeed } from "@/lib/feed/compartir";
 import { enlaceWhatsApp } from "@/lib/equipo";
+import { trocear } from "@/lib/feed/markdown";
 
 /**
  * La síntesis, con lo que hace falta para pasarle un trozo al equipo.
@@ -67,7 +68,7 @@ export function FeedDigest({
             <p>
               {bloque.titulo ? <b>{bloque.titulo}</b> : null}
               {bloque.titulo ? " " : null}
-              <Negritas texto={bloque.cuerpo} />
+              <Rico texto={bloque.cuerpo} />
             </p>
             <button
               type="button"
@@ -107,17 +108,33 @@ export function FeedDigest({
   );
 }
 
-/** Las negritas de dentro del párrafo. Dos marcas no piden una librería. */
-function Negritas({ texto }: { texto: string }) {
+/**
+ * Negritas y enlaces. Dos marcas no piden una librería de markdown.
+ *
+ * Los enlaces abren fuera y con `noreferrer`: la dirección viene de un correo
+ * que no controlamos, así que la página de destino no tiene por qué saber de
+ * dónde sale el clic ni poder tocar esta pestaña.
+ */
+function Rico({ texto }: { texto: string }) {
   return (
     <>
-      {texto.split(/(\*\*[^*]+\*\*)/g).map((trozo, i) =>
-        trozo.startsWith("**") && trozo.endsWith("**") ? (
-          <b key={i}>{trozo.slice(2, -2)}</b>
-        ) : (
-          <span key={i}>{trozo}</span>
-        ),
-      )}
+      {trocear(texto).map((trozo, i) => {
+        if (trozo.tipo === "negrita") return <b key={i}>{trozo.texto}</b>;
+        if (trozo.tipo === "enlace") {
+          return (
+            <a
+              key={i}
+              href={trozo.url}
+              target="_blank"
+              rel="noreferrer noopener nofollow"
+              className="feed-enlace"
+            >
+              {trozo.texto}
+            </a>
+          );
+        }
+        return <span key={i}>{trozo.texto}</span>;
+      })}
     </>
   );
 }

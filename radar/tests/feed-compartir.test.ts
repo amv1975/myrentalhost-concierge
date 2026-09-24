@@ -71,3 +71,22 @@ describe("textoDelFeed", () => {
     );
   });
 });
+
+describe("el enlace al original", () => {
+  const cuando = new Date("2026-09-22T10:00:00Z");
+
+  it("en WhatsApp la dirección va suelta, no entre corchetes", () => {
+    const bloques = partir(
+      "**Booking y la nota de ubicación** Un punto más sube la tarifa un 21% [Hosteltur](https://hosteltur.com/x).",
+    );
+    const texto = textoDelFeed(bloques, cuando);
+    expect(texto).toContain("Hosteltur: https://hosteltur.com/x");
+    expect(texto).not.toContain("](");
+  });
+
+  it("y las negritas siguen siendo de WhatsApp", () => {
+    expect(aWhatsApp("sube un **21%** [ver](https://a.com)")).toBe(
+      "sube un *21%* ver: https://a.com",
+    );
+  });
+});

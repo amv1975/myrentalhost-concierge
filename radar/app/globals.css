@@ -1516,3 +1516,12 @@ body {
   padding: 0;
   cursor: pointer;
 }
+
+/* El enlace al artículo original. Subrayado y en el color del texto: dentro de
+   un párrafo, un enlace de otro color lo rompe en dos. */
+.feed-enlace {
+  color: var(--p-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--p-rule);
+}

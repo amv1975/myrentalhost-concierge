@@ -1,4 +1,5 @@
 import type { Bloque } from "@/lib/feed/bloques";
+import { enlacesPlanos } from "@/lib/feed/markdown";
 
 /**
  * Lo que llega al grupo del equipo.
@@ -34,5 +35,7 @@ export function textoDelFeed(bloques: Bloque[], cuando: Date): string {
 
 /** Negrita de markdown a negrita de WhatsApp. */
 export function aWhatsApp(texto: string): string {
-  return texto.replace(/\*\*([^*]+)\*\*/g, "*$1*");
+  // Primero los enlaces: `[Hosteltur](https://…)` pegado en un chat es
+  // ilegible y encima no se puede pulsar. Una dirección suelta, sí.
+  return enlacesPlanos(texto).replace(/\*\*([^*]+)\*\*/g, "*$1*");
 }

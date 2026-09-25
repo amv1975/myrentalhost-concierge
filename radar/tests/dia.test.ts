@@ -166,3 +166,21 @@ describe("ocultar una cita", () => {
     expect(sinLoOculto(agenda, new Set())).toBe(agenda);
   });
 });
+
+describe("el reparto del tiempo", () => {
+  it("la lectura no puede comerse el plazo de lo que va detrás", async () => {
+    const { deadlineIn, reservando } = await import("@/lib/deadline");
+    const plazo = deadlineIn(35_000);
+    const lectura = reservando(plazo, 6_000);
+    // El bug: la lectura corría con el plazo entero, así que los hilos
+    // empezaban con el reloj vencido y se cortaban en la primera vuelta.
+    expect(plazo.endsAt - lectura.endsAt).toBe(6_000);
+    expect(lectura.ok()).toBe(true);
+  });
+
+  it("si ya no queda tiempo, no inventa plazo hacia atrás", async () => {
+    const { reservando } = await import("@/lib/deadline");
+    const vencido = { ok: () => false, left: () => 0, endsAt: Date.now() - 1 };
+    expect(reservando(vencido, 6_000).ok()).toBe(false);
+  });
+});

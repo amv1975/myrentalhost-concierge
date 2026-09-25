@@ -1525,3 +1525,13 @@ body {
   text-underline-offset: 3px;
   text-decoration-color: var(--p-rule);
 }
+
+/* Un fallo al despachar una cita, en su propio renglón. Dentro del texto
+   parecía parte del nombre del sitio. */
+.parte-agenda .agenda-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--p-alert);
+  font-size: 14.8px;
+  line-height: 1.45;
+}

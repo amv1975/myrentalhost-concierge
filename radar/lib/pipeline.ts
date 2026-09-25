@@ -8,7 +8,12 @@ import { buildTriageContext } from "@/lib/triage/context";
 import { syncSpace } from "@/lib/calendar/sync";
 import { refrescarHilos } from "@/lib/triage/hilos";
 import { Spend } from "@/lib/usage";
-import { deadlineIn, porcion, type Deadline } from "@/lib/deadline";
+import {
+  deadlineIn,
+  porcion,
+  reservando,
+  type Deadline,
+} from "@/lib/deadline";
 import type { Space } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 import { VENTANA_MS } from "@/lib/ventana";
@@ -169,7 +174,13 @@ export async function runPipeline(
 
   // La lectura va con el plazo entero, no con una porción: es la etapa que
   // produce lo que se ve, y lo que le sobre a las anteriores es suyo.
-  const triaged = await triagePending(accessToken, spaces, context, spend, plazo);
+  const triaged = await triagePending(
+    accessToken,
+    spaces,
+    context,
+    spend,
+    reservando(plazo, REPARTO.hilos),
+  );
   result.read = triaged.read;
   result.family = triaged.family;
   result.work = triaged.work;
@@ -219,6 +230,15 @@ const BACKLOG_LIMIT = 60;
 const REPARTO = {
   bajar: 8_000,
   filtrar: 10_000,
+  /**
+   * Lo que se le guarda a los hilos del final del plazo.
+   *
+   * Son llamadas de metadatos, sin cuerpos y sin modelo: rápidas. Pero si no
+   * se les reserva nada, la lectura —que corre con el plazo entero— se lo come
+   * y el "sin responder" no se actualiza jamás los días con cola, que son
+   * justo los días en los que importa saber quién sigue esperando.
+   */
+  hilos: 6_000,
 };
 
 /**

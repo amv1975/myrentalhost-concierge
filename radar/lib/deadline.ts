@@ -58,6 +58,21 @@ export function porcion(plazo: Deadline, ms: number): Deadline {
 }
 
 /**
+ * El mismo plazo, guardando un trozo del final para lo que venga después.
+ *
+ * Existe por una etapa que no llegaba a correr nunca. La lectura va con el
+ * plazo entero a propósito —es la que produce lo que se ve— pero eso deja a
+ * cero lo que va detrás: el día que hay correos de sobra, la lectura agota el
+ * reloj y la etapa siguiente empieza con el plazo ya vencido y se corta en la
+ * primera vuelta. Así, pasada tras pasada.
+ *
+ * Con esto la lectura sigue teniendo casi todo, pero no todo.
+ */
+export function reservando(plazo: Deadline, ms: number): Deadline {
+  return hasta(Math.max(Date.now(), plazo.endsAt - ms));
+}
+
+/**
  * Lo que hay que pasarle a una llamada al modelo para que no se pase del plazo.
  *
  * El plazo se comprueba ENTRE llamadas, así que una sola llamada lenta se lo

@@ -66,7 +66,9 @@ export function AgendaSlotRow({ slot }: { slot: AgendaSlot }) {
       <span className="que">
         {slot.title}
         {slot.location ? <span className="donde"> · {slot.location}</span> : null}
-        {error ? <span className="parte-error"> {error}</span> : null}
+        {/* En su propio renglón: metido dentro del texto de la cita, el aviso
+            parecía parte del sitio donde era la cita. */}
+        {error ? <span className="agenda-error">{error}</span> : null}
       </span>
       <button
         type="button"

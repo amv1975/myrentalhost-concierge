@@ -4,7 +4,7 @@ import { useState } from "react";
 import { partir } from "@/lib/feed/bloques";
 import { textoDelFeed } from "@/lib/feed/compartir";
 import { enlaceWhatsApp } from "@/lib/equipo";
-import { trocear } from "@/lib/feed/markdown";
+import { primerEnlace, trocear } from "@/lib/feed/markdown";
 
 /**
  * La síntesis, con lo que hace falta para pasarle un trozo al equipo.
@@ -63,10 +63,28 @@ export function FeedDigest({
     <>
       {bloques.map((bloque) => {
         const elegido = elegidos.includes(bloque.id);
+        // El titular lleva al artículo cuando lo hay: es lo que se mira
+        // primero y lo que el pulgar busca. El nombre del medio se queda
+        // igual al final, que es la otra cosa que uno quiere saber —de dónde
+        // sale— y no estorba.
+        const url = primerEnlace(bloque.cuerpo);
         return (
           <div key={bloque.id} className="feed-bloque" data-elegido={elegido}>
             <p>
-              {bloque.titulo ? <b>{bloque.titulo}</b> : null}
+              {bloque.titulo ? (
+                url ? (
+                  <a
+                    className="feed-titular"
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer noopener nofollow"
+                  >
+                    {bloque.titulo}
+                  </a>
+                ) : (
+                  <b>{bloque.titulo}</b>
+                )
+              ) : null}
               {bloque.titulo ? " " : null}
               <Rico texto={bloque.cuerpo} />
             </p>

@@ -78,8 +78,8 @@ export default async function PreviewPage({
   );
 }
 
-const SAMPLE_FEED = `**Airbnb quiere cobrarte por vender dentro de su propia plataforma** Chesky anticipó anuncios patrocinados para anfitriones, con la idea de sumar 1.000 millones de dólares de ingresos. Todavía no hay fecha ni mecánica concreta, pero es la dirección.
+const SAMPLE_FEED = `**Airbnb quiere cobrarte por vender dentro de su propia plataforma** Chesky anticipó anuncios patrocinados para anfitriones, con la idea de sumar 1.000 millones de dólares de ingresos. Todavía no hay fecha ni mecánica concreta, pero es la dirección. [Hosteltur](https://www.hosteltur.com/x.html)
 
-**Apartur: ocupación del 88,8% en Barcelona este verano** Tres medios citan esta misma cifra en el marco del debate sobre acotar el alquiler turístico. Nada urgente, pero es la semana en que más medios hablaron de vuestro sector.
+**Apartur: ocupación del 88,8% en Barcelona este verano** Tres medios citan esta misma cifra en el marco del debate sobre acotar el alquiler turístico. Nada urgente, pero es la semana en que más medios hablaron de vuestro sector. [El País](https://elpais.com/x)
 
 Lo demás iba de hoteles (RMS de Cloudbeds, informes de IA generativa para cadenas), rondas de financiación de startups de pagos, y notas de prensa sueltas de turismo general.`;

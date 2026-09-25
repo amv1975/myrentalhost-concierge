@@ -1517,13 +1517,33 @@ body {
   cursor: pointer;
 }
 
-/* El enlace al artículo original. Subrayado y en el color del texto: dentro de
-   un párrafo, un enlace de otro color lo rompe en dos. */
+/* El enlace al artículo original.
+   El subrayado iba en el color de las líneas de separación: casi invisible, y
+   un enlace que no parece un enlace no se pulsa. Ahora se ve, y la flecha dice
+   que abre fuera. */
 .feed-enlace {
-  color: var(--p-ink);
+  color: var(--p-work);
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: var(--p-rule);
+  text-decoration-thickness: 1px;
+  white-space: nowrap;
+}
+
+.feed-enlace::after {
+  content: " ↗";
+  font-size: 0.85em;
+}
+
+/* El titular, cuando lleva al artículo. Sigue leyéndose como un titular —es lo
+   primero de la línea y tiene que pesar— con el subrayado justo para que se
+   vea que se puede pulsar. */
+.feed-titular {
+  font-weight: 700;
+  color: var(--p-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--p-work);
 }
 
 /* Un fallo al despachar una cita, en su propio renglón. Dentro del texto

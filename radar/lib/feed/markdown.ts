@@ -57,3 +57,17 @@ export function enlacesPlanos(texto: string): string {
     return `${etiqueta}: ${limpia}`;
   });
 }
+
+/**
+ * El primer enlace de un párrafo, para poder colgarlo también del titular.
+ *
+ * Un titular es lo que se mira primero y lo que el pulgar busca. Dejar el
+ * único camino al artículo en el nombre del medio, al final del párrafo y en
+ * letra pequeña, es esconderlo: hay que saber que está para encontrarlo.
+ */
+export function primerEnlace(texto: string): string | null {
+  for (const trozo of trocear(texto)) {
+    if (trozo.tipo === "enlace") return trozo.url;
+  }
+  return null;
+}

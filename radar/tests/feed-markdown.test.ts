@@ -58,3 +58,29 @@ describe("enlacesPlanos", () => {
     expect(enlacesPlanos("Nada que enlazar")).toBe("Nada que enlazar");
   });
 });
+
+describe("primerEnlace", () => {
+  it("encuentra el artículo para colgarlo del titular", async () => {
+    const { primerEnlace } = await import("@/lib/feed/markdown");
+    expect(
+      primerEnlace("Los anuncios subieron un 47%. [3CatInfo](https://3cat.cat/x)"),
+    ).toBe("https://3cat.cat/x");
+  });
+
+  it("se queda con el primero cuando hay varios", async () => {
+    const { primerEnlace } = await import("@/lib/feed/markdown");
+    expect(primerEnlace("[A](https://a.com) y [B](https://b.com)")).toBe(
+      "https://a.com",
+    );
+  });
+
+  it("sin enlace, el titular se queda en titular", async () => {
+    const { primerEnlace } = await import("@/lib/feed/markdown");
+    expect(primerEnlace("Lo demás iba de hoteles.")).toBeNull();
+  });
+
+  it("no cuelga del titular algo que no es http", async () => {
+    const { primerEnlace } = await import("@/lib/feed/markdown");
+    expect(primerEnlace("[aquí](javascript:void)")).toBeNull();
+  });
+});

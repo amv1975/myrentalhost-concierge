@@ -65,9 +65,30 @@ export function enlacesPlanos(texto: string): string {
  * único camino al artículo en el nombre del medio, al final del párrafo y en
  * letra pequeña, es esconderlo: hay que saber que está para encontrarlo.
  */
-export function primerEnlace(texto: string): string | null {
+export function primerEnlace(
+  texto: string,
+): { url: string; medio: string } | null {
   for (const trozo of trocear(texto)) {
-    if (trozo.tipo === "enlace") return trozo.url;
+    if (trozo.tipo === "enlace") return { url: trozo.url, medio: trozo.texto };
   }
   return null;
+}
+
+/**
+ * El párrafo sin el enlace que ya está en el botón.
+ *
+ * Dejarlo dentro deja el nombre del medio colgando al final de la frase
+ * —"…es un buen momento para tenerlo blindado. 3CatInfo"— justo encima de un
+ * botón que dice "Leer en 3CatInfo". Decirlo dos veces seguidas no informa
+ * mejor, solo sobra.
+ */
+export function sinEnlace(texto: string, url: string): string {
+  return texto
+    .replace(
+      /\s*\[([^\]]+)\]\(([^)]+)\)/g,
+      (todo, _etiqueta, encontrada: string) =>
+        encontrada.trim() === url ? "" : todo,
+    )
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
 }

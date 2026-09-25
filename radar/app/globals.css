@@ -1517,33 +1517,32 @@ body {
   cursor: pointer;
 }
 
-/* El enlace al artículo original.
-   El subrayado iba en el color de las líneas de separación: casi invisible, y
-   un enlace que no parece un enlace no se pulsa. Ahora se ve, y la flecha dice
-   que abre fuera. */
-.feed-enlace {
+/* Ir al artículo.
+   Estuvo dos versiones como palabra subrayada dentro del párrafo y no se
+   pulsaba ninguna: un enlace metido en un muro de texto hay que encontrarlo
+   antes de poder usarlo. Fuera del texto, con borde y color propio, se ve sin
+   buscarlo — que es la diferencia entre que exista y que sirva. */
+.feed-leer {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
   color: var(--p-work);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-  white-space: nowrap;
+  border: 1px solid var(--p-work);
+  border-radius: 2px;
+  padding: 6px 11px;
+  background: var(--p-work-soft);
 }
 
-.feed-enlace::after {
-  content: " ↗";
-  font-size: 0.85em;
-}
-
-/* El titular, cuando lleva al artículo. Sigue leyéndose como un titular —es lo
-   primero de la línea y tiene que pesar— con el subrayado justo para que se
-   vea que se puede pulsar. */
-.feed-titular {
-  font-weight: 700;
-  color: var(--p-ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
-  text-decoration-color: var(--p-work);
+/* El botón de leer y el de compartir, en la misma línea. */
+.feed-acciones {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 8px;
 }
 
 /* Un fallo al despachar una cita, en su propio renglón. Dentro del texto

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { partir } from "@/lib/feed/bloques";
 import { textoDelFeed } from "@/lib/feed/compartir";
 import { enlaceWhatsApp } from "@/lib/equipo";
-import { primerEnlace, trocear } from "@/lib/feed/markdown";
+import { primerEnlace, sinEnlace, trocear } from "@/lib/feed/markdown";
 
 /**
  * La síntesis, con lo que hace falta para pasarle un trozo al equipo.
@@ -67,35 +67,41 @@ export function FeedDigest({
         // primero y lo que el pulgar busca. El nombre del medio se queda
         // igual al final, que es la otra cosa que uno quiere saber —de dónde
         // sale— y no estorba.
-        const url = primerEnlace(bloque.cuerpo);
+        const fuente = primerEnlace(bloque.cuerpo);
         return (
           <div key={bloque.id} className="feed-bloque" data-elegido={elegido}>
             <p>
-              {bloque.titulo ? (
-                url ? (
-                  <a
-                    className="feed-titular"
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer noopener nofollow"
-                  >
-                    {bloque.titulo}
-                  </a>
-                ) : (
-                  <b>{bloque.titulo}</b>
-                )
-              ) : null}
+              {bloque.titulo ? <b>{bloque.titulo}</b> : null}
               {bloque.titulo ? " " : null}
-              <Rico texto={bloque.cuerpo} />
+              <Rico
+                texto={
+                  fuente ? sinEnlace(bloque.cuerpo, fuente.url) : bloque.cuerpo
+                }
+              />
             </p>
-            <button
-              type="button"
-              className="feed-elegir"
-              aria-pressed={elegido}
-              onClick={() => alternar(bloque.id)}
-            >
-              {elegido ? "✓ Share" : "Share"}
-            </button>
+            <div className="feed-acciones">
+              {/* Un enlace subrayado dentro de un párrafo no se pulsa: hay que
+                  encontrarlo primero. Fuera del texto y con forma de botón, se
+                  ve sin buscarlo. */}
+              {fuente ? (
+                <a
+                  className="feed-leer"
+                  href={fuente.url}
+                  target="_blank"
+                  rel="noreferrer noopener nofollow"
+                >
+                  Leer en {fuente.medio} ↗
+                </a>
+              ) : null}
+              <button
+                type="button"
+                className="feed-elegir"
+                aria-pressed={elegido}
+                onClick={() => alternar(bloque.id)}
+              >
+                {elegido ? "✓ Share" : "Share"}
+              </button>
+            </div>
           </div>
         );
       })}
@@ -138,19 +144,10 @@ function Rico({ texto }: { texto: string }) {
     <>
       {trocear(texto).map((trozo, i) => {
         if (trozo.tipo === "negrita") return <b key={i}>{trozo.texto}</b>;
-        if (trozo.tipo === "enlace") {
-          return (
-            <a
-              key={i}
-              href={trozo.url}
-              target="_blank"
-              rel="noreferrer noopener nofollow"
-              className="feed-enlace"
-            >
-              {trozo.texto}
-            </a>
-          );
-        }
+        // El nombre del medio se queda como texto: el camino al artículo es
+        // el botón de abajo, y dos caminos al mismo sitio en la misma línea
+        // no ayudan, confunden.
+        if (trozo.tipo === "enlace") return <span key={i}>{trozo.texto}</span>;
         return <span key={i}>{trozo.texto}</span>;
       })}
     </>

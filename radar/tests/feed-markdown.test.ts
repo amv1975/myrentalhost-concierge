@@ -60,16 +60,16 @@ describe("enlacesPlanos", () => {
 });
 
 describe("primerEnlace", () => {
-  it("encuentra el artículo para colgarlo del titular", async () => {
+  it("da la dirección y el medio, que es lo que se lee en el botón", async () => {
     const { primerEnlace } = await import("@/lib/feed/markdown");
     expect(
       primerEnlace("Los anuncios subieron un 47%. [3CatInfo](https://3cat.cat/x)"),
-    ).toBe("https://3cat.cat/x");
+    ).toEqual({ url: "https://3cat.cat/x", medio: "3CatInfo" });
   });
 
   it("se queda con el primero cuando hay varios", async () => {
     const { primerEnlace } = await import("@/lib/feed/markdown");
-    expect(primerEnlace("[A](https://a.com) y [B](https://b.com)")).toBe(
+    expect(primerEnlace("[A](https://a.com) y [B](https://b.com)")?.url).toBe(
       "https://a.com",
     );
   });
@@ -82,5 +82,31 @@ describe("primerEnlace", () => {
   it("no cuelga del titular algo que no es http", async () => {
     const { primerEnlace } = await import("@/lib/feed/markdown");
     expect(primerEnlace("[aquí](javascript:void)")).toBeNull();
+  });
+});
+
+describe("sinEnlace", () => {
+  it("quita el medio que ya está en el botón de leer", async () => {
+    const { sinEnlace } = await import("@/lib/feed/markdown");
+    expect(
+      sinEnlace(
+        "Es un buen momento para tenerlo blindado. [3CatInfo](https://3cat.cat/x)",
+        "https://3cat.cat/x",
+      ),
+    ).toBe("Es un buen momento para tenerlo blindado.");
+  });
+
+  it("deja los otros enlaces del párrafo donde estaban", async () => {
+    const { sinEnlace } = await import("@/lib/feed/markdown");
+    expect(sinEnlace("[A](https://a.com) y [B](https://b.com)", "https://a.com")).toBe(
+      "y [B](https://b.com)",
+    );
+  });
+
+  it("un párrafo sin enlaces no se toca", async () => {
+    const { sinEnlace } = await import("@/lib/feed/markdown");
+    expect(sinEnlace("Lo demás iba de hoteles.", "https://a.com")).toBe(
+      "Lo demás iba de hoteles.",
+    );
   });
 });

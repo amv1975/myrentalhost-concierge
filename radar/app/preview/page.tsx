@@ -67,15 +67,35 @@ export default async function PreviewPage({
     );
   }
 
+  // Un día cargado: los contadores de dos cifras son donde se pisaban los
+  // filtros, y con cinco correos de ejemplo eso no se veía nunca.
+  const parte = vista === "cargado" ? multiplicar(SAMPLE_PARTE, 6) : SAMPLE_PARTE;
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
       <ParteBoard
-        parte={SAMPLE_PARTE}
+        parte={parte}
         agenda={SAMPLE_AGENDA}
         espacios={["work", "personal", "family"]}
       />
     </main>
   );
+}
+
+function multiplicar(
+  parte: typeof SAMPLE_PARTE,
+  veces: number,
+): typeof SAMPLE_PARTE {
+  const copias = <T extends { id: string }>(lista: T[]) =>
+    Array.from({ length: veces }, (_, i) =>
+      lista.map((e) => ({ ...e, id: `${e.id}-${i}` })),
+    ).flat();
+  return {
+    ...parte,
+    urgent: copias(parte.urgent),
+    rest: copias(parte.rest),
+    fyi: copias(parte.fyi),
+  };
 }
 
 const SAMPLE_FEED = `**Airbnb quiere cobrarte por vender dentro de su propia plataforma** Chesky anticipó anuncios patrocinados para anfitriones, con la idea de sumar 1.000 millones de dólares de ingresos. Todavía no hay fecha ni mecánica concreta, pero es la dirección. [Hosteltur](https://www.hosteltur.com/x.html)

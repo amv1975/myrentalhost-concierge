@@ -46,27 +46,26 @@ export function ParteBoard({
           a las 08:29" y se partía en dos renglones en el móvil: tres frases
           para tres números que se entienden solos.
         */}
+        {/*
+          Lo tuyo primero. "458 mirados" abría la línea y es el número que
+          menos importa: dice cuánto trabajó la app, no cuánto te toca a ti.
+          Va al final y apagado, como contexto.
+        */}
         <div className="parte-tally">
-          <span>
-            <b>{parte.scanned}</b> mirados
-          </span>
-          <span className="sep">·</span>
           <span>
             <b>{total}</b> para ti
           </span>
           {parte.reading > 0 ? (
-            <>
-              <span className="sep">·</span>
-              <span className="leyendo">
-                <b>{parte.reading}</b> sin leer
-              </span>
-            </>
-          ) : parte.updatedAt ? (
-            <>
-              <span className="sep">·</span>
-              <span>{hhmm(parte.updatedAt)}</span>
-            </>
+            <span className="leyendo">
+              <b>{parte.reading}</b> sin leer
+            </span>
           ) : null}
+          <span className="contexto">
+            {parte.scanned} mirados
+            {parte.updatedAt && parte.reading === 0
+              ? ` · ${hhmm(parte.updatedAt)}`
+              : null}
+          </span>
         </div>
       </header>
 

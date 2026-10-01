@@ -7,6 +7,7 @@ import type { ParteEntry } from "@/lib/parte";
 import { spaceLabel } from "@/lib/types";
 import { decidirEje, resultado, SWIPE_PX } from "@/lib/gesto";
 import { desdeCuando } from "@/lib/google/hilo-parse";
+import { llegada } from "@/lib/llegada";
 
 /**
  * Una línea del parte.
@@ -205,8 +206,11 @@ export function ParteRow({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <span className="parte-at">{hhmm(entry.at)}</span>
-
+        {/*
+          Sin columna de hora a la izquierda: costaba sesenta píxeles de cada
+          línea, que eran justo los que le faltaban al titular para no
+          partirse en tres renglones. La hora va en la meta, y relativa.
+        */}
         <button
           type="button"
           className="parte-open"
@@ -214,29 +218,69 @@ export function ParteRow({
           onClick={() => setOpen((value) => !value)}
         >
           <span className="parte-headline">{entry.headline}</span>
+          {/*
+            Sin puntos separadores escritos a mano: cuando la línea se partía,
+            el renglón nuevo empezaba por "·" y parecía una lista rota. El
+            hueco entre piezas lo pone el gap, que no se queda huérfano.
+          */}
           <span className="parte-meta">
             <span className="parte-chip" data-life={life}>
               {spaceLabel(life)}
             </span>
             {entry.who ? <span className="parte-who">{entry.who}</span> : null}
             {entry.when ? (
-              <span className="parte-when">· {entry.when}</span>
-            ) : null}
-            {entry.reading ? (
-              <span className="parte-reading">· leyéndolo</span>
-            ) : null}
-            {/* Lo más accionable de la línea, y por eso va en la cabecera y no
-                escondido en el detalle: no es lo mismo una pregunta que
-                contestaste que una que lleva dos mensajes esperando. */}
-            {entry.espera ? (
-              <span className="parte-espera">
-                · sin responder {desdeCuando(new Date(entry.espera.desde))}
-                {entry.espera.mensajes > 1
-                  ? ` (${entry.espera.mensajes} mensajes)`
-                  : null}
+              <span className="parte-when">
+                <svg viewBox="0 0 16 16" aria-hidden width="13" height="13">
+                  <rect
+                    x="2"
+                    y="3.2"
+                    width="12"
+                    height="10.8"
+                    rx="1.6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                  />
+                  <path
+                    d="M2 6.6h12M5.2 1.8v2.6M10.8 1.8v2.6"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {entry.when}
               </span>
             ) : null}
+            <span className="parte-llegada" title="Cuándo llegó el correo">
+              {llegada(entry.at)}
+            </span>
+            {entry.reading ? (
+              <span className="parte-reading">leyéndolo</span>
+            ) : null}
           </span>
+          {/*
+            Un estado, no un dato más de la meta: es lo más accionable de la
+            línea y tiene que verse sin leerla. Con forma propia —una pastilla
+            con su icono— y no solo con color, que no todo el mundo distingue.
+          */}
+          {entry.espera ? (
+            <span className="parte-estado" data-estado="espera">
+              <svg viewBox="0 0 16 16" aria-hidden width="14" height="14">
+                <path
+                  d="M6 4 2.5 7.5 6 11M3 7.5h6.5a4 4 0 0 1 4 4V12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Sin responder {desdeCuando(new Date(entry.espera.desde))}
+              {entry.espera.mensajes > 1
+                ? ` · ${entry.espera.mensajes} mensajes`
+                : null}
+            </span>
+          ) : null}
           {entry.link ? (
             <span className="parte-link">{entry.link}</span>
           ) : null}
@@ -366,11 +410,3 @@ function Star({ filled }: { filled: boolean }) {
   );
 }
 
-function hhmm(iso: string): string {
-  return new Intl.DateTimeFormat("es-ES", {
-    timeZone: "Europe/Madrid",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
-}

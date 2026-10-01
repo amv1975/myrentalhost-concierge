@@ -18,7 +18,7 @@ export const TriageResultSchema = z.object({
     .string()
     .max(180)
     .describe(
-      "El titular: qué pasa, en una frase corta y concreta. Sin repetir el asunto literal.",
+      "El titular: qué pasa, en unas diez palabras. Quién y qué, y el dato que lo distingue. Las cifras, plazos y condiciones van al detalle. Sin repetir el asunto literal.",
     ),
   detail: z
     .string()

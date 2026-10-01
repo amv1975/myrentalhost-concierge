@@ -39,12 +39,6 @@
   --color-line-soft: #eef0f4;
 
   /* Un color por espacio: saber en cuál estás sin leer la pestaña. */
-  --color-family: #0d7a70;
-  --color-family-soft: #e6f4f2;
-  --color-personal: #9a5518;
-  --color-personal-soft: #fbeee1;
-  --color-work: #4640c4;
-  --color-work-soft: #ecebfb;
 
   /* Estados */
   --color-danger: #b4232a;
@@ -84,22 +78,6 @@ body {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   -webkit-font-smoothing: antialiased;
-}
-
-/* El espacio activo tiñe sus acentos. Lo pone el layout en un contenedor. */
-[data-space="family"] {
-  --accent: var(--color-family);
-  --accent-soft: var(--color-family-soft);
-}
-
-[data-space="work"] {
-  --accent: var(--color-work);
-  --accent-soft: var(--color-work-soft);
-}
-
-[data-space="personal"] {
-  --accent: var(--color-personal);
-  --accent-soft: var(--color-personal-soft);
 }
 
 /* Al instalarla, un toque sostenido no debe seleccionar texto como en una web:
@@ -187,13 +165,6 @@ body {
     --color-line: #272d2a;
     --color-line-soft: #1f2422;
 
-    --color-family: #4fb8ab;
-    --color-family-soft: #10302d;
-    --color-personal: #d99b63;
-    --color-personal-soft: #33220f;
-    --color-work: #9a95f0;
-    --color-work-soft: #1f1d3d;
-
     --color-danger: #e8846a;
     --color-danger-soft: #381d15;
     --color-warn: #d9a441;
@@ -232,8 +203,12 @@ body {
     --p-family-soft: #33202a;
     --p-personal: #d8a763;
     --p-personal-soft: #33260f;
-    --p-alert: #e8846a;
-    --p-alert-soft: #381d15;
+    /* Más rojo y más saturado que antes. Con #e8846a, lo urgente y Familia
+       eran casi el mismo salmón (ΔE 10 medido; hace falta 15 para que dos
+       colores se distingan a simple vista), y la raya de "hay que mirarlo
+       hoy" se confundía con la etiqueta de las niñas. */
+    --p-alert: #f2694a;
+    --p-alert-soft: #3a1a12;
 
     --p-solid: #262d2a;
     --p-solid-ink: #e4e8e5;
@@ -317,7 +292,7 @@ body {
   color: var(--p-muted);
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 4px 16px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--p-rule);
@@ -327,8 +302,9 @@ body {
   font-weight: 500;
   color: var(--p-ink);
 }
-.parte-tally .sep {
-  color: var(--p-rule);
+/* Lo que trabajó la app, no lo que te toca: contexto, en segundo plano. */
+.parte-tally .contexto {
+  color: var(--p-faint);
 }
 
 .parte h2 {
@@ -344,7 +320,8 @@ body {
   gap: 8px;
 }
 .parte h2 .count {
-  color: var(--p-rule);
+  color: var(--p-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* El contenedor no se mueve; lo que se desliza es la fila de dentro, para que
@@ -393,12 +370,19 @@ body {
   font-weight: 700;
 }
 
+/*
+ * Una fila: el texto y la estrella. El hueco de la izquierda está reservado en
+ * todas, urgentes o no, para que los titulares empiecen en la misma vertical
+ * en toda la pantalla. Antes las urgentes llevaban una raya que empujaba el
+ * texto y las demás no, y el ojo saltaba de un borde a otro al bajar.
+ */
 .parte-row {
   display: grid;
-  grid-template-columns: 3.1rem 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 0 10px;
   align-items: start;
-  padding: 11px 0;
+  padding: 13px 0 13px 12px;
+  border-left: 3px solid transparent;
   background: var(--p-paper);
   position: relative;
 }
@@ -406,7 +390,7 @@ body {
 .parte-open {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
   text-align: left;
   background: none;
@@ -444,29 +428,25 @@ body {
   outline-offset: 2px;
 }
 
-.parte-at {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 14.8px;
-  color: var(--p-faint);
-  font-variant-numeric: tabular-nums;
-  padding-top: 2px;
-}
 
 
 
 .parte-headline {
-  font-size: 16.6px;
-  line-height: 1.42;
+  font-size: 17px;
+  line-height: 1.4;
   text-wrap: pretty;
 }
 
+/* Quién, de qué vida, para cuándo y cuándo llegó. Las piezas se separan con
+   hueco y no con "·" escritos: un punto al principio de un renglón partido
+   parece una lista rota. */
 .parte-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 7px;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 14.8px;
+  gap: 4px 12px;
+  font-size: 14.5px;
+  line-height: 1.4;
   color: var(--p-faint);
 }
 .parte-who {
@@ -474,16 +454,22 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 15rem;
+  color: var(--p-muted);
+}
+.parte-llegada {
+  font-variant-numeric: tabular-nums;
 }
 
+/* La vida a la que pertenece. Era mono, en mayúsculas y con tracking ancho, y
+   en cada fila ocupaba más que el remitente: la etiqueta pesaba más que el
+   dato. En redonda y caja normal dice lo mismo en la mitad de ancho. */
 .parte-chip {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 14.8px;
-  font-weight: 500;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  padding: 2px 5px;
-  border-radius: 2px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 1px 7px;
+  border-radius: 3px;
+  line-height: 1.45;
 }
 .parte-chip[data-life="work"] {
   color: var(--p-work);
@@ -498,21 +484,55 @@ body {
   background: var(--p-personal-soft);
 }
 
+/* Para cuándo es: la fecha que importa. Con su icono de calendario, porque
+   al lado va cuándo llegó el correo, y dos fechas seguidas sin marca no hay
+   forma de saber cuál es cuál. */
 .parte-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--p-ink);
+  font-variant-numeric: tabular-nums;
+}
+.parte-when svg {
+  flex: none;
   color: var(--p-muted);
 }
 
 .parte-urgent .parte-item {
   border-top-color: var(--p-rule);
 }
-.parte-urgent .parte-open {
-  border-left: 2px solid var(--p-alert);
-  padding-left: 11px;
-  margin-left: -1px;
+/* Lo urgente se marca con la raya en el hueco que todas tienen reservado: el
+   texto no se mueve, solo aparece el color. */
+.parte-urgent .parte-row {
+  border-left-color: var(--p-alert);
 }
 .parte-urgent .parte-headline {
-  font-weight: 500;
-  font-size: 17.8px;
+  font-weight: 600;
+}
+
+/*
+ * Un estado de la línea, con forma propia.
+ *
+ * "Sin responder desde ayer" iba como un trozo más de la meta, en el mismo
+ * tamaño que el remitente, y cuando la línea se partía quedaba a medias en el
+ * renglón de abajo. Es lo más accionable de toda la fila: va en su pastilla,
+ * con icono, para verse sin leer — y no solo por el color.
+ */
+.parte-estado {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 4px 9px 4px 7px;
+  /* Esquinas suaves y no una píldora: cuando el texto se parte en dos
+     renglones en un móvil estrecho, una píldora entera parece un globo. */
+  border-radius: 6px;
+  color: var(--p-alert);
+  background: var(--p-alert-soft);
 }
 
 .parte-flag {
@@ -524,16 +544,13 @@ body {
 }
 
 .parte-detail {
-  grid-column: 2 / -1;
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 12px 0 4px;
   border-top: 1px dashed var(--p-rule);
   margin-top: 11px;
-}
-.parte-urgent .parte-detail {
-  padding-left: 13px;
 }
 .parte-detail p {
   margin: 0;
@@ -645,7 +662,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 17rem;
+  /* Con la lista ya accionable, 17rem dejaba ver tres correos. */
+  max-height: 26rem;
   overflow-y: auto;
 }
 .parte-noise li {
@@ -713,33 +731,6 @@ body {
   margin-top: 2px;
 }
 
-/* Con la lista ya accionable, el alto de antes dejaba ver tres correos. */
-/* El buscador manda, así que ocupa el ancho entero y va antes que la lista. */
-.parte-buscar {
-  display: block;
-  width: 100%;
-  margin-top: 12px;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 14.8px;
-  color: var(--p-ink);
-  background: var(--p-surface);
-  border: 1px solid var(--p-rule);
-  border-radius: 2px;
-  padding: 10px 11px;
-}
-
-.parte-buscar::placeholder {
-  color: var(--p-faint);
-}
-
-.parte-buscar:focus-visible {
-  outline: 2px solid var(--p-work);
-  outline-offset: 1px;
-}
-
-.parte-noise ul {
-  max-height: 26rem;
-}
 
 .parte-noise .note {
   font-size: 14.8px;
@@ -841,15 +832,19 @@ body {
   color: var(--p-faint);
   border-top: 1px solid var(--p-rule);
   padding-top: 14px;
-  line-height: 1.7;
+  line-height: 1.5;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
 }
 .parte-foot a {
   color: var(--p-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
+  /* Un enlace de 20 px de alto se falla con el pulgar. El relleno agranda la
+     zona que se puede tocar sin mover nada de sitio. */
+  display: inline-block;
+  padding-block: 6px;
 }
 
 /* El botón de actualizar viene de la otra pantalla, con la paleta de la otra
@@ -922,11 +917,12 @@ body {
   border-top: 1px solid var(--p-rule-soft);
 }
 
-/* Centradas con el texto cuando la pantalla es ancha. */
+/* Del mismo ancho que la columna de texto, no 48 px más. En una pantalla
+   ancha el botón asomaba por los dos lados de lo que tenía encima. */
 .parte-refresh > div,
 .parte-equipo > div {
   margin: 0 auto;
-  max-width: 42rem;
+  max-width: calc(42rem - 48px);
 }
 
 .parte-refresh button {
@@ -1045,18 +1041,20 @@ body {
   flex-wrap: nowrap;
 }
 
+/* En redonda y caja normal, no en mono mayúscula: "TRABAJO 26" en mono no
+   cabía en un cuarto de móvil y se pisaba con "PERSONAL 2". "Trabajo 26"
+   cabe con holgura. */
 .parte-filter button {
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
   flex: 1 1 0;
   min-width: 0;
+  white-space: nowrap;
   gap: 5px;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 14.8px;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  padding: 8px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 4px;
   border: 1px solid var(--p-rule);
   border-radius: 2px;
   background: none;
@@ -1113,6 +1111,13 @@ body {
   display: flex;
   gap: 10px;
   align-items: baseline;
+}
+
+/* La lista se queda con el ancho que sobra. Sin esto, en un día con una sola
+   cita corta la lista medía lo que su texto, y "Listo" quedaba pegado al
+   título en vez de en su columna, a la derecha, como en las demás filas. */
+.parte-agenda .dia ul {
+  flex: 1;
 }
 
 .parte-agenda .cuando {
@@ -1174,7 +1179,9 @@ body {
   font-size: 14.9px;
   line-height: 1.45;
   color: var(--p-muted);
-  border-left: 2px solid var(--p-alert);
+  /* En el gris de las reglas y no en el rojo de lo urgente: es otra voz,
+     no una alarma, y en rojo competía con la raya de las urgentes. */
+  border-left: 2px solid var(--p-rule);
   padding-left: 9px;
   margin-top: 2px;
   text-wrap: pretty;
@@ -1215,7 +1222,9 @@ body {
   font: inherit;
   background: none;
   border: 0;
-  padding: 0;
+  /* La misma diana que los enlaces del pie: estos dos iban sin relleno y
+     quedaban pegados entre sí mientras el resto respiraba. */
+  padding: 6px 0;
   color: var(--p-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1433,11 +1442,6 @@ body {
   font-weight: 600;
 }
 
-/* Que están esperando respuesta tuya. Se pinta en el color de aviso dentro de
-   la línea de meta: es un dato de estado, no una alarma aparte. */
-.parte-espera {
-  color: var(--p-alert);
-}
 
 /* El pie del botón de actualizar: lo que pasó en la última pasada, o qué
    falló. Con contraste suficiente para leerlo, que es más de lo que tenía. */
@@ -1472,21 +1476,27 @@ body {
 /* Despachar una cita: "con verlo una vez ya está".
    El botón vive apagado al final de la línea — es lo opcional de la fila, y
    una columna de botones encendidos convierte la agenda en un formulario. */
+/* Despachar una cita. Era texto gris suelto al final de la línea y no se
+   entendía que se pudiera pulsar: un control tiene que parecerlo. Pequeño y
+   con borde fino, para no competir con la cita. */
 .parte-agenda .agenda-listo {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  background: none;
-  border: 0;
-  padding: 0 0 0 10px;
-  color: var(--p-faint);
-  cursor: pointer;
+  flex: none;
   align-self: start;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--p-rule);
+  border-radius: 999px;
+  background: none;
+  color: var(--p-muted);
+  cursor: pointer;
 }
 
-.parte-agenda li:hover .agenda-listo,
+.parte-agenda .agenda-listo:hover,
 .parte-agenda .agenda-listo:focus-visible {
   color: var(--p-ink);
+  border-color: var(--p-muted);
 }
 
 /* Lo que se acaba de quitar, con su vuelta atrás. Nombra la cita: "quitado"

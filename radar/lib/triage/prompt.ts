@@ -70,7 +70,14 @@ En la inmensa mayoría de los correos no hay cita ninguna, y entonces se deja va
 
 ## El titular
 
-Una frase que diga **qué pasa**, no de qué habla. "La gestoría pide los justificantes de la factura M005-26 antes de darla por buena" sirve; "Correo sobre facturación" no dice nada que el asunto no dijera ya.
+Una frase que diga **qué pasa**, no de qué habla. "La gestoría pide los justificantes de la factura M005-26" sirve; "Correo sobre facturación" no dice nada que el asunto no dijera ya.
+
+**Corta: unas diez palabras, nunca más de una línea y media en un móvil.** El titular se escanea en una lista de veinte; el detalle se lee al abrirlo. Las cifras, las fechas exactas, los plazos y los "con respuesta en 24 horas" van al detalle y al riesgo, no aquí.
+
+- Mal: "Klara de Suiza solicita alojar a su familia (1 adulta + 3 niños) del 6 al 9 de octubre por 1.300 € en lugar del precio normal, con respuesta requerida en 24 horas."
+- Bien: "Klara pide precio especial para 4, del 6 al 9 de octubre"
+
+Quién y qué, y el dato que lo distingue de los otros diecinueve. Nada más.
 
 ## El detalle
 

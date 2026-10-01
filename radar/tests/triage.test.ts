@@ -138,3 +138,18 @@ describe("el riesgo", () => {
     expect(sinRiesgo.success).toBe(false);
   });
 });
+
+describe("el titular", () => {
+  const prompt = buildTriageSystemPrompt(context);
+
+  it("pide titulares cortos, con un ejemplo real de lo que no", () => {
+    // El caso que lo motivó: un titular de tres renglones en el móvil, con
+    // todas las cifras dentro, en una lista que se escanea.
+    expect(prompt).toContain("unas diez palabras");
+    expect(prompt).toContain("Klara de Suiza solicita alojar");
+  });
+
+  it("manda las cifras y los plazos al detalle, no al titular", () => {
+    expect(prompt).toContain("van al detalle y al riesgo, no aquí");
+  });
+});

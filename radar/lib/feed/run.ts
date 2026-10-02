@@ -180,7 +180,15 @@ export async function sincronizarFeed(): Promise<FeedResult> {
     const response = await getClient().messages.create(
       {
         model: MODEL,
-        max_tokens: 2000,
+        // Este modelo piensa antes de escribir aunque no se le pida, y lo que
+        // piensa sale del mismo cupo. Con 2.000, una semana de boletines
+        // diarios se lo comía entero razonando y no quedaba nada para la
+        // síntesis: la respuesta llegaba vacía, cobrada y sin texto.
+        max_tokens: 16000,
+        // Y el razonamiento, acotado: para resumir boletines no hace falta el
+        // nivel por defecto, y menos razonamiento es menos tiempo dentro del
+        // minuto que tiene la petición.
+        output_config: { effort: "medium" },
         system: [
           {
             type: "text",
@@ -208,7 +216,7 @@ export async function sincronizarFeed(): Promise<FeedResult> {
         markdown: null,
         emails: conCuerpo.length,
         costUsd: spend.usd,
-        error: "El modelo no devolvió nada.",
+        error: porQueVacia(response),
       };
     }
 
@@ -268,4 +276,23 @@ let client: Anthropic | null = null;
 function getClient(): Anthropic {
   client ??= new Anthropic({ apiKey: env.anthropicApiKey });
   return client;
+}
+
+/**
+ * Por qué una respuesta llegó sin texto, dicho de forma que sirva.
+ *
+ * "El modelo no devolvió nada" era verdad y no ayudaba: no distinguía entre
+ * quedarse sin cupo pensando —se arregla sincronizando con menos boletines—
+ * y negarse a contestar, que es otra cosa. El motivo viene en la respuesta;
+ * solo hay que leerlo.
+ */
+function porQueVacia(response: Anthropic.Message): string {
+  if (response.stop_reason === "max_tokens") {
+    return "La síntesis se quedó sin espacio antes de escribir nada. Vuelve a sincronizar; si se repite, son demasiados boletines juntos.";
+  }
+  if (response.stop_reason === "refusal") {
+    const motivo = response.stop_details?.category;
+    return `El modelo no quiso resumir estos boletines${motivo ? ` (${motivo})` : ""}. No se ha guardado nada.`;
+  }
+  return `El modelo terminó sin escribir nada (${response.stop_reason ?? "sin motivo"}).`;
 }

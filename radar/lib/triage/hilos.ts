@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getThreadMessages } from "@/lib/google/gmail";
 import { estadoDelHilo } from "@/lib/google/hilo-parse";
+import { esPlataforma } from "@/lib/plataforma";
 import { describeError } from "@/lib/errors";
 import { VENTANA_MS } from "@/lib/ventana";
 import type { Deadline } from "@/lib/deadline";
@@ -43,7 +44,7 @@ export async function refrescarHilos(
     // Lo que está en el parte: ya clasificado como tuyo y sin despachar.
     const { data, error } = await admin
       .from("emails")
-      .select("id, gmail_thread_id, esperando_desde, sin_responder")
+      .select("id, gmail_thread_id, from_email, esperando_desde, sin_responder")
       .gte("received_at", desde)
       .not("space_id", "is", null)
       .is("dismissed_at", null)
@@ -51,12 +52,17 @@ export async function refrescarHilos(
       .limit(MAX_HILOS);
     if (error) throw error;
 
-    const filas = (data ?? []) as {
+    // A Airbnb, Booking y los no-reply nadie les contesta por correo: se
+    // contesta en la plataforma. Su hilo de Gmail no recibe nunca una
+    // respuesta tuya, así que mirarlo daba "sin responder" siempre. Lo que sí
+    // se sabe de ellos lo decide el parte leyendo los asuntos.
+    const filas = ((data ?? []) as {
       id: string;
       gmail_thread_id: string;
+      from_email: string;
       esperando_desde: string | null;
       sin_responder: number;
-    }[];
+    }[]).filter((f) => !esPlataforma(f.from_email));
 
     // Un hilo puede traer varios correos del parte. Se mira una vez.
     const porHilo = new Map<string, typeof filas>();

@@ -13,6 +13,7 @@ function entrada(over: Partial<ParteEntry> & { id: string }): ParteEntry {
     detail: null,
     riesgo: null,
     espera: null,
+    resuelta: null,
     when: null,
     fromEmail: "noreply@booking.com",
     subject: "Invoice request",

@@ -85,13 +85,25 @@ Dos a cuatro frases, y es lo que de verdad vale. Tiene que llevar, cuando el cor
 
 - **Con qué se encuentra esto**, y va primero de todo. El nombre del huésped, el código de reserva o de confirmación, el piso o la dirección, el número de factura o de expediente, la matrícula, el contrato. Literales, tal como vienen. Esta parte no es para él: es para quien vaya a ocuparse, que va a buscarlo en Airbnb, en Booking o en el programa de facturación y no tiene acceso a su correo. Sin un identificador exacto no puede abrir nada.
 - **Los números**: importes exactos, cuántas partidas, qué porcentaje.
-- **El plazo, convertido en fecha.** Si dice "10 días naturales desde hoy", calcula el día y dilo. Un plazo sin fecha no se puede cumplir.
+- **El plazo, convertido en fecha.** Si dice "10 días naturales desde hoy", calcula el día y dilo. Un plazo sin fecha no se puede cumplir. **Haz la cuenta entera, con el día:** 24 horas desde las 05:17 del 5 de octubre vencen a las 05:17 del **6**, no del 5. Un plazo que vence a la misma hora en que empieza es un error que se nota a la primera.
 - **Quién espera qué, y desde cuándo.** "Administración te lo reenvió ayer a las 18:28, sin respuesta" dice más que "hay un correo pendiente". Nombra a las personas.
 - **Qué se puede cerrar hoy**, si es algo que se cierra en cinco minutos.
 
 No repitas el titular con otras palabras. Si el correo no da para cuatro frases, escribe dos: rellenar con paja es peor que ser corto.
 
 Nada de adjetivos ni de urgencia inventada. Los hechos del correo, contados como se los contarías a alguien que confía en ti y no va a leer el original.
+
+## Avisos de Airbnb: qué es cada cosa
+
+Airbnb manda tipos de aviso que se parecen y no significan lo mismo. Confundirlos tiene consecuencias: un aviso mal nombrado acaba en el grupo del equipo como algo que no es.
+
+- **"Inquiry for…" / "Enquiry for…"** — una **consulta**. El huésped pregunta; **no hay reserva**. Se contesta preaprobando o rechazando. Nunca escribas "reserva", "reserva original" ni "modificación de reserva" para una consulta: las fechas que da son las que pregunta, no las de una reserva.
+- **"Pending: Reservation Request at…" / "Reminder: Reservation Request…"** — una **solicitud de reserva**. El huésped quiere reservar y hay que aceptar o rechazar dentro del plazo.
+- **"Reservation confirmed - …"** — una **reserva confirmada**.
+- **"RE: Pre-approval for…"** — alguien del equipo **ya preaprobó** esa consulta desde la app. Es una respuesta vuestra, no algo pendiente.
+- **"RE: Inquiry for…" / "RE: Reservation for…"** — un mensaje dentro de una conversación. Mira quién firma: si es el huésped, es algo que contestar; si es "Vicky & Agus" o "Co-host", es vuestro equipo, y ya está contestado.
+
+El titular dice qué tipo es con sus palabras: "Sonia consulta por el 21–24 de octubre y pide entrar temprano", no "Sonia pide check-in anticipado en su reserva".
 
 ## El riesgo
 

@@ -535,6 +535,15 @@ body {
   background: var(--p-alert-soft);
 }
 
+/* Ya contestado. Tranquilo a propósito: sin color de alarma y sin fondo. Lo
+   que dice es "esto ya no es tuyo", y tiene que leerse así. */
+.parte-estado[data-estado="resuelta"] {
+  color: var(--p-muted);
+  background: none;
+  border: 1px solid var(--p-rule);
+  font-weight: 500;
+}
+
 .parte-flag {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 14.8px;

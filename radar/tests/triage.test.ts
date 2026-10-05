@@ -153,3 +153,23 @@ describe("el titular", () => {
     expect(prompt).toContain("van al detalle y al riesgo, no aquí");
   });
 });
+
+describe("avisos de Airbnb", () => {
+  const prompt = buildTriageSystemPrompt(context);
+
+  it("una consulta no es una reserva", () => {
+    // El error real: una "Inquiry" llegó al equipo como "reserva original".
+    expect(prompt).toContain("no hay reserva");
+    expect(prompt).toContain('Nunca escribas "reserva"');
+  });
+
+  it("una preaprobación es una respuesta vuestra, no algo pendiente", () => {
+    expect(prompt).toContain("RE: Pre-approval for");
+    expect(prompt).toContain("ya preaprobó");
+  });
+
+  it("los plazos se calculan con el día, no solo con la hora", () => {
+    // "Tenés 24 horas desde las 05:17 del 5 (vence 5 de octubre 05:17)".
+    expect(prompt).toContain("vencen a las 05:17 del **6**");
+  });
+});

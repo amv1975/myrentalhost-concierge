@@ -263,6 +263,21 @@ export function ParteRow({
             línea y tiene que verse sin leerla. Con forma propia —una pastilla
             con su icono— y no solo con color, que no todo el mundo distingue.
           */}
+          {entry.resuelta ? (
+            <span className="parte-estado" data-estado="resuelta">
+              <svg viewBox="0 0 16 16" aria-hidden width="14" height="14">
+                <path
+                  d="M3.5 8.5 6.5 11.5 12.5 4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {entry.resuelta.como} · {llegada(entry.resuelta.cuando)}
+            </span>
+          ) : null}
           {entry.espera ? (
             <span className="parte-estado" data-estado="espera">
               <svg viewBox="0 0 16 16" aria-hidden width="14" height="14">

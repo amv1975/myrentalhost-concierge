@@ -26,6 +26,13 @@ export function textoParaElEquipo(entries: ParteEntry[]): string {
 
     return [
       `${i + 1}. ${entry.headline}${cuando}`,
+      // Si ya está contestado en la plataforma, que se lea lo primero. El
+      // aviso de la consulta de Sonia llegó al grupo como pendiente cuando
+      // Vicky ya la había preaprobado: el equipo tiene que saberlo antes de
+      // ponerse a contestar otra vez.
+      entry.resuelta
+        ? `✓ ${entry.resuelta.como} a las ${horaMadrid(entry.resuelta.cuando)}`
+        : null,
       // El detalle lleva los identificadores delante: huésped, código de
       // reserva, piso, número de factura. Es por donde van a buscarlo.
       entry.detail?.trim(),
@@ -48,4 +55,13 @@ export function textoParaElEquipo(entries: ParteEntry[]): string {
  */
 export function enlaceWhatsApp(texto: string): string {
   return `https://wa.me/?text=${encodeURIComponent(texto)}`;
+}
+
+function horaMadrid(iso: string): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
 }

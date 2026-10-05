@@ -6,6 +6,11 @@ import type { Email, Item, SpaceKey } from "@/lib/types";
 import { describeError } from "@/lib/errors";
 import { VENTANA_MS } from "@/lib/ventana";
 import { MARCA_USUARIO } from "@/lib/triage/estados";
+import {
+  aplicarPlataforma,
+  leerAsunto,
+  type Resolucion,
+} from "@/lib/plataforma";
 
 /**
  * El parte de la mañana.
@@ -52,6 +57,14 @@ export interface ParteEntry {
    * Null cuando el último mensaje del hilo lo mandaste tú, que es lo normal.
    */
   espera: { desde: string; mensajes: number } | null;
+  /**
+   * Ya contestado en la plataforma, con la prueba.
+   *
+   * Una consulta de Airbnb se contesta en la app de Airbnb, no por correo, así
+   * que el hilo de Gmail no se entera nunca. Pero Airbnb manda una copia con el
+   * título nuevo de la conversación —"Pre-approval for…"— y eso sí llega.
+   */
+  resuelta: Resolucion | null;
   /** Para un compromiso: cuándo cae. Para un correo, nada. */
   when: string | null;
   fromEmail: string | null;
@@ -233,9 +246,12 @@ async function buildParte(): Promise<Parte> {
       .map((email) => emailEntry(email, lifeById)),
   ].filter((entry): entry is ParteEntry => entry !== null);
 
+  const posteriores = user ? await respuestasDePlataforma(since) : [];
+  const conPlataforma = entries.map((e) => aplicarPlataforma(e, posteriores));
+
   // Lo que has marcado tú manda sobre la hora: es lo único de esta pantalla
   // que dice explícitamente "esto por encima de lo demás".
-  const unicas = dedupe(entries);
+  const unicas = dedupe(conPlataforma);
 
   unicas.sort(
     (a, b) =>
@@ -320,7 +336,12 @@ function dedupe(entries: ParteEntry[]): ParteEntry[] {
 
   for (const entry of entries) {
     const hora = entry.at.slice(0, 13);
-    const clave = `${entry.kind}:${entry.fromEmail ?? ""}:${entry.subject ?? entry.headline}:${hora}`;
+    // La misma consulta de Airbnb llega a dos buzones con dos asuntos —
+    // "Inquiry for…" en uno y "Enquiry for…" en otro— y se colaba dos veces.
+    const airbnb = leerAsunto(entry.subject);
+    const clave = airbnb
+      ? `airbnb:${airbnb.estado}:${airbnb.clave}`
+      : `${entry.kind}:${entry.fromEmail ?? ""}:${entry.subject ?? entry.headline}:${hora}`;
 
     const anterior = vistos.get(clave);
     // Se queda el que más información tiene: uno leído gana a uno sin leer.
@@ -367,6 +388,7 @@ function itemEntry(
     // Un compromiso ya lleva su fecha delante; el riesgo es de los correos.
     riesgo: null,
     espera: null,
+    resuelta: null,
     when: whenLabel(item),
     fromEmail: item.emails?.from_email ?? null,
     subject: item.emails?.subject ?? null,
@@ -415,6 +437,7 @@ function emailEntry(
       email.esperando_desde && email.sin_responder > 0
         ? { desde: email.esperando_desde, mensajes: email.sin_responder }
         : null,
+    resuelta: null,
     reading: email.summary === null,
     when: null,
     fromEmail: email.from_email,
@@ -491,4 +514,32 @@ async function countScanned(since: string): Promise<number> {
     .select("id", { count: "exact", head: true })
     .gte("received_at", since);
   return count ?? 0;
+}
+
+/**
+ * Los correos de Airbnb que pueden probar que algo ya se contestó.
+ *
+ * Con el cliente de servicio y no con el del usuario: estas copias casi
+ * siempre las tira el filtro como ruido —son avisos, no tareas— y el ruido no
+ * pertenece a ningún espacio, así que RLS no las devolvería. Solo se lee el
+ * asunto y la hora, y solo quien ya ha pasado la comprobación de sesión.
+ */
+async function respuestasDePlataforma(
+  since: string,
+): Promise<{ asunto: string | null; recibido: string }[]> {
+  try {
+    const { data, error } = await createAdminClient()
+      .from("emails")
+      .select("subject, received_at")
+      .gte("received_at", since)
+      .or("subject.ilike.RE: Pre-approval%,subject.ilike.RE: Reservation%")
+      .limit(500);
+    if (error) return [];
+    return ((data ?? []) as { subject: string | null; received_at: string }[]).map(
+      (f) => ({ asunto: f.subject, recibido: f.received_at }),
+    );
+  } catch {
+    // Sin esto el parte se ve igual que antes. No puede tumbarlo.
+    return [];
+  }
 }

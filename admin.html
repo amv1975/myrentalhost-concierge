@@ -445,7 +445,32 @@
     </div>
 
     <script>
-        const API_URL = 'https://myrentalhost-concierge-production.up.railway.app';
+        // El panel lo sirve el mismo backend, así que la API está en el mismo origen
+        const API_URL = '';
+
+        // Clave de administración: se pide una vez y queda guardada en este navegador
+        function getAdminKey() {
+            let key = null;
+            try { key = localStorage.getItem('mrh_admin_key'); } catch (e) {}
+            if (!key) {
+                key = prompt('Clave de administración') || '';
+                try { if (key) localStorage.setItem('mrh_admin_key', key); } catch (e) {}
+            }
+            return key;
+        }
+
+        // Todas las llamadas a la API llevan la cabecera X-Admin-Key
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = async (url, options = {}) => {
+            const response = await originalFetch(url, {
+                ...options,
+                headers: { ...(options.headers || {}), 'X-Admin-Key': getAdminKey() }
+            });
+            if (response.status === 401) {
+                try { localStorage.removeItem('mrh_admin_key'); } catch (e) {}
+            }
+            return response;
+        };
 
         function showTab(tabName) {
             // Ocultar todos los tabs

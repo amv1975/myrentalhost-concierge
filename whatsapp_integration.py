@@ -5,17 +5,28 @@ Este módulo maneja el envío y recepción de mensajes por WhatsApp
 
 import requests
 import os
+from datetime import datetime
 from typing import Dict, Optional
+
+REQUEST_TIMEOUT = 20  # segundos
+
+
+def _error_detail(e: Exception) -> str:
+    """Incluye la respuesta de Meta en el error (ahí viene el motivo real)"""
+    response = getattr(e, 'response', None)
+    body = response.text[:500] if response is not None else ''
+    return f"{e} {body}".strip()
+
 
 class WhatsAppClient:
     """Cliente para interactuar con WhatsApp Business API"""
-    
+
     def __init__(self):
         self.access_token = os.environ.get('WHATSAPP_ACCESS_TOKEN')
         self.phone_number_id = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
-        self.api_version = 'v18.0'
+        self.api_version = os.environ.get('WHATSAPP_API_VERSION', 'v26.0')
         self.base_url = f'https://graph.facebook.com/{self.api_version}'
-        
+
     def send_message(self, to: str, message: str) -> Dict:
         """
         Envía un mensaje de texto por WhatsApp
@@ -46,12 +57,12 @@ class WhatsAppClient:
         }
         
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error enviando mensaje de WhatsApp: {e}")
-            return {'error': str(e)}
+            print(f"Error enviando mensaje de WhatsApp: {_error_detail(e)}")
+            return {'error': _error_detail(e)}
     
     def send_template_message(self, to: str, template_name: str, 
                              language_code: str = 'es') -> Dict:
@@ -86,12 +97,12 @@ class WhatsAppClient:
         }
         
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error enviando plantilla de WhatsApp: {e}")
-            return {'error': str(e)}
+            print(f"Error enviando plantilla de WhatsApp: {_error_detail(e)}")
+            return {'error': _error_detail(e)}
     
     def mark_as_read(self, message_id: str) -> Dict:
         """
@@ -117,12 +128,12 @@ class WhatsAppClient:
         }
         
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error marcando mensaje como leído: {e}")
-            return {'error': str(e)}
+            print(f"Error marcando mensaje como leído: {_error_detail(e)}")
+            return {'error': _error_detail(e)}
 
 
 class GuestPhoneRegistry:
